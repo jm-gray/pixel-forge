@@ -1,6 +1,7 @@
 # load the dlm library and the Kalman Filtering functions
 library(dlm)
-source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
+library(devtools)
+source_url("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

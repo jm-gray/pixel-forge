@@ -5,55 +5,56 @@ library(dlm)
 library(tools)
 library(caTools)
 library(RColorBrewer)
+source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
 
-#-------------------------------------------------------------------
-CalcEVI2 <- function(in_file, scale_factor=1e-4){
-  s <- stack(in_file)
-  nir_v <- values(raster(in_file, 4))
-  red_v <- values(raster(in_file, 3))
-  evi2 <- 2.5 * (((nir_v * scale_factor) - (red_v * scale_factor)) / ((nir_v * scale_factor) + (2.4 * (red_v * scale_factor)) + 1))
-  return(evi2)
-}
-
-#-------------------------------------------------------------------
-PlotEVI <- function(r, breaks=c(-1e9, seq(0, 0.75, len=253), 1e9)){
-  par(mar=rep(0,4), oma=rep(0,4), bg="black")
-  myRamp <- colorRampPalette(brewer.pal(11, "Spectral"))
-  plot(r, breaks=breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
-}
-
-#-------------------------------------------------------------------
-PlotFusion <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len=254), 1e9)){
-  nf <- layout(matrix(c(1,2,3,3), nrow=2, byrow=T), heights=c(0.5, 1))
-  par(mar=rep(0,4), oma=rep(0,4), bg="black")
-  myRamp <- colorRampPalette(brewer.pal(11, "Spectral"))
-  image(r1, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
-  image(r2, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
-  image(kf, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
-  text(par()$usr[1], par()$usr[3], label=label, adj=c(-0.1, -0.1), col='black', cex=2)
-}
-
-#-------------------------------------------------------------------
-ApplyKFSmooth <- function(x, dlm, prior_rates, prior_vars, prior_means, use_cov=FALSE){
-  cluster_id <- x[1,1]
-  if(use_cov){
-    signal_cov <- x[1,2]
-  }else{
-    signal_cov <- 0
-  }
-  y <- x[-1,]
-  tmp_dlm <- dlm
-  X(tmp_dlm)[,1] <- prior_rates[cluster_id, ]
-  X(tmp_dlm)[,2] <- prior_vars[cluster_id, ]
-  m0(tmp_dlm) <- prior_means[cluster_id, 1]
-  C0(tmp_dlm) <- prior_vars[cluster_id, 1]
-  smooth <- dlmSmooth(y, tmp_dlm)
-  return(smooth)
-}
-
-#-------------------------------------------------------------------
-ExtractSmoothMeans <- function(x) dropFirst(x$s)
-ExtractSmoothSE <- function(x) sqrt(unlist(dropFirst(dlmSvd2var(x$U.S, x$D.S))))
+# #-------------------------------------------------------------------
+# CalcEVI2 <- function(in_file, scale_factor=1e-4){
+#   s <- stack(in_file)
+#   nir_v <- values(raster(in_file, 4))
+#   red_v <- values(raster(in_file, 3))
+#   evi2 <- 2.5 * (((nir_v * scale_factor) - (red_v * scale_factor)) / ((nir_v * scale_factor) + (2.4 * (red_v * scale_factor)) + 1))
+#   return(evi2)
+# }
+#
+# #-------------------------------------------------------------------
+# PlotEVI <- function(r, breaks=c(-1e9, seq(0, 0.75, len=253), 1e9)){
+#   par(mar=rep(0,4), oma=rep(0,4), bg="black")
+#   myRamp <- colorRampPalette(brewer.pal(11, "Spectral"))
+#   plot(r, breaks=breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
+# }
+#
+# #-------------------------------------------------------------------
+# PlotFusion <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len=254), 1e9)){
+#   nf <- layout(matrix(c(1,2,3,3), nrow=2, byrow=T), heights=c(0.5, 1))
+#   par(mar=rep(0,4), oma=rep(0,4), bg="black")
+#   myRamp <- colorRampPalette(brewer.pal(11, "Spectral"))
+#   image(r1, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
+#   image(r2, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
+#   image(kf, breaks=evi_breaks, col=myRamp(255), legend=FALSE, xaxt="n", yaxt="n", colNA="black")
+#   text(par()$usr[1], par()$usr[3], label=label, adj=c(-0.1, -0.1), col='black', cex=2)
+# }
+#
+# #-------------------------------------------------------------------
+# ApplyKFSmooth <- function(x, dlm, prior_rates, prior_vars, prior_means, use_cov=FALSE){
+#   cluster_id <- x[1,1]
+#   if(use_cov){
+#     signal_cov <- x[1,2]
+#   }else{
+#     signal_cov <- 0
+#   }
+#   y <- x[-1,]
+#   tmp_dlm <- dlm
+#   X(tmp_dlm)[,1] <- prior_rates[cluster_id, ]
+#   X(tmp_dlm)[,2] <- prior_vars[cluster_id, ]
+#   m0(tmp_dlm) <- prior_means[cluster_id, 1]
+#   C0(tmp_dlm) <- prior_vars[cluster_id, 1]
+#   smooth <- dlmSmooth(y, tmp_dlm)
+#   return(smooth)
+# }
+#
+# #-------------------------------------------------------------------
+# ExtractSmoothMeans <- function(x) dropFirst(x$s)
+# ExtractSmoothSE <- function(x) sqrt(unlist(dropFirst(dlmSvd2var(x$U.S, x$D.S))))
 
 #-------------------------------------------------------------------
 # get the input data files
