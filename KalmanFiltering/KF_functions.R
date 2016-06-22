@@ -16,6 +16,15 @@ GetSentinelDate <- function(x) as.Date(substr(unlist(strsplit(basename(x), "_"))
 #-------------------------------------------------------------------------------
 GetLandsatDate <- function(x) as.Date(substr(basename(x), 10, 16), format="%Y%j")
 
+#-------------------------------------------------------------------------------
+CalcEVI2 <- function(in_file, scale_factor=1e-4){
+  s <- stack(in_file)
+  nir_v <- values(raster(in_file, 4))
+  red_v <- values(raster(in_file, 3))
+  evi2 <- 2.5 * (((nir_v * scale_factor) - (red_v * scale_factor)) / ((nir_v * scale_factor) + (2.4 * (red_v * scale_factor)) + 1))
+  return(evi2)
+}
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions for creating, implementing, and extracting results from image KF's
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
