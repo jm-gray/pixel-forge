@@ -1,6 +1,7 @@
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Preprocesses TM and ETM+ data: cuts to path-row overlap, reprojects, fmasks,
-# and calculates EVI2.
+# and calculates EVI2. Everything is done with GDAL command line utilities, but
+# R is used to generate and submit those expressions to the shell
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 library(raster)
 library(rgdal)
