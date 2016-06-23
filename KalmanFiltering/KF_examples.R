@@ -1,7 +1,9 @@
 # load the dlm library and the Kalman Filtering functions
 library(dlm)
-library(devtools)
-source_url("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
+source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
+# if above doesn't work b/c of bug in version 3.2ish...
+# library(devtools)
+# source_url("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
