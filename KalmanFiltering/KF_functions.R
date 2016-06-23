@@ -17,6 +17,9 @@ GetSentinelDate <- function(x) as.Date(substr(unlist(strsplit(basename(x), "_"))
 GetLandsatDate <- function(x) as.Date(substr(basename(x), 10, 16), format="%Y%j")
 
 #-------------------------------------------------------------------------------
+GetModisDate <- function(x) as.Date(unlist(strsplit(basename(x), split="\\."))[2], format="A%Y%j")
+
+#-------------------------------------------------------------------------------
 CalcEVI2 <- function(in_file, scale_factor=1e-4){
   s <- stack(in_file)
   nir_v <- values(raster(in_file, 4))
