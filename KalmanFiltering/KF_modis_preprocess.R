@@ -1,7 +1,6 @@
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Preprocesses TM and ETM+ data: cuts to path-row overlap, reprojects, fmasks,
-# and calculates EVI2. Everything is done with GDAL command line utilities, but
-# R is used to generate and submit those expressions to the shell
+# Preprocesses MCD43A4/2 data: reprojects & resamples to match an example raster
+# cut to cutline, calculate EVI2. Applies to R,G,B,NIR and QA, & QAsnow
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 library(raster)
 library(rgdal)
@@ -14,6 +13,10 @@ GetSDSName <- function(mcd43a4_file_path, band){
 
 GetSDSNameQA <- function(mcd43a2_file_path){
 	return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":MOD_Grid_BRDF:BRDF_Albedo_Band_Quality", sep = ""))
+}
+
+GetSDSNameSnow <- function(mcd43a2_file_path){
+	return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":MOD_Grid_BRDF:Snow_BRDF_Albedo", sep = ""))
 }
 
 GetBandBRDFQualities <- function(x){
@@ -59,7 +62,19 @@ ModisOveralapPreprocessNBAR <- function(modis_file, cutline_file, example_raster
 }
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ModisOveralapPreprocessQA <- function(modis_file, cutline_file, example_raster_file, suffix="_modis_overlap", out_dir=NA){
+  tmp_r <- raster(example_raster_file)
 
+  # process the BRDF Albedo Band Quality
+  out_file <- file.path(out_dir, paste(file_path_sans_ext(basename(modis_file)), "_", "band_quality", suffix, ".tif", sep=""))
+  gdal_cmd <- paste("gdalwarp -overwrite -s_srs '+proj=sinu +R=6371007.181 +nadgrids=@null +wktext +unit=m' -t_srs", paste("'", projection(tmp_r), "'", sep=""), "-te", paste(extent(tmp_r)[c(1,3,2,4)], collapse=" "), "-ts", ncol(tmp_r), nrow(tmp_r), "-crop_to_cutline -cutline", cutline_file, GetSDSNameQA(modis_file), out_file)
+  system(gdal_cmd)
+
+  # process the BRDF Snow Albedo
+  out_file <- file.path(out_dir, paste(file_path_sans_ext(basename(modis_file)), "_", "snow", suffix, ".tif", sep=""))
+  gdal_cmd <- paste("gdalwarp -overwrite -s_srs '+proj=sinu +R=6371007.181 +nadgrids=@null +wktext +unit=m' -t_srs", paste("'", projection(tmp_r), "'", sep=""), "-te", paste(extent(tmp_r)[c(1,3,2,4)], collapse=" "), "-ts", ncol(tmp_r), nrow(tmp_r), "-crop_to_cutline -cutline", cutline_file, GetSDSNameSnow(modis_file), out_file)
+  system(gdal_cmd)
+}
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # run script over all directories to create Landsat KF input
@@ -67,11 +82,27 @@ ModisOveralapPreprocessNBAR <- function(modis_file, cutline_file, example_raster
 example_raster_file <- "/projectnb/modislc/users/joshgray/DL_Landsat/LT50290312010361EDC00/LT50290312010361EDC00_sr_band1_landsat_overlap.tif"
 cutline_file <- "/projectnb/modislc/users/joshgray/DL_Landsat/landsat_overlap.shp"
 tile <- "h10v04"
-data_dir <- "/projectnb/modislc/data/mcd12_in/c5/mcd43a4/2008"
-nbar_in_files <- dir(data_dir, pattern=paste(".*", tile, ".*hdf$", sep=""), full=T)
+
+cl <- makeCluster(16)
+clusterExport(cl, c("ModisOveralapPreprocessNBAR", "GetSDSName", "GetSDSNameQA", "GetSDSNameSnow", "ModisOveralapPreprocessQA"))
+clusterEvalQ(cl, {library(tools); library(raster); library(rgdal)})
+
+# process the NBAR data
+nbar_in_files <- c()
+for(year in 2007:2010){
+  data_dir <- paste("/projectnb/modislc/data/mcd12_in/c5/mcd43a4/", year, sep="")
+  nbar_in_files <- c(nbar_in_files, dir(data_dir, pattern=paste(".*", tile, ".*hdf$", sep=""), full=T, rec=T))
+}
 
 # apply the Stack and Subset function to each directory
-cl <- makeCluster(16)
-clusterExport(cl, c("ModisOveralapPreprocessNBAR", "GetSDSName", "GetSDSNameQA", "GetBandBRDFQualities"))
-clusterEvalQ(cl, {library(tools); library(raster); library(rgdal)})
 trash <- parLapply(cl, nbar_in_files, ModisOveralapPreprocessNBAR, example_raster_file=example_raster_file, cutline_file=cutline_file, out_dir="/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP")
+
+# process the NBAR QA data
+qa_in_files <- c()
+for(year in 2007:2010){
+  data_dir <- paste("/projectnb/modislc/data/mcd12_in/c5/mcd43a2/", year, sep="")
+  qa_in_files <- c(qa_in_files, dir(data_dir, pattern=paste(".*", tile, ".*hdf$", sep=""), full=T, rec=T))
+}
+
+# apply the Stack and Subset function to each directory
+trash <- parLapply(cl, qa_in_files, ModisOveralapPreprocessQA, example_raster_file=example_raster_file, cutline_file=cutline_file, out_dir="/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP")
