@@ -2,23 +2,31 @@
 # Preprocesses MCD43A4/2 data: reprojects & resamples to match an example raster
 # cut to cutline, calculate EVI2. Applies to R,G,B,NIR and QA, & QAsnow
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 library(raster)
 library(rgdal)
 library(tools)
 library(parallel)
 
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Functions
+
+#-------------------------------------------------------------------------------
 GetSDSName <- function(mcd43a4_file_path, band){
   return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a4_file_path, "\":", paste("MOD_Grid_BRDF:Nadir_Reflectance_Band", band, sep=""), sep = ""))
 }
 
+#-------------------------------------------------------------------------------
 GetSDSNameQA <- function(mcd43a2_file_path){
 	return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":MOD_Grid_BRDF:BRDF_Albedo_Band_Quality", sep = ""))
 }
 
+#-------------------------------------------------------------------------------
 GetSDSNameSnow <- function(mcd43a2_file_path){
 	return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":MOD_Grid_BRDF:Snow_BRDF_Albedo", sep = ""))
 }
 
+#-------------------------------------------------------------------------------
 GetBandBRDFQualities <- function(x){
 	# represent the binary conversion of x as a 32 x N matrix of values
 	M <- matrix(as.integer(intToBits(t(x))), ncol=32, byrow=T)
@@ -38,7 +46,7 @@ GetBandBRDFQualities <- function(x){
 	return(c(QA_Fill, B1QA, B2QA, B3QA, B4QA, B5QA, B6QA, B7QA))
 }
 
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-------------------------------------------------------------------------------
 ModisOveralapPreprocessNBAR <- function(modis_file, cutline_file, example_raster_file, suffix="_modis_overlap", out_dir=NA){
   # TM Band 1 is blue, MODIS equivalent is Band 3
   # TM Band 2 is green, MODIS equivalent is Band 4
@@ -61,7 +69,7 @@ ModisOveralapPreprocessNBAR <- function(modis_file, cutline_file, example_raster
   system(gdal_cmd)
 }
 
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#-------------------------------------------------------------------------------
 ModisOveralapPreprocessQA <- function(modis_file, cutline_file, example_raster_file, suffix="_modis_overlap", out_dir=NA){
   tmp_r <- raster(example_raster_file)
 
@@ -77,8 +85,7 @@ ModisOveralapPreprocessQA <- function(modis_file, cutline_file, example_raster_f
 }
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# run script over all directories to create Landsat KF input
-# get all the ETM+ and TM data directories
+# run script over all MODIS NBAR and QA files
 example_raster_file <- "/projectnb/modislc/users/joshgray/DL_Landsat/LT50290312010361EDC00/LT50290312010361EDC00_sr_band1_landsat_overlap.tif"
 cutline_file <- "/projectnb/modislc/users/joshgray/DL_Landsat/landsat_overlap.shp"
 tile <- "h10v04"
@@ -94,7 +101,6 @@ for(year in 2007:2010){
   nbar_in_files <- c(nbar_in_files, dir(data_dir, pattern=paste(".*", tile, ".*hdf$", sep=""), full=T, rec=T))
 }
 
-# apply the Stack and Subset function to each directory
 trash <- parLapply(cl, nbar_in_files, ModisOveralapPreprocessNBAR, example_raster_file=example_raster_file, cutline_file=cutline_file, out_dir="/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP")
 
 # process the NBAR QA data
@@ -104,5 +110,4 @@ for(year in 2007:2010){
   qa_in_files <- c(qa_in_files, dir(data_dir, pattern=paste(".*", tile, ".*hdf$", sep=""), full=T, rec=T))
 }
 
-# apply the Stack and Subset function to each directory
 trash <- parLapply(cl, qa_in_files, ModisOveralapPreprocessQA, example_raster_file=example_raster_file, cutline_file=cutline_file, out_dir="/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP")
