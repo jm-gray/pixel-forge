@@ -28,6 +28,79 @@ CalcEVI2 <- function(in_file, scale_factor=1e-4){
   return(evi2)
 }
 
+#-------------------------------------------------------------------------------
+GetValuesGDAL <- function(dsets, start_row, n, max_open_datasets=2.75e3) {
+	# extracts n rows from all dsets starting at start_row
+
+	# determine how many blocks of datasets to open simultaneously and dataset size
+	num_blocks <- ceiling(length(dsets) / max_open_datasets)
+	nrows <- nrow(raster(dsets[1]))
+	ncols <- ncol(raster(dsets[1]))
+
+	# initialize output matrix
+	out_vals <- matrix(NA, nrow=ncols * n, ncol=length(dsets))
+
+	# loop through all datasets in a block and extract data
+	for(dset_block in 1:num_blocks){
+		# determine which dataset to start and end on
+		dset_start <- ((dset_block - 1) * max_open_datasets) + 1
+		dset_end <- min((dset_block * max_open_datasets), length(dsets))
+		gds <- list()
+
+		# open all datasets
+		for (i in dset_start:dset_end) { gds <- c(gds, GDAL.open(dsets[i])) }
+
+		# loop through each dataset and extract rows
+		for (j in 1:length(gds)) {
+			val <- getRasterData(gds[[j]], offset = c((start_row - 1)*n, 0), region.dim = c(n, ncols), as.is = FALSE)
+			out_vals[, (dset_start + j - 1)] <- c(val)
+		}
+		# close all files
+		for (i in 1:length(gds)) { GDAL.close(gds[[i]]) }
+	}
+	return(out_vals)
+}
+
+#-------------------------------------------------------------------------------
+GetSplineRMSE <- function(x, x_dates, y_dates, pred_dates=NULL){
+	# fits a daily smoothing spline to time series x and y (landsat and modis)
+	# and then calculates the RMSE
+	x_v <- x[1:length(x_dates)]
+	y_v <- x[(length(x_dates) + 1):(length(x_dates) + length(y_dates))]
+	y_snow_v <- x[(length(x_dates) + length(y_dates) + 1):length(x)]
+  y_v[y_snow_v == 1] <- NA # screen snow obs out of y (MODIS)
+
+	if(is.null(pred_dates)) pred_dates <- seq(min(x_dates, y_dates, na.rm=T), max(x_dates, y_dates, na.rm=T), by=1)
+
+  x_smooth <- try(predict(smooth.spline(x_dates[!is.na(x_dates) & !is.na(x_v)], x_v[!is.na(x_dates) & !is.na(x_v)]), as.numeric(pred_dates))$y, silent=T)
+  if(inherits(x_smooth, 'try-error')) return(NA)
+
+	y_smooth <- try(predict(smooth.spline(y_dates[!is.na(y_dates) & !is.na(y_v)], y_v[!is.na(y_dates) & !is.na(y_v)]), as.numeric(pred_dates))$y, silent=T)
+  if(inherits(y_smooth, 'try-error')) return(NA)
+
+	return(sqrt(mean((x_smooth - y_smooth)^2, na.rm=T)))
+}
+
+#-------------------------------------------------------------------------------
+GetBandBRDFQualities <- function(x){
+	# represent the binary conversion of x as a 32 x N matrix of values
+	M <- matrix(as.integer(intToBits(t(x))), ncol=32, byrow=T)
+	M <- M[, 32:1] # reverse column order
+
+	# get the individual bit-words and convert to decimal
+	QA_Fill <- M[1]
+	NOT_USED <- M[2:4]
+	B7QA <- sum(M[5:8] * t(c(8,4,2,1)))
+	B6QA <- sum(M[9:12] * t(c(8,4,2,1)))
+	B5QA <- sum(M[13:16] * t(c(8,4,2,1)))
+	B4QA <- sum(M[17:20] * t(c(8,4,2,1)))
+	B3QA <- sum(M[21:24] * t(c(8,4,2,1)))
+	B2QA <- sum(M[25:28] * t(c(8,4,2,1)))
+	B1QA <- sum(M[29:32] * t(c(8,4,2,1)))
+
+	return(c(QA_Fill, B1QA, B2QA, B3QA, B4QA, B5QA, B6QA, B7QA))
+}
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions for creating, implementing, and extracting results from image KF's
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
