@@ -35,9 +35,9 @@ DefaultPhenoParameters <- function(){
 	  midgdown_thresh=0.5,
 	  dor_thresh=0.15,
 		## QA parameters ##
-		qual_buffer_days=14,
-		qual_r2_weight=1,
-		qual_fill_weight=4,
+		qual_buffer_days=14, # buffer around phenometric for QA calc
+		qual_r2_weight=1, # rel weight of r2 in composite QA
+		qual_fill_weight=4, # rel weight of fill fraction in composite QA
 		## data in/out parameters ##
 	  nbar_scale_factor=1e4,
 	  nbar_NA_value=32767,
@@ -306,7 +306,7 @@ GetSegs <- function(peaks, x, pars, peak=NA){
   }
 
 	# checks if the period preceding the peak covers enough amplitude
-	# search before the peak up to the maximum of: previous peak, the head of x, or the max_increase_length
+	# search before the peak up to the maximum of: previous peak, the head of x, or the peak - max_increase_length
   previous_peaks <- peaks[peaks - peak < 0]
   previous_peak <- NA
   if(length(previous_peaks) > 0) previous_peak <- max(previous_peaks)
