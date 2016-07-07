@@ -82,6 +82,20 @@ GetSplineRMSE <- function(x, x_dates, y_dates, pred_dates=NULL){
 }
 
 #-------------------------------------------------------------------------------
+GetMatchRMSE <- function(x, x_dates, y_dates){
+	# calculates RMSE of matching dates in x/y
+  x_match_inds <- x_dates %in% y_dates
+  y_match_inds <- y_dates %in% x_dates
+	x_v <- x[1:length(x_dates)]
+	y_v <- x[(length(x_dates) + 1):(length(x_dates) + length(y_dates))]
+	y_snow_v <- x[(length(x_dates) + length(y_dates) + 1):length(x)]
+  y_v[y_snow_v == 1] <- NA # screen snow obs out of y (MODIS)
+  x_match <- x_v[x_match_inds]
+  y_match <- y_v[y_match_inds]
+	return(sqrt(mean((x_match - y_match)^2, na.rm=T)))
+}
+
+#-------------------------------------------------------------------------------
 GetBandBRDFQualities <- function(x){
 	# represent the binary conversion of x as a 32 x N matrix of values
 	M <- matrix(as.integer(intToBits(t(x))), ncol=32, byrow=T)
