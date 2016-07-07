@@ -115,6 +115,25 @@ GetBandBRDFQualities <- function(x){
 	return(c(QA_Fill, B1QA, B2QA, B3QA, B4QA, B5QA, B6QA, B7QA))
 }
 
+#-------------------------------------------------------------------------------
+GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL){
+	# calculates an annual spline fit to the data in x
+	# values below the quantile specified by min_quant are filled
+	doys <- as.numeric(strftime(dates, format="%j"))
+	years <- as.numeric(strftime(dates, format="%Y"))
+	# calculate background minimum value as quantile
+	qmin <- quantile(x, min_quant, na.rm=T)
+	x[x < qmin] <- NA
+	# add background value to head/tail from first/last non-NA value to constrain spline fit
+	start_doy <- min(doys[!is.na(x)])
+	end_doy <- max(doys[!is.na(x)])
+	doys <- c(doys, 1:(start_doy - 1), (end_doy + 1):365)
+	x <- c(x, rep(qmin, start_doy - 1), rep(qmin, 365 - end_doy))
+	# fit smoothing spline
+	x_smooth <- predict(smooth.spline(doys[!is.na(x)], x[!is.na(x)]), 1:365)$y
+	return(x_smooth)
+}
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions for creating, implementing, and extracting results from image KF's
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
