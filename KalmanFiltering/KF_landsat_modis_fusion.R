@@ -92,14 +92,25 @@ for(i in is){
 	modis_v <- GetValuesGDAL(modis_evi2_files, start_row, read_rows)
 	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, read_rows)
 	V <- cbind(landsat_v, modis_v, modis_snow_v)
-	# apply the spline RMSE
-	tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	# calculate MODIS-Landsat RMSE:
+	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates)
 	if(i == 1){
 		out_rmse <- tmp
 	}else{
 		out_rmse <- c(out_rmse, tmp)
 	}
 }
+# save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse.Rdata")
+save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match.Rdata")
 
-system.time(tmp <- apply(V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates))
-system.time(tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates))
+values(tmp_r) <- out_rmse
+qs <- quantile(out_rmse, c(0, 0.02, 0.98, 1), na.rm=T)
+breaks <- c(qs[1], seq(qs[2], qs[3], len=254), qs[4])
+pal <- colorRampPalette(brewer.pal(11, "Greys"))
+plot(tmp_r, breaks=breaks, col=pal(255))
+
+
+# system.time(tmp <- apply(V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates))
+# system.time(tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates))
+# 474 seconds per 1e3 rows
