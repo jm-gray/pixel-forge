@@ -52,7 +52,7 @@ GetValuesGDAL <- function(dsets, start_row, n, max_open_datasets=2.75e3) {
 
 		# loop through each dataset and extract rows
 		for (j in 1:length(gds)) {
-			val <- getRasterData(gds[[j]], offset = c((start_row - 1)*n, 0), region.dim = c(n, ncols), as.is = FALSE)
+      val <- getRasterData(gds[[j]], offset = c((start_row - 1), 0), region.dim = c(n, ncols), as.is = FALSE)
 			out_vals[, (dset_start + j - 1)] <- c(val)
 		}
 		# close all files
