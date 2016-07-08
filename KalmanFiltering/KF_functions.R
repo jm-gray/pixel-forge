@@ -62,37 +62,35 @@ GetValuesGDAL <- function(dsets, start_row, n, max_open_datasets=2.75e3) {
 }
 
 #-------------------------------------------------------------------------------
-GetSplineRMSE <- function(x, x_dates, y_dates, pred_dates=NULL){
+GetSplineRMSE <- function(x, x_dates, y_dates, pred_dates=NULL, num_cdl_years=4){
 	# fits a daily smoothing spline to time series x and y (landsat and modis)
 	# and then calculates the RMSE
-	x_v <- x[1:length(x_dates)]
-	y_v <- x[(length(x_dates) + 1):(length(x_dates) + length(y_dates))]
-	y_snow_v <- x[(length(x_dates) + length(y_dates) + 1):length(x)]
-  y_v[y_snow_v == 1] <- NA # screen snow obs out of y (MODIS)
-
+  x_v <- x[(num_cdl_years + 1):(length(x_dates) + num_cdl_years)]
+  y_v <- x[(length(x_dates) + num_cdl_years + 1):(length(x_dates) + num_cdl_years + length(y_dates))]
 	if(is.null(pred_dates)) pred_dates <- seq(min(x_dates, y_dates, na.rm=T), max(x_dates, y_dates, na.rm=T), by=1)
-
   x_smooth <- try(predict(smooth.spline(x_dates[!is.na(x_dates) & !is.na(x_v)], x_v[!is.na(x_dates) & !is.na(x_v)]), as.numeric(pred_dates))$y, silent=T)
   if(inherits(x_smooth, 'try-error')) return(NA)
-
 	y_smooth <- try(predict(smooth.spline(y_dates[!is.na(y_dates) & !is.na(y_v)], y_v[!is.na(y_dates) & !is.na(y_v)]), as.numeric(pred_dates))$y, silent=T)
   if(inherits(y_smooth, 'try-error')) return(NA)
-
 	return(sqrt(mean((x_smooth - y_smooth)^2, na.rm=T)))
 }
 
 #-------------------------------------------------------------------------------
-GetMatchRMSE <- function(x, x_dates, y_dates){
+GetMatchRMSE <- function(x, x_dates, y_dates, num_cdl_years=4){
 	# calculates RMSE of matching dates in x/y
+  if(all(is.na(x))) return(NA) # check for special case of no data
   x_match_inds <- x_dates %in% y_dates
   y_match_inds <- y_dates %in% x_dates
-	x_v <- x[1:length(x_dates)]
-	y_v <- x[(length(x_dates) + 1):(length(x_dates) + length(y_dates))]
-	y_snow_v <- x[(length(x_dates) + length(y_dates) + 1):length(x)]
-  y_v[y_snow_v == 1] <- NA # screen snow obs out of y (MODIS)
+  x_v <- x[(num_cdl_years + 1):(length(x_dates) + num_cdl_years)]
+  y_v <- x[(length(x_dates) + num_cdl_years + 1):(length(x_dates) + num_cdl_years + length(y_dates))]
   x_match <- x_v[x_match_inds]
   y_match <- y_v[y_match_inds]
-	return(sqrt(mean((x_match - y_match)^2, na.rm=T)))
+  rmse <- sqrt(mean((x_match - y_match)^2, na.rm=T))
+  if(is.nan(rmse)){
+    return(NA)
+  }else{
+    return(rmse)
+  }
 }
 
 #-------------------------------------------------------------------------------
