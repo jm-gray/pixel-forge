@@ -53,6 +53,10 @@ modis_snow_files <- dir(modis_data_dir, pattern="snow_modis_overlap.tif", full=T
 modis_snow_files <- modis_snow_files[order(modis_dates)]
 modis_dates <- sort(modis_dates)
 
+#-------------------------------------------------------------------------------
+# get the CDL files
+cdl_files <- dir("/projectnb/modislc/users/joshgray/DL_Landsat/CDL_sub", pattern="landsat_overlap.tif", full=T)
+cdl_years <- as.numeric(substr(basename(cdl_files), 5, 8))
 
 #---------------------------------------------------------------------
 # set up the cluster
@@ -68,13 +72,16 @@ for(i in is){
 	# get the data
 	start_row <- ((i - 1) * rows_to_read) + 1
 	nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+	cdl_v <- GetValuesGDAL(cdl_files, start_row, nrows)
 	landsat_v <- GetValuesGDAL(landsat_evi2_files, start_row, nrows)
 	modis_v <- GetValuesGDAL(modis_evi2_files, start_row, nrows)
 	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
-	V <- cbind(landsat_v, modis_v, modis_snow_v)
+	modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	# V <- cbind(landsat_v, modis_v, modis_snow_v)
+	V <- cbind(cdl_v, landsat_v, modis_v)
 	# calculate MODIS-Landsat RMSE:
 	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
-	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates, num_cdl_years=length(cdl_files))
 	if(i == 1){
 		out_rmse <- tmp
 	}else{
