@@ -74,3 +74,16 @@ cl <- makeCluster(16)
 clusterExport(cl, c("LandsatOverlapPreprocess"))
 clusterEvalQ(cl, {library(tools); library(raster); library(rgdal)})
 trash <- parLapply(cl, dirs, LandsatOverlapPreprocess, cutline_file=cutline_file)
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# create CDL subsets
+tmp_r <- raster( dir("/projectnb/modislc/users/joshgray/DL_Landsat", pattern="_landsat_overlap.tif", rec=T)[1])
+cdl_files <- c(dir("/projectnb/modislc/users/joshgray/C3/CDL", pattern="20(0[7-9]|10)_30.*(.tif|.img)", full=T), dir("/projectnb/modislc/users/joshgray/C3/CDL", pattern="2009.*(.tif|.img)", full=T))
+out_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat/CDL_sub"
+
+SubsetCDL <- function(in_file, out_proj, tr, out_dir, cutline){
+  out_path <- file.path(out_dir, paste("CDL_", substr(file_path_sans_ext(basename(in_file)), 1, 4), "_landsat_overlap.tif", sep=""))
+  gdal_cmd <- paste("gdalwarp -dstnodata -9999 -overwrite -t_srs ", paste("'", out_proj, "'", sep=""), "-tr", paste(tr, collapse=" "), "-crop_to_cutline -cutline", cutline, in_file, out_path)
+  system(gdal_cmd)
+}
+trash <- lapply(cdl_files, SubsetCDL, out_proj=projection(tmp_r), tr=res(tmp_r), out_dir=out_dir, cutline=cutline_file)
