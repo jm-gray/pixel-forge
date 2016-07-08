@@ -91,21 +91,45 @@ for(i in is){
 # save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse.Rdata")
 save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match.Rdata")
 
-values(tmp_r) <- out_rmse
-qs <- quantile(out_rmse, c(0, 0.02, 0.98, 1), na.rm=T)
-breaks <- c(qs[1], seq(qs[2], qs[3], len=254), qs[4])
-pal <- colorRampPalette(brewer.pal(11, "Greys"))
-plot(tmp_r, breaks=breaks, col=pal(255))
-
-
-# plot demo...
-# plot(c(pred_dates, pred_dates, x_dates, y_dates), c(x_smooth, y_smooth, x_v, y_v), type="n", xlab="", ylab="EVI2")
-plot(c(x_dates, y_dates), c(x_v, y_v), type="n", xlab="", ylab="EVI2")
-points(x_dates, x_v, col=1, pch=1)
-# points(pred_dates, x_smooth, type="l", col="grey", lwd=1.5)
-points(y_dates, y_v, col=2, pch=2)
-points(y_dates[y_snow_v == 1], y_v[y_snow_v == 1], col=4, pch=2)
-# points(pred_dates, y_smooth, type="l", col="pink", lwd=1.5)
+#-------------------------------------------------------------------------------
+scale_factor <- 1e4
+landsat_measurement_error <- 0.05
+year_to_do <- 2008
+x <- V[myc$cell[3], ]
+x_v <- x[(num_cdl_years + 1):(length(landsat_dates) + num_cdl_years)] / scale_factor
+y_v <- x[(length(landsat_dates) + num_cdl_years + 1):(length(landsat_dates) + num_cdl_years + length(modis_dates))] / scale_factor
+# x_v <- log(x_v); y_v <- log(y_v)
+x_doys <- as.numeric(strftime(landsat_dates, format="%j"))
+x_years <- as.numeric(strftime(landsat_dates, format="%Y"))
+y_doys <- as.numeric(strftime(modis_dates, format="%j"))
+y_years <- as.numeric(strftime(modis_dates, format="%Y"))
+# x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant)
+x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant, spline_spar=0.75)
+change_rate <- x_smooth[2:length(x_smooth)] / x_smooth[1:(length(x_smooth) - 1)]
+change_rate <- c(change_rate, change_rate[length(change_rate)])
+model_error <- var(x_v - x_smooth[x_doys], na.rm=T) # determine the model error
+x_y_error <- GetLandsatMODISError(x / scale_factor, landsat_dates, modis_dates) # get Landsat-MODIS error model
+dlm <- MakeMultiDLM(num_states=1, sensors=2, time_varying=F)
+X(dlm) <- matrix(change_rate, ncol=1)
+JGG(dlm) <- 1 # time varying system evolution in column 1 of X
+FF(dlm)[2, 1] <- x_y_error$slope
+diag(V(dlm)) <- c(landsat_measurement_error, x_y_error$rmse)
+W(dlm) <- model_error
+m0(dlm) <- x_smooth[1]
+C0(dlm) <- landsat_measurement_error
+x_tmp <- rep(NA, 365)
+x_tmp[x_doys[x_years == year_to_do]] <- x_v[x_years == year_to_do]
+y_tmp <- rep(NA, 365)
+y_tmp[y_doys[y_years == year_to_do]] <- y_v[y_years == year_to_do]
+# Y <- cbind(x_tmp, y_tmp)
+Y <- cbind(x_tmp, y_tmp + x_y_error$intercept)
+smooth <- dlmSmooth(Y, dlm)
+filt_m <- ExtractSmoothMeans(smooth)
+filt_se <- ExtractSmoothSE(smooth)
+PlotForecast(filt_m, filt_se, signal=Y)
+points(x_tmp)
+points(y_tmp, col=2)
+points(x_smooth, type="l")
 
 
 #-------------------------------------------------------------------------------
@@ -123,13 +147,16 @@ points(y_dates[y_snow_v == 1], y_v[y_snow_v == 1], col=4, pch=2)
 
 mycols <- unlist(lapply(c("Reds", "Blues", "Greens", "Purples"), function(x) brewer.pal(5, x)[4]))
 min_quant <- 0.1
-x <- V[myc$cell[4], ]
-x_v <- x[1:length(x_dates)] / 1e4
-y_v <- x[(length(x_dates) + 1):(length(x_dates) + length(y_dates))] / 1e4
-y_snow_v <- x[(length(x_dates) + length(y_dates) + 1):length(x)]
+num_cdl_years <- length(cdl_files)
+x <- V[myc$cell[3], ]
+x_v <- x[(num_cdl_years + 1):(length(landsat_dates) + num_cdl_years)]
+y_v <- x[(length(landsat_dates) + num_cdl_years + 1):(length(landsat_dates) + num_cdl_years + length(modis_dates))]
+
 doys <- as.numeric(strftime(landsat_dates, format="%j"))
 years <- as.numeric(strftime(landsat_dates, format="%Y"))
-x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant)
+# x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant)
+x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant, spline_spar=0.75)
+# x_smooth_fill <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant, head_fill_len=30, tail_fill_len=30)
 
 layout(matrix(c(1,1,2,3), nrow=2, byrow=T))
 par(mar=c(2, 4, 1, 1), oma=rep(1, 4))

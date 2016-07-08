@@ -94,6 +94,27 @@ GetMatchRMSE <- function(x, x_dates, y_dates, num_cdl_years=4){
 }
 
 #-------------------------------------------------------------------------------
+GetLandsatMODISError <- function(x, x_dates, y_dates, num_cdl_years=4){
+	# calculates RMSE of matching dates in x/y
+  return_NA <- list(intercept=NA,slope=NA,rmse=NA)
+  if(all(is.na(x))) return(return_NA) # check for special case of no data
+  x_match_inds <- x_dates %in% y_dates
+  y_match_inds <- y_dates %in% x_dates
+  x_v <- x[(num_cdl_years + 1):(length(x_dates) + num_cdl_years)]
+  y_v <- x[(length(x_dates) + num_cdl_years + 1):(length(x_dates) + num_cdl_years + length(y_dates))]
+  x_match <- x_v[x_match_inds]
+  y_match <- y_v[y_match_inds]
+  rmse <- sqrt(mean((x_match - y_match)^2, na.rm=T))
+  lm1 <- try(lm(x_match ~ y_match))
+  if(inherits(lm1, 'try-error')) return(return_NA)
+  if(is.nan(rmse)){
+    return(return_NA)
+  }else{
+    return(list(intercept=lm1$coefficients[1], slope=lm1$coefficients[2], rmse=rmse))
+  }
+}
+
+#-------------------------------------------------------------------------------
 GetBandBRDFQualities <- function(x){
 	# represent the binary conversion of x as a 32 x N matrix of values
 	M <- matrix(as.integer(intToBits(t(x))), ncol=32, byrow=T)
@@ -114,21 +135,31 @@ GetBandBRDFQualities <- function(x){
 }
 
 #-------------------------------------------------------------------------------
-GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL){
+GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL, head_fill_len=NA, tail_fill_len=NA){
 	# calculates an annual spline fit to the data in x
 	# values below the quantile specified by min_quant are filled
 	doys <- as.numeric(strftime(dates, format="%j"))
 	years <- as.numeric(strftime(dates, format="%Y"))
 	# calculate background minimum value as quantile
 	qmin <- quantile(x, min_quant, na.rm=T)
-	x[x < qmin] <- NA
+	# x[x < qmin] <- NA
+  x[x < qmin] <- qmin
 	# add background value to head/tail from first/last non-NA value to constrain spline fit
 	start_doy <- min(doys[!is.na(x)])
 	end_doy <- max(doys[!is.na(x)])
 	doys <- c(doys, 1:(start_doy - 1), (end_doy + 1):365)
 	x <- c(x, rep(qmin, start_doy - 1), rep(qmin, 365 - end_doy))
+  # if head/tail fills lengths are supplied, fill w/ background value:
+  if(!is.na(head_fill_len)){
+    doys <- c(doys, 1:head_fill_len)
+    x <- c(x, rep(qmin, head_fill_len))
+  }
+  if(!is.na(tail_fill_len)){
+    doys <- c(doys, (366 - tail_fill_len):365)
+    x <- c(x, rep(qmin, tail_fill_len))
+  }
 	# fit smoothing spline
-	x_smooth <- predict(smooth.spline(doys[!is.na(x)], x[!is.na(x)]), 1:365)$y
+	x_smooth <- predict(smooth.spline(doys[!is.na(x)], x[!is.na(x)], spar=spline_spar), 1:365)$y
 	return(x_smooth)
 }
 
