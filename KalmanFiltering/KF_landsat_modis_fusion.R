@@ -94,6 +94,7 @@ save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match
 #-------------------------------------------------------------------------------
 scale_factor <- 1e4
 landsat_measurement_error <- 0.05
+min_quant <- 0.1
 year_to_do <- 2008
 x <- V[myc$cell[3], ]
 x_v <- x[(num_cdl_years + 1):(length(landsat_dates) + num_cdl_years)] / scale_factor
@@ -104,7 +105,7 @@ x_years <- as.numeric(strftime(landsat_dates, format="%Y"))
 y_doys <- as.numeric(strftime(modis_dates, format="%j"))
 y_years <- as.numeric(strftime(modis_dates, format="%Y"))
 # x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant)
-x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant, spline_spar=0.75)
+x_smooth <- GetDOYSpline(x_v, landsat_dates, min_quant=min_quant, spline_spar=0.6)
 change_rate <- x_smooth[2:length(x_smooth)] / x_smooth[1:(length(x_smooth) - 1)]
 change_rate <- c(change_rate, change_rate[length(change_rate)])
 model_error <- var(x_v - x_smooth[x_doys], na.rm=T) # determine the model error
