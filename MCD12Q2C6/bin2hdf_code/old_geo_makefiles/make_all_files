@@ -1,0 +1,4 @@
+#!/bin/sh
+make -f makefile_bin2hdf
+make -f makefile_bin2hdf_phe_temp
+make -f makefile_bin2hdf_phe

@@ -1,0 +1,10 @@
+CC = gcc -O3
+INCLUDE = -I. -I$(API_INC) -I$(PGSINC) -I$(HDFINC) -I$(HDFEOS_INC) -I$(HDF5INC) -I$(JPEGINC)
+LIBRARY = -L. -L$(HDFEOS_LIB) -L$(HDFLIB) -L$(API_LIB) -L$(PGSLIB) -L$(HDF5LIB) -L$(JPEGLIB)
+LDFLAGS = -lm -lmapi -lPGSTK -lmfhdf -lhdfeos -ldf -lz -ljpeg
+
+FILES  = bin2hdf.c 
+
+reproject: $(FILES) 
+	$(CC) $(FILES) $(INCLUDE) $(LIBRARY) $(LDFLAGS) -o bin2hdf.exe
+

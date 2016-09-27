@@ -1,0 +1,126 @@
+# donj 20110118
+# paths are for GEO and Monde 64-bit
+
+if [ -n "${GEOBSH+x}" ]; then
+  GEOBSH=$((GEOBSH+1))
+	source /net/usr/local/scripts/alias.sh
+else
+  export GEOBSH=1
+fi
+
+export HOST=`hostname`
+export SCVHOME=`ypcat -d linux-nis -h warec.nerf.bu.edu passwd | awk -F: '{print $6}' | grep '\/'$USER'$'` 
+export SSRCHOME=`ypcat -d stone -h gglab1.bu.edu passwd | awk -F: '{print $6}' | grep '\/'$USER'$'` 
+if [ -n "$DISPLAY" ]; then
+  XAUTH=/usr/bin/xauth
+  $XAUTH -f $SCVHOME/.Xauthority -q nextract - $DISPLAY | $XAUTH -f $SSRCHOME/.Xauthority -q nmerge - 
+fi
+export HOME=$SSRCHOME
+cd $HOME 
+
+export IDL_LMGRD_LICENSE_FILE="1700@gglab1.bu.edu:1700@aqua.bu.edu"
+export LM_LICENSE_FILE="aqua.bu.edu:gglab1.bu.edu"
+export IDL_DIR="/net/usr/local/itt/idl/idl80"
+export ENVI_DIR="$IDL_DIR/products/envi48"
+export ZOOM_DIR="$IDL_DIR/products/envizoom"
+. /net/usr/local/itt/idl/idl/products/enviex/bin/enviex_setup.bash
+. /net/usr/local/scripts/alias.sh
+
+export HDFINC="/net/usr/local/hdf-4.2.5/include"
+export HDFLIB="/net/usr/local/hdf-4.2.5/lib"
+export HDFBIN="/net/usr/local/hdf-4.2.5/bin"
+export HDF5INC="/net/usr/local/hdf5-1.6.10/src"
+export HDF5LIB="/net/usr/local/hdf5-1.6.10/src/.libs"
+export HDF5BIN="/net/usr/local/hdf5-1.6.10/bin"
+export HDFEOSINC="/net/usr/local/hdfeos2-17v1.00/include"
+export HDFEOSLIB="/net/usr/local/hdfeos2-17v1.00/lib/linux64"
+export HDFEOS_INC="/net/usr/local/hdfeos2-17v1.00/include"
+export HDFEOS_LIB="/net/usr/local/hdfeos2-17v1.00/lib/linux64"
+export HDFEOS5_INC="/net/usr/local/hdfeos5-1.13/include"
+export HDFEOS5_LIB="/net/usr/local/hdfeos5-1.13/hdfeos5/lib"
+export ZLIBINC="/net/usr/local/zlib-1.2.5/include"
+export ZLIBLIB="/net/usr/local/zlib-1.2.5/lib"
+export SZIPINC="/net/usr/local/szip-2.1/include"
+export SZIPLIB="/net/usr/local/szip-2.1/lib"
+export JPEGINC="/net/usr/local/jpeg-6b/include"
+export JPEGLIB="/net/usr/local/jpeg-6b/lib"
+export MFHDFINC="/net/usr/local/hdf-4.2.5/hdf/src"
+export MFHDFLIB="/net/usr/local/hdf-4.2.5/lib"
+export SGELIB="/net/usr/local/sge6_2u6/lib/lx24-amd64"
+export LIBGCTP="/net/usr/local/gctpc/source"
+export SRCGCTP="/net/usr/local/gctpc/source"
+export PERL5LIB="/net/usr/local/perl5/lib64/perl5/site_perl/5.8.8/x86_64-linux-thread-multi"
+export MAGICK_FONT_PATH="/net/usr/local/TrueType"
+export GEOTIFF_INC="/net/usr/local/libgeotiff-1.3.0/"
+export GEOTIFF_LIB="/net/usr/local/libgeotiff-1.3.0/lib"
+export TIFFINC="/net/usr/local/tiff-3.8.2/libtiff"
+export TIFFLIB="/net/usr/local/tiff-3.8.2/lib"
+export GEOS_CONFIG="/net/usr/local/geos-3.2.2/tools/geos-config"
+export PYTHONPATH="/net/usr/local/gdal-1.8.0/swig/python/build/lib.linux-x86_64-2.7\:/net/usr/local/wxPython-src-2.8.11.0/wxPython/wxversion" 
+export QTDIR="/net/usr/local/qt-everywhere-opensource-src-4.7.2"
+export QTINC="/net/usr/local/qt-everywhere-opensource-src-4.7.2/include"
+export QTLIB="/net/usr/local/qt-everywhere-opensource-src-4.7.2/lib"
+export PKG_CONFIG="/net/usr/local/bin/pkg-config"
+export API_INC="/net/usr/local/mapi-2.3.4"
+export API_LIB="/net/usr/local/mapi-2.3.4"
+export PGSINC="/net/usr/local/TOOLKIT_PGS/include"
+export PGSLIB="/net/usr/local/TOOLKIT_PGS/lib/linux"
+export SQL_INC="/net/usr/local/postgresql-8.4.1/include"
+export IPW="/net/usr/local/ipw-2.1.0b3"
+
+source /net/usr/local/Intel/11.1/064/bin/intel64/ifortvars_intel64.sh
+
+if [ -n "`echo $MANPATH`" ]; then
+  export MANPATH="/net/usr/local/man:$MANPATH"
+else
+  export MANPATH="/net/usr/local/man"
+fi
+
+if [ -n "`echo $LD_LIBRARY_PATH`" ]; then
+  export LD_LIBRARY_PATH=/net/usr/local/lib:$HDFLIB:$HDF5LIB:$ZLIBLIB:$SZIPLIB:$JPEGLIB:$MFHDFLIB:$HDFEOSLIB:$SGELIB:$LD_LIBRARY_PATH
+else
+  export LD_LIBRARY_PATH=/net/usr/local/lib:$HDFLIB:$HDF5LIB:$ZLIBLIB:$SZIPLIB:$JPEGLIB:$MFHDFLIB:$HDFEOSLIB:$SGELIB
+fi
+if [ -n "`echo $PATH`" ]; then
+  export PATH=/net/usr/local/qt-everywhere-opensource-src-4.7.2/bin:/net/usr/local/bin:/net/usr/local/gams-23.6.5:$PATH
+else
+  export PATH=/net/usr/local/qt-everywhere-opensource-src-4.7.2/bin:/net/usr/local/gams-23.6.5:/net/usr/local/bin
+fi
+
+export CFLAGS="-m64 -fPIC -DHAVE_NETCDF"
+export CXXFLAGS="-m64 -fPIC -DHAVE_NETCDF"
+export LIBS="-L/net/usr/local/lib -lm"
+export PGHOST=modis1.bu.edu
+
+# my config
+
+export APIHOME="/net/usr/local/mapi-2.3.4"
+export APIDIR="/net/usr/local/mapi-2.3.4"
+export API_DIR="/net/usr/local/mapi-2.3.4"
+export API_INC="/net/usr/local/mapi-2.3.4/h"
+export API_LIB="/net/usr/local/mapi-2.3.4/lib"
+export API_SRC="/net/usr/local/mapi-2.3.4/srclib"
+
+export PGSBIN="/net/usr/local/TOOLKIT_PGS/bin/linux"
+export PGSDAT="/net/usr/local/TOOLKIT_PGS/database/linux"
+export PGSINC="/net/usr/local/TOOLKIT_PGS/include"
+export PGSLIB="/net/usr/local/TOOLKIT_PGS/lib/linux"
+export PGSMSG="/net/usr/local/TOOLKIT_PGS/message"
+export PGSOBJ="/net/usr/local/TOOLKIT_PGS/obj/linux"
+export PGSRUN="/net/usr/local/TOOLKIT_PGS/runtime"
+export PGSSRC="/net/usr/local/TOOLKIT_PGS/src"
+export PGSTST="/net/usr/local/TOOLKIT_PGS/test"
+
+export JAVA_HOME="$HOME/jdk1.6.0_23"
+export JRE_HOME="$HOME/jdk1.6.0_23/jre"
+
+
+export PATH=$HOME/bin:$PATH
+
+
+# Tue Sep 20 17:30:06 EDT 2011 - MODIS Reprojection Tool modifications
+MRT_HOME="/net/canopy/scratch/sqs/program/MRT"
+PATH="$PATH:/net/canopy/scratch/sqs/program/MRT/bin"
+MRT_DATA_DIR="/net/canopy/scratch/sqs/program/MRT/data"
+export MRT_HOME PATH MRT_DATA_DIR
+

@@ -1,0 +1,29 @@
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/Greenup': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/Maturity': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/Senescence': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/Dormancy': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/EVI_Minimum': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/EVI_Maximum': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/EVI_Area': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/Assessment': File exists
+mkdir: cannot create directory `/net/casfsc/fs/scratch32/khufkens/phenout/2010/001/HDF/TEMP': File exists
+Processing tile h12v04
+	..Layer: TEMP
+	..Layer: Greenup
+	..Layer: Maturity
+	..Layer: Senescence
+	..Layer: Dormancy
+	..Layer: EVI_Minimum
+	..Layer: EVI_Maximum
+	..Layer: EVI_Area
+	..Layer: Assessment
+Processing tile h11v04
+	..Layer: TEMP
+	..Layer: Greenup
+	..Layer: Maturity
+	..Layer: Senescence
+	..Layer: Dormancy
+	..Layer: EVI_Minimum
+	..Layer: EVI_Maximum
+	..Layer: EVI_Area
+	..Layer: Assessment

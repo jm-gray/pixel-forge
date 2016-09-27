@@ -1,0 +1,11 @@
+Processing tile h26v03
+	..Layer: TEMP
+	..Layer: Greenup
+	..Layer: Maturity
+	..Layer: Senescence
+	..Layer: Dormancy
+	..Layer: EVI_Minimum
+	..Layer: EVI_Maximum
+	..Layer: EVI_Area
+	..Layer: Assessment
+0.385u 0.422s 0:06.86 11.6%	0+0k 378856+364168io 9pf+0w

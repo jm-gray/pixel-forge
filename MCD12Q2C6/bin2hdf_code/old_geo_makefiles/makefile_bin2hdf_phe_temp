@@ -1,0 +1,45 @@
+CC = gcc -O3
+
+# Define executable name
+TARGET = bin2hdf_phe_temp.exe
+
+HDFLIB = /net/casfsb.bu.edu/vol/Data13/canopy/scratch/sqs/program/HDF4.2.r2/lib
+HDFINC =  /net/casfsb.bu.edu/vol/Data13/canopy/scratch/sqs/program/HDF4.2.r2/include
+HDFEOS5_INC = /net/casfsb/vol/ssrchome/active_users/wangzhs/tools/TOOLKIT/hdfeos5/include
+HDFEOS5_LIB = /net/casfsb/vol/ssrchome/active_users/wangzhs/tools/TOOLKIT/hdfeos5/lib/linux
+
+# Combine the includes using pre-defined includes and your inclueds
+INC = -I$(API_INC) -I$(PGSINC) -I$(HDFINC) -I$(HDFEOS_INC) -I$(HDF5INC) -I$(JPEGINC) -I$(HDFEOS5_INC)
+
+# Additional flags for compile
+ADD_CFLAGS = -DLINUX
+
+# Combine the includes using pre-defined library and your library
+LIB = -L$(API_LIB) -lmapi -L$(PGSLIB) -lPGSTK \
+      -L$(HDFLIB)  -L$(HDFEOS_LIB) -lmfhdf -lhdfeos -lGctp -ldf -lz -lm \
+      -L$(HDF5LIB) -lhdf5 -L$(JPEGLIB) -ljpeg -L$(SZIPLIB) -lsz -L$(HDFEOS5_LIB) -lhe5_hdfeos
+
+# Define object files
+OBJ = bin2hdf_phe_temp.o smf.o  
+
+#Define include files
+INC_FILES  = bin2hdf_phe_temp.h smfio.h 
+
+
+all: $(TARGET)
+
+$(OBJ) : $(INC_FILES)
+
+# Make the process
+$(TARGET) : $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) $(LIB)  -o $(TARGET)
+	rm -f $(OBJ)
+
+#
+# Rules
+#
+.c.o: $(INC_FILES)
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
+	
+
+

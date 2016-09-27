@@ -1,0 +1,180 @@
+#
+# -----------------------------------------------------------------------
+?   SYSTEM RUNTIME PARAMETERS
+# -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+1
+# -----------------------------------------------------------------------
+# Software ID - unique software configuration identifier
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+1
+#
+?   PRODUCT INPUT FILES
+#########################################################################
+#   MOD12QPREV  =  output of MOD_PR12Q  (Previous Run of MOD12Q)  
+! /data/fen/modis/tanbin/LC_codes/V5/part5.
+212514|PHE_LW_TEMP.A2010001.h27v04.hdf|/projectnb/modislc/data/mcd12_out/phen_out/c5_hdf1/2010/001/TEMP||UR_PHE_LW_TEMP.A2010001.h27v04.hdf|PHE_LW_TEMP.A2010001.h27v04.hdf|1
+#
+#subset define file
+212563|subset.def|.||UR_DT_DATA|subset.def|1
+#
+#output DT names file
+212564|all.names|.||UR_DT_DATA|all.names|1
+# 
+# -----------------------------------------------------------------------
+10999|PGS_CUC_maths_parameters|~/database/common/CUC||||1
+#
+10252|GetAttr.temp|.||||1
+10254|MCFWrite.temp|.||||1
+#MCF FILE for MOD_12M
+212551|MOD12Q.mcf|.||||1
+#QA mcf file for MOD_12Q
+#
+# -----------------------------------------------------------------------
+#
+10501|INSERT_EPHEMERIS_FILES_HERE|||||1
+10502|INSERT_ATTITUDE_FILES_HERE|||||1
+#
+#
+?   PRODUCT OUTPUT FILES
+# Next line is the default location for PRODUCT OUTPUT FILES
+#!  ~/runtime
+! .
+212550|all.bip|.||||1
+#MOD_PRLQA output
+#200100|QA_LOG_1|.||||1
+#
+#HDF file with metadata and LW
+212549|PHE_LW_TEMP.hdf|.||||1
+#
+?   SUPPORT INPUT FILES
+#!  ~/runtime
+! .
+#
+10301|leapsec.dat|/apps/modis/TOOLKIT/database/common/TD||||1
+#
+# -----------------------------------------------------------------------
+10401|utcpole.dat|/apps/modis/TOOLKIT/database/common/CSC||||1
+#
+# -----------------------------------------------------------------------
+10402|earthfigure.dat|/apps/modis/TOOLKIT/database/common/CSC||||1
+#
+# -----------------------------------------------------------------------
+# JPL planetary ephemeris file (binary form) (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10601|de200.eos|~/database/sgi32/CBP||||1
+#
+# -----------------------------------------------------------------------
+# spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10801|sc_tags.dat|/apps/modis/TOOLKIT/database/common/EPH||||1
+#
+# -----------------------------------------------------------------------
+# units conversion definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10302|udunits.dat|/apps/modis/TOOLKIT/database/common/CUC||||1
+#
+#
+?   SUPPORT OUTPUT FILES 
+#########################################################################
+#
+# Next line is default location for SUPPORT OUTPUT FILES
+#!  ~/runtime
+!.
+#
+# -----------------------------------------------------------------------
+10100|LogStatus||.|||1
+10101|LogReport||.|||1
+10102|LogUser||.|||1
+10103|TmpStatus|||||1
+10104|TmpReport|||||1
+10105|TmpUser|||||1
+10110|MailFile|||||1
+#
+# -----------------------------------------------------------------------
+# ASCII file which stores pointers to runtime SMF files in lieu of 
+# loading them to shared memory, which is a TK5 enhancement.
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10111|ShmMem|||||1
+#
+#  
+?   USER DEFINED RUNTIME PARAMETERS
+#########################################################################
+# -----------------------------------------------------------------------
+10109|TransmitFlag; 1=transmit,0=disable|0
+10106|RemoteHost|sandcrab
+10107|RemotePath|/usr/kwan/test/PC/data
+10108|EmailAddresses|kwan@eos.hitc.com
+#
+# -----------------------------------------------------------------------
+10114|Logging Control; 0=disable logging, 1=enable logging|1
+10115|Trace Control; 0=no trace, 1=error trace, 2=full trace|0
+10116|Process ID logging; 0=don't log PID, 1=log PID|0
+#10117|Disabled status level list (e.g. W S F)|
+10118|Disabled seed list|0
+10119|Disabled status code list|0
+#
+# -----------------------------------------------------------------------
+# Toolkit version for which this PCF was intended.
+# DO NOT REMOVE THIS VERSION ENTRY!
+# -----------------------------------------------------------------------
+10220|Toolkit version string|SCF B.0 TK5.2.3
+#
+# -----------------------------------------------------------------------
+10120|ADEOS-II s/c reference time|0
+10121|ADEOS-II ground reference time|0
+10122|ADEOS-II s/c clock period|0
+#
+# -----------------------------------------------------------------------
+10123|TRMM UTCF value|0
+#
+# -----------------------------------------------------------------------
+10124|NASA PB5C time Epoch date (ASCII UTC)|0
+#
+# -----------------------------------------------------------------------
+10507|ephemeris data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+10508|attitude data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+# ECS DPS trigger for PGE debug runs
+#
+# NOTICE TO PGE DEVELOPERS: PGEs which have a debug mode
+# need to examine this parameter to evaluate activation rule
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10911|ECS DEBUG; 0=normal, 1=debug|0
+#
+# -----------------------------------------------------------------------
+10099|Local IP Address of 'amasis'|128.197.72.29
+#
+#MOD_PRLQA parameters
+#200098|QALOG LUNS|212050
+#200200|ECS METADATA|200100:1
+#
+?   INTERMEDIATE INPUT
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE INPUT FILES
+!  ~/runtime
+#
+#
+?   INTERMEDIATE OUTPUT
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE OUTPUT FILES
+!  ~/runtime
+#
+#
+?   TEMPORARY I/O
+#########################################################################
+#
+# Next line is default location for TEMPORARY FILES
+#!  ~/runtime
+! .
+#
+#
+?   END

@@ -1,0 +1,9 @@
+CC = gcc -O3
+
+INCLUDE = -I.
+LIBRARY = -L.
+FILES  = bin2hdf.c 
+
+reproject: $(FILES) 
+	$(CC) $(FILES) $(INCLUDE) $(LIBRARY) -o bin2hdf.exe
+

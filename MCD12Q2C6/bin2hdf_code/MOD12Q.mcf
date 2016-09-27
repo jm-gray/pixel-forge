@@ -1,0 +1,524 @@
+/* This metadata configuration file (MCF) was built according to the  */
+/* information provided to ECS.  This MCF has been integrated and the */
+/* interface with ECS validated AS IS.  Should you wish to change any */
+/* information in this MCF, please contact ECS immediately at         */
+/* metadata@eos.hitc.com.  Undocumented changes to the MCF will void  */
+/* the interface validation and can result in delays in integrating   */
+/* science software.                                                  */
+GROUP = INVENTORYMETADATA 
+
+GROUPTYPE = MASTERGROUP
+
+GROUP = ECSDataGranule
+
+        OBJECT = ProductionDateTime
+            Data_Location = "TK"
+            NUM_VAL = 1
+            TYPE = "DATETIME"
+            Mandatory = "TRUE"
+        END_OBJECT = ProductionDateTime
+    
+
+
+        OBJECT = SizeMBECSDataGranule
+                Data_Location  = "DSS"
+                TYPE = "DOUBLE"
+                NUM_VAL = 1
+                Mandatory  = "TRUE"
+        END_OBJECT = SizeMBECSDataGranule
+
+
+        OBJECT = ReprocessingPlanned
+                Data_Location  = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory = "TRUE"
+        END_OBJECT = ReprocessingPlanned
+
+
+        OBJECT = ReprocessingActual
+                Data_Location  = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory = "TRUE"
+        END_OBJECT = ReprocessingActual
+
+
+        OBJECT = LocalGranuleID
+                Data_Location = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory = "TRUE"
+        END_OBJECT = LocalGranuleID
+
+
+        OBJECT = DayNightFlag
+                Data_Location = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory = "TRUE"
+        END_OBJECT = DayNightFlag
+
+
+       OBJECT = LocalVersionID
+                Data_Location = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory = "TRUE"
+        END_OBJECT = LocalVersionID
+
+
+END_GROUP = ECSDataGranule
+
+   GROUP = CollectionDescriptionClass
+        OBJECT = ShortName
+                Data_Location  = "MCF"
+		Value = "MOD12Q2_TEMP"    
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory  = "TRUE"
+        END_OBJECT = ShortName
+
+        OBJECT = VersionID
+                Data_Location  = "MCF"
+		Value = 2
+                TYPE = "INTEGER"
+                NUM_VAL = 1
+                Mandatory  = "TRUE"
+        END_OBJECT = VersionID
+   END_GROUP = CollectionDescriptionClass
+
+   GROUP = PGEVersionClass
+        OBJECT = PGEVersion
+                Data_Location = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 1
+                Mandatory =  "TRUE"
+        END_OBJECT = PGEVersion
+   END_GROUP = PGEVersionClass
+
+
+   GROUP = InputGranule
+        OBJECT = InputPointer
+                Data_Location = "PGE"
+                TYPE = "STRING"
+                NUM_VAL = 100
+                Mandatory = "TRUE"
+        END_OBJECT = InputPointer
+   END_GROUP = InputGranule
+
+
+
+   GROUP = RangeDateTime
+
+       OBJECT = RangeBeginningDate
+            Data_Location = "PGE"               
+            NUM_VAL = 1                 
+            TYPE = "DATE"
+            Mandatory = "TRUE"
+        END_OBJECT = RangeBeginningDate
+
+        OBJECT = RangeBeginningTime     
+            Data_Location = "PGE"
+            NUM_VAL = 1                 
+            TYPE = "TIME"
+            Mandatory = "TRUE"
+        END_OBJECT = RangeBeginningTime
+
+        OBJECT = RangeEndingDate
+            Data_Location = "PGE"
+            NUM_VAL = 1
+            TYPE = "DATE"
+            Mandatory = "TRUE"
+        END_OBJECT = RangeEndingDate
+
+        OBJECT = RangeEndingTime
+            Data_Location = "PGE"
+            NUM_VAL = 1
+            TYPE = "TIME"
+            Mandatory = "TRUE"
+        END_OBJECT = RangeEndingTime
+
+   END_GROUP = RangeDateTime
+
+   GROUP = SpatialDomainContainer   
+          GROUP = GPolygon
+
+                 OBJECT = GPolygonContainer
+                         Data_Location = "MCF"
+                         CLASS = "M"
+                         Mandatory = "TRUE"
+
+                         GROUP = GRing
+                                CLASS = "M"
+
+                                OBJECT = ExclusionGRingFlag
+                                        Data_Location= "PGE"
+                                        TYPE = "STRING"
+                                        NUM_VAL = 1
+                                        Mandatory = "TRUE" 
+                                END_OBJECT = ExclusionGRingFlag
+
+                         END_GROUP = GRing
+
+                         GROUP = GRingPoint
+                                CLASS = "M"
+
+                                OBJECT = GRingPointLatitude
+                                        Data_Location = "PGE"
+                                        CLASS = "M"
+                                        TYPE = "DOUBLE"
+                                        NUM_VAL = 4
+                                        Mandatory = "TRUE"
+                                END_OBJECT = GRingPointLatitude
+                                
+                                OBJECT = GRingPointLongitude
+                                        Data_Location = "PGE"
+                                        CLASS = "M"
+                                        TYPE = "DOUBLE"
+                                        NUM_VAL = 4
+                                        Mandatory = "TRUE"
+                                END_OBJECT = GRingPointLongitude
+
+                                OBJECT = GRingPointSequenceNo
+                                        Data_Location  = "PGE"
+                                        CLASS = "M"
+                                        TYPE = "INTEGER"
+                                        NUM_VAL = 4
+                                        Mandatory = "TRUE"
+                                END_OBJECT = GRingPointSequenceNo
+
+                         END_GROUP = GRingPoint
+                 END_OBJECT = GPolygonContainer
+          END_GROUP = GPolygon
+   END_GROUP = SpatialDomainContainer   
+
+  GROUP = MeasuredParameter
+          OBJECT = MeasuredParameterContainer
+                  Data_Location = "MCF"
+                  CLASS = "M"
+                  Mandatory = "TRUE"
+
+                  OBJECT = ParameterName
+                          Data_Location = "PGE"
+                          CLASS = "M"
+                          TYPE = "STRING"
+                          NUM_VAL = 1
+                          Mandatory = "TRUE"
+                  END_OBJECT = ParameterName
+
+                  GROUP = QAFlags
+                         OBJECT = AutomaticQualityFlag
+                                 Data_Location = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = AutomaticQualityFlag
+   
+                         OBJECT = AutomaticQualityFlagExplanation
+                                 Data_Location = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = AutomaticQualityFlagExplanation
+ 
+                         OBJECT = OperationalQualityFlag
+                                 Data_Location = "DAAC"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = OperationalQualityFlag
+ 
+                         OBJECT = OperationalQualityFlagExplanation
+                                 Data_Location = "DAAC"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = OperationalQualityFlagExplanation
+ 
+                         OBJECT = ScienceQualityFlag
+                                 Data_Location = "DP"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = ScienceQualityFlag
+ 
+                         OBJECT = ScienceQualityFlagExplanation
+                                 Data_Location = "DP"
+                                 CLASS = "M"
+                                 TYPE = "STRING"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = ScienceQualityFlagExplanation
+
+                  END_GROUP = QAFlags
+ 
+                  GROUP = QAStats
+                         OBJECT = QAPercentInterpolatedData
+                                 Data_Location  = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "INTEGER"
+                                 NUM_VAL = 1
+                                 Mandatory =  "FALSE"
+                         END_OBJECT = QAPercentInterpolatedData
+
+                         OBJECT = QAPercentMissingData
+                                 Data_Location  = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "INTEGER"
+                                 NUM_VAL = 1
+                                 Mandatory =  "FALSE"
+                         END_OBJECT = QAPercentMissingData
+ 
+                         OBJECT =  QAPercentOutofBoundsData
+                                 Data_Location  = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "INTEGER"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = QAPercentOutofBoundsData
+
+                        OBJECT =  QAPercentCloudCover
+                                 Data_Location  = "PGE"
+                                 CLASS = "M"
+                                 TYPE = "INTEGER"
+                                 NUM_VAL = 1
+                                 Mandatory = "FALSE"
+                         END_OBJECT = QAPercentCloudCover
+
+                  END_GROUP = QAStats
+
+          END_OBJECT = MeasuredParameterContainer
+   END_GROUP = MeasuredParameter
+
+
+GROUP = AdditionalAttributes
+       OBJECT = AdditionalAttributesContainer
+               Data_Location = "NONE"
+               CLASS = "M"
+               Mandatory = "FALSE"
+
+               OBJECT = AdditionalAttributeName
+                       Data_Location = "PGE"
+                       CLASS = "M"
+                       TYPE = "STRING"                 
+                       NUM_VAL = 1                 
+                       Mandatory =  "FALSE"
+               END_OBJECT = AdditionalAttributeName
+
+               GROUP = InformationContent
+                       CLASS = "M"
+
+                       OBJECT = ParameterValue
+                               Data_Location = "PGE"
+                               CLASS = "M"
+                               TYPE = "STRING"
+                               NUM_VAL = 1
+                               Mandatory = "FALSE"
+                       END_OBJECT = ParameterValue
+
+                END_GROUP = InformationContent
+       END_OBJECT = AdditionalAttributesContainer
+
+END_GROUP = AdditionalAttributes
+
+
+
+END_GROUP = INVENTORYMETADATA 
+
+GROUP = ARCHIVEDMETADATA
+
+GROUPTYPE = MASTERGROUP
+
+GROUP = BoundingRectangle
+
+            OBJECT = WestBoundingCoordinate
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = WestBoundingCoordinate
+
+            OBJECT = NorthBoundingCoordinate
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = NorthBoundingCoordinate
+
+            OBJECT = EastBoundingCoordinate
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = EastBoundingCoordinate
+
+            OBJECT = SouthBoundingCoordinate
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = SouthBoundingCoordinate
+        
+END_GROUP = BoundingRectangle
+
+            OBJECT = AlgorithmPackageAcceptanceDate
+                Data_Location = "MCF"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Value = "1998-01-01"
+                Mandatory = "TRUE"
+            END_OBJECT = AlgorithmPackageAcceptanceDate
+
+
+            OBJECT = AlgorithmPackageMaturityCode
+                Data_Location = "MCF"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Value = "LAUNCH"
+                Mandatory = "TRUE"
+            END_OBJECT = AlgorithmPackageMaturityCode
+
+
+            OBJECT = AlgorithmPackageName
+                Data_Location = "MCF"
+                NUM_VAL = 1
+                TYPE = "STRING"
+              Value = "MOD12M"
+                Mandatory = "TRUE"
+            END_OBJECT = AlgorithmPackageName
+
+            OBJECT = AlgorithmPackageVersion
+                Data_Location = "MCF"
+                NUM_VAL = 1
+                TYPE = "STRING"
+               Value =  "V2.0"
+                Mandatory = "TRUE"
+            END_OBJECT = AlgorithmPackageVersion
+
+            OBJECT = GeoAnyAbnormal
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT =  GeoAnyAbnormal
+
+            OBJECT = GeoEstMaxRMSError
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = GeoEstMaxRMSError
+
+            OBJECT = LongName
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT =  LongName
+
+            OBJECT = SPSOParameters
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT = SPSOParameters
+
+            OBJECT = ProcessingCenter
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT =  ProcessingCenter
+
+            OBJECT = CharacteristicBinAngularSize
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = CharacteristicBinAngularSize
+
+            OBJECT = CharacteristicBinSize
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "DOUBLE"
+                Mandatory = "TRUE"
+            END_OBJECT = CharacteristicBinSize
+
+
+            OBJECT = DataColumns
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = DataColumns
+
+
+            OBJECT = DataRows
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = DataRows
+
+
+            OBJECT = GlobalGridColumns
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = GlobalGridColumns
+
+
+            OBJECT = GlobalGridRows
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = GlobalGridRows
+
+
+            OBJECT = MaximumObservations
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = MaximumObservations
+
+
+            OBJECT = NumberofGranules
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "INTEGER"
+                Mandatory = "TRUE"
+            END_OBJECT = NumberofGranules
+
+
+            OBJECT = CoverageCalculationMethod
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT = CoverageCalculationMethod
+
+
+            OBJECT = NadirDataResolution
+                Data_Location = "PGE"
+                NUM_VAL = 1
+                TYPE = "STRING"
+                Mandatory = "TRUE"
+            END_OBJECT =  NadirDataResolution
+
+
+END_GROUP = ARCHIVEDMETADATA
+
+END
+
+
+
+

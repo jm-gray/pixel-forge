@@ -1,0 +1,36 @@
+#Import: the order of input parameters cannot be changed! 
+#Make sure the directories listed here exist!!!!!
+#previous version HDF path, this directory must include the desired subdirectory
+#structure (Greenup, Dormancy....Fill_View)
+/projectnb/modislc/data/mcd12_out/phen_out/c5_hdf1/2010/001
+
+#previous version HDF files' name stem. For example, input A2002001 here, then 
+#the program will look for PheGre.A2002001.h??v??.hdf in LC1 subdirectory.
+A2010001
+
+#Output HDF path, the desired subdirectory structure (Greenup, Maturity....)
+#will be generated automatically
+/projectnb/modislc/data/mcd12_out/phen_out/josh_test_new_hdf
+
+#Output HDF files' name stem. For example, input A2000001 here, then 
+#the program will generate LC1.A2000001.h??v??.hdf in LC1 subdirectory.
+A2012001
+
+#The path name of input binary data which are generated from last step (remap)
+#make sure the all directory structures generated in last step are kept same
+#(subdirectories Greenup, Maturity...)
+/projectnb/modislc/data/mcd12_out/phen_out/josh_test_new
+
+#Name stem of input binary files, if put 2000V5 here
+#the program will look for 2000V5.Greenup.h??v??.bin, 2000V5.Maturity.h??v??.bin etc.
+BINOUT
+
+#input land water mask directory
+/projectnb/modislc/data/mcd12_in/c5/ancillary_layers/C5_LW_Mask/lw_mask_500m
+
+#input land water mask file name stem, for example, input LW here, then 
+#this program will looking for files named as LW.h??v??.bin
+LW
+
+#processing year
+2012
