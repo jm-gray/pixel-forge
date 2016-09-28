@@ -544,12 +544,16 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	resids <- x[(data_length + 1):(2 * data_length)] / pheno_pars$nbar_scale_factor
 	resids_gup <- resids[seg[1]:seg[2]]
 	resids_gdown <- resids[seg[2]:seg[3]]
-	# snow/fill flags
-	# 0 is non-snow observed
-	# 1 is snow observed
-	# 2 is non-snow interpolated.  Is used to initialize array so values between stride are going to be 2 even if they are snow.
-	# 3 is snow interpolated
-	# 4 is observed but evi is below minimum evi so that it is filled.
+
+	#--------------------------------------
+	# new snowflag values:
+	# 0 - observed value, no snow
+	# 1 - interpolated value, no snow. Is used to initialize array so values between stride are going to be 1 even if they are snow.
+	# 2 - truncated to minimum value, no snow
+	# 3 - observed value, snow
+	# 4 - interpolated value, snow
+	# 5 - interpolated value off-stride, snow
+
 	snowflags <- x[(2 * data_length + 1):(3 * data_length)]
 	snowflags[snowflags == 2] <- 0 # NOTE: I think flag=2 only happens for stride-fills, which are irrelevant for QA purposes
 	snowflags_gup <- snowflags[seg[1]:seg[2]]
@@ -656,6 +660,15 @@ SegMet <- function(seg, x, dates, pheno_pars){
 SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=NA, fill_code=NA){
 	# sets return object annual_pheno_metrics values for cycle 1 or 2 using the SegMet return object seg_met
 	# and num_cycles and fill_code arguments
+
+	######################
+	# NOTE: here is where we collapse quality scores from continuous to 0-3, calculate
+	# overall quality, and do the bitpacking
+	# quals order: gup, midgup, mat, peak, sen, midsen, dor, overall:
+	# quals <- c(1, 0, 3, 2, 2, 0, 1, 2) # example
+	# QualBit <- function(x) as.integer(intToBits(x))[1:2]
+	# QualPack <- function(quals) sum(unlist(lapply(quals, QualBit)) * (2^(0:15)))
+
 
 	if(!is.na(num_cycles)){
 		annual_pheno_metrics$num_cycles <- num_cycles
