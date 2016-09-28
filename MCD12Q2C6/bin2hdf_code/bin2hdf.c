@@ -13,7 +13,7 @@
 /*										*/
 /* Author: Bin Tan (tanbin@bu.edu)					        */
 /* Last updated: Mar 15, 2007                                         		*/
-/********************************************************************************/ 
+/********************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +32,7 @@ int get_random_name(char* name);
 void generate_HDF(char* type, char* processYear, char* tile_id,char* pre_hdf_directory,char* pre_hdf_name_stem,char* output_directory,char* output_hdf_name_stem,char* binary_directory, char* binary_name_stem,char* lw_full_name);
 void prepare_pcf(char* tile_id,char* binary_full_name,char* pre_hdf_directory, char* pre_hdf_name_stem);
 int main(int argc, char *argv[])
-{       
+{
 	int read_count,status;
 	FILE *f_paths,*f_tile_list;
 	char pre_hdf_directory[300],pre_hdf_name_stem[100], output_directory[300], output_hdf_name_stem[100];
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	char input_string[500],command_line[500],tile_id[10];
 	char pre_hdf_full_name[400],lw_full_name[1000];
 	char process_year[20];
-	
+
 	/****open the input info files (paths.txt) and read all path and file name info one by one******/
 	if ((f_paths=fopen("bin2hdf_paths.txt","r"))==NULL)
 	{
@@ -54,32 +54,32 @@ int main(int argc, char *argv[])
 		if (read_count==1)
 			sprintf(pre_hdf_directory,"%s",input_string);
 		else if (read_count==2)
-			sprintf(pre_hdf_name_stem,"%s",input_string);		
+			sprintf(pre_hdf_name_stem,"%s",input_string);
 		else if (read_count==3)
 			sprintf(output_directory,"%s",input_string);
 		else if (read_count==4)
-			sprintf(output_hdf_name_stem,"%s",input_string);		
+			sprintf(output_hdf_name_stem,"%s",input_string);
 		else if (read_count==5)
 			sprintf(binary_directory,"%s",input_string);
 		else if (read_count==6)
-			sprintf(binary_name_stem,"%s",input_string);		
+			sprintf(binary_name_stem,"%s",input_string);
 		else if (read_count==7)
 			sprintf(lw_directory,"%s",input_string);
 		else if (read_count==8)
 			sprintf(lw_name_stem,"%s",input_string);
 		else if (read_count==9)
 			sprintf(process_year,"%s",input_string);
-			
+
 	}
 	fclose(f_paths);
-		
-		
+
+
 	/******If the input info file (paths.txt) is not in the expecting format, quit the program ******/
-	
+
 	if (read_count!=TOTAL_INPUT_AMOUNT)
 	{
 		printf("The number of inputs %d or the format of the input file is not correct!\n",read_count);
-		return 0;	
+		return 0;
 	}
 	status=setenv("PGS_PC_INFO_FILE","phe_bin2hdf.pcf",1);
 	if (status!=0)
@@ -87,20 +87,47 @@ int main(int argc, char *argv[])
 		printf("Failed to set up the environment variable -- PGS_PC_INFO_FILE\n");
 		return 0;
 	}
-	
+
 	/*****finish reading paths.txt **************/
 	/**** prepare output direcotries ****/
+	// sprintf(command_line,"mkdir %s/Greenup",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/Maturity",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/Senescence",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/Dormancy",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/EVI_Minimum",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/EVI_Maximum",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/EVI_Area",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/Assessment",output_directory);
+	// system(command_line);
+	// sprintf(command_line,"mkdir %s/TEMP",output_directory);
+	// system(command_line);
+	// # layer_names <- c("num_cycles", "fill_code", "evi_area_cycle1", "evi_amp_cycle1", "evi_min_cycle1", "frac_filled_gup_cycle1", "frac_filled_gdown_cycle1", "length_gup_cycle1", "length_gdown_cycle1", "ogi_cycle1", "midgup_cycle1", "mat_cycle1", "peak_cycle1", "sen_cycle1", "midgdown_cycle1", "dor_cycle1", "ogi_qual_cycle1", "midgup_qual_cycle1", "mat_qual_cycle1", "peak_qual_cycle1", "sen_qual_cycle1", "midgdown_qual_cycle1", "dor_qual_cycle1", "evi_area_cycle2", "evi_amp_cycle2", "evi_min_cycle2", "frac_filled_gup_cycle2", "frac_filled_gdown_cycle2", "length_gup_cycle2", "length_gdown_cycle2", "ogi_cycle2", "midgup_cycle2", "mat_cycle2", "peak_cycle2", "sen_cycle2", "midgdown_cycle2", "dor_cycle2", "ogi_qual_cycle2", "midgup_qual_cycle2", "mat_qual_cycle2", "peak_qual_cycle2", "sen_qual_cycle2", "midgdown_qual_cycle2", "dor_qual_cycle2")
+	sprintf(command_line,"mkdir %s/NumCycles",output_directory);
+	system(command_line);
 	sprintf(command_line,"mkdir %s/Greenup",output_directory);
+	system(command_line);
+	sprintf(command_line,"mkdir %s/MidGreenup",output_directory);
 	system(command_line);
 	sprintf(command_line,"mkdir %s/Maturity",output_directory);
 	system(command_line);
+	sprintf(command_line,"mkdir %s/Peak",output_directory);
+	system(command_line);
 	sprintf(command_line,"mkdir %s/Senescence",output_directory);
+	system(command_line);
+	sprintf(command_line,"mkdir %s/MidSenescence",output_directory);
 	system(command_line);
 	sprintf(command_line,"mkdir %s/Dormancy",output_directory);
 	system(command_line);
 	sprintf(command_line,"mkdir %s/EVI_Minimum",output_directory);
 	system(command_line);
-	sprintf(command_line,"mkdir %s/EVI_Maximum",output_directory);
+	sprintf(command_line,"mkdir %s/EVI_Amplitude",output_directory);
 	system(command_line);
 	sprintf(command_line,"mkdir %s/EVI_Area",output_directory);
 	system(command_line);
@@ -108,13 +135,14 @@ int main(int argc, char *argv[])
 	system(command_line);
 	sprintf(command_line,"mkdir %s/TEMP",output_directory);
 	system(command_line);
-	
+
+
 	if ((f_tile_list=fopen("gltiles.txt","r"))==NULL)
 	{
 		printf("Cannot open the input file --- gltiles.txt! Abort!\n");
 		return 0;
 	}
-	
+
 	/**** begin to generate the LC_LW_TEMP.* one tile by one tile ******/
 	while(fscanf(f_tile_list,"%s",tile_id)!=EOF)
 	{
@@ -165,7 +193,7 @@ int get_line(FILE *file,char* string_input)
 	int initial_sign=0;
 	while ((char_input=fgetc(file))!=EOF)
 	{
-	
+
 		if (initial_sign==0)  /***the first letter of a line****/
 		{
 			if (char_input=='#')
@@ -174,12 +202,12 @@ int get_line(FILE *file,char* string_input)
 				indicator=1;
 			initial_sign=1;
 		}
-		if (char_input=='\n')  /****the end of a line *****/ 
+		if (char_input=='\n')  /****the end of a line *****/
 		{
 			if (indicator==1 && string_count>0)  /**** there is valid line ******/
 			{
 				if (blank_count==string_count)  /***** one line contains only space, ignore it *****/
-				{	
+				{
 					string_count=0;
 					blank_count=0;
 					initial_sign=0;
@@ -191,7 +219,7 @@ int get_line(FILE *file,char* string_input)
 			initial_sign=0;
 			continue;
 		}
-		
+
 		if (indicator==1)
 		{
 			if (char_input==' ')
@@ -221,13 +249,13 @@ void generate_HDF(char* type,char* processYear, char* tile_id,char* pre_hdf_dire
 	char binary_full_name[1000],command[1000],output_full_name[400], phe_layer_name[100];
 	int tile_row, tile_column;
 	char begin_date[20], end_date[20], outputNameStem[20];
-	
+
 	sprintf(begin_date,"%s-01-01",processYear);
 	sprintf(end_date,"%s-12-31",processYear);
-	
+
 	sscanf(tile_id,"h%02dv%02d",&tile_column,&tile_row);
-	
-	
+
+
 	if (strcmp(type,"Greenup")==0)
 	{
 		sprintf(binary_full_name,"%s/Greenup/%s_Greenup_%s.bin",binary_directory,binary_name_stem,tile_id);
@@ -291,23 +319,23 @@ void generate_HDF(char* type,char* processYear, char* tile_id,char* pre_hdf_dire
 		sprintf(command,"./bin2hdf_phe_temp.exe %s %s %s",binary_full_name, begin_date,end_date);
 		system(command);
 		sprintf(command,"mv PHE_LW_TEMP.hdf %s/%s/PHE_LW_TEMP.%s.%s.hdf", output_directory,type, output_hdf_name_stem, tile_id);
-		system(command);		
+		system(command);
 	}
 	else
 	{
-		
-		
+
+
 		sprintf(output_full_name,"%s/%s/%s.%s.%s.hdf",output_directory, type,outputNameStem,output_hdf_name_stem, tile_id);
 		sprintf(command,"./bin2hdf_phe.exe %s %s %s %d %d %s",binary_full_name,output_full_name,phe_layer_name,tile_row,tile_column, processYear);
 		// DEBUG: Josh
 		printf("Executing bin2hdf_phe.exe\n");
-		
+
 		system(command);
-		
+
 		//DEBUG: Josh
-		printf("Done with bin2hdf.exe\n");			
+		printf("Done with bin2hdf.exe\n");
 	}
-		
+
 }
 
 /****** this function prepare *.pcf file which is requried to generate LW hdf file ******/
@@ -315,9 +343,9 @@ void prepare_pcf(char* tile_id,char* lw_full_name, char* pre_hdf_directory, char
 {
 	FILE *f_pcf, *f_pcf_templateA, *f_pcf_templateB;
 	char pre_hdf_name[300], input_a_line[1000];
-	
+
 	sprintf(pre_hdf_name,"PHE_LW_TEMP.%s.%s.hdf",pre_hdf_name_stem, tile_id);
-	
+
 	if ((f_pcf=fopen("phe_bin2hdf.pcf","w"))==NULL)
 	{
 		printf("Cannot open pcf file to write. \n");
@@ -333,15 +361,15 @@ void prepare_pcf(char* tile_id,char* lw_full_name, char* pre_hdf_directory, char
 		printf("Cannot open pcf template B file to read. \n");
 		exit(0);
 	}
-	
+
 	while(get_line_2(f_pcf_templateA, input_a_line))
 		fprintf(f_pcf,"%s\n",input_a_line);
-		
+
 	fprintf(f_pcf,"212514|%s|%s/TEMP||UR_%s|%s|1\n",pre_hdf_name, pre_hdf_directory, pre_hdf_name, pre_hdf_name);
-	
+
 	while(get_line_2(f_pcf_templateB, input_a_line))
 		fprintf(f_pcf,"%s\n",input_a_line);
-	
+
 	fclose(f_pcf_templateB);
 	fclose(f_pcf_templateA);
 	fclose(f_pcf);
@@ -353,13 +381,13 @@ int get_line_2(FILE *file,char* string_input)
 	int string_count=0;
 	while ((char_input=fgetc(file))!=EOF)
 	{
-	
-		if (char_input=='\n')  /****the end of a line *****/ 
+
+		if (char_input=='\n')  /****the end of a line *****/
 		{
 			string_input[string_count]='\0';
 			return 1;
 		}
-		
+
 		string_input[string_count]=char_input;
 		string_count++;
 	}

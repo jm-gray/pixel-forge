@@ -253,6 +253,8 @@ WritePhenologyData <- function(out_file, pheno_values_bip, tile, nbands=44){
 		cat(temp_txt)
 		sink()
 	}
+	# write OGI output, converting from Int32 to Int16 and stacking as 2 bands:
+	# gdal_translate -ot Int16 -of ENVI -b 10 -b 31 MCD12Q2C6_h12v04_2003 MCD12Q2C6_h12v04_2003_OGI
 }
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
