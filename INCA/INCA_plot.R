@@ -1,7 +1,7 @@
 library(raster)
 library(RColorBrewer)
 
-PlotINCASummary <- function(input_file, metric_name="INCA", MAXPIXELS=2.5e6, PVALUETHRESH=0.05, MEDIANCUTOFFS=NULL, MEDIANCUTOFFSQUANTS=c(0.02, 0.98), SLOPECUTOFFS=NULL, SLOPECUTOFFSQUANTS=c(0.05, 0.95), MADCUTOFFS=c(0, 21), MADCUTOFFSQUANTS=c(0, 0.98), SLOPEBGCOLOR=rgb(0.2, 0.2, 0.2 ), LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
+PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", MAXPIXELS=2.5e6, PVALUETHRESH=0.05, MEDIANCUTOFFS=NULL, MEDIANCUTOFFSQUANTS=c(0.02, 0.98), SLOPECUTOFFS=NULL, SLOPECUTOFFSQUANTS=c(0.05, 0.95), MADCUTOFFS=c(0, 21), MADCUTOFFSQUANTS=c(0, 0.98), WATERCOLOR=rgb(0.7, 0.7, 0.7), LANDCOLOR=rgb(0.2, 0.2, 0.2), LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
   # plotting for INCA output
   # MAXPIXELS <- 2.5e6
   # PVALUETHRESH <- 0.05
@@ -74,13 +74,20 @@ PlotINCASummary <- function(input_file, metric_name="INCA", MAXPIXELS=2.5e6, PVA
 
   ###################################
   # setup the plot
-  quartz(h=7, w=21.5)
+  # quartz(h=7, w=21.5)
+  if(!is.null(out_pdf)){
+    pdf(file=out_pdf, h=7, w=24)
+  }else{
+    quartz(h=7, w=24)
+  }
+
   layout(matrix(1:3, nrow=1))
-  par(mar=rep(1.5, 4), oma=rep(1,4))
+  par(mar=c(1, 1, 1, 3), oma=rep(1, 4))
 
   ###################################
   # plot the median DOY map
-  plot(r_med, breaks=median_breaks, col=median_pal(length(median_breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n")
+  plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+  plot(r_med, breaks=median_breaks, col=median_pal(length(median_breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
   legend_at <- round(seq(median_breaks[2], median_breaks[length(median_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
@@ -89,7 +96,8 @@ PlotINCASummary <- function(input_file, metric_name="INCA", MAXPIXELS=2.5e6, PVA
   title(paste(tile, metric_name, "Median"))
 
   # plot the MAD map
-  plot(r_mad, breaks=mad_breaks, col=mad_pal(length(mad_breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n")
+  plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+  plot(r_mad, breaks=mad_breaks, col=mad_pal(length(mad_breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
   legend_at <- round(seq(mad_breaks[2], mad_breaks[length(mad_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
@@ -98,17 +106,20 @@ PlotINCASummary <- function(input_file, metric_name="INCA", MAXPIXELS=2.5e6, PVA
   title(paste(tile, metric_name, "Med. Abs. Dev."))
 
   # plot the slope map
-  plot(r_land, col=SLOPEBGCOLOR, xaxt="n", yaxt="n", legend=F)
-  plot(r_slope, breaks=slope_breaks, col=div_pal(length(slope_breaks) - 1), maxpixels=MAXPIXELS, legend=F, add=T, xaxt="n", yaxt="n")
+  plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+  # plot(r_land, col=SLOPEBGCOLOR, xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+  plot(r_slope, breaks=slope_breaks, col=div_pal(length(slope_breaks) - 1), maxpixels=MAXPIXELS, legend=F, add=T, xaxt="n", yaxt="n", bty="n", box=FALSE)
   legend_at <- round(seq(slope_breaks[2], slope_breaks[length(slope_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
   plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(slope_breaks)-1), axis.args=list(at=legend_at, labels=legend_labels))
   title(paste(tile, metric_name, "Theil-Sen Slope (where p <=", PVALUETHRESH, ")"))
+
+  if(!is.null(out_pdf)) dev.off()
 }
 
 # Example:
-PlotINCASummary(dir()[1])
+PlotINCASummary("~/Desktop/INCA_summary_h12v04_halfspring.tif", out_pdf="~/Desktop/halfspring_h12v04_inca.pdf", LWMASKDIR="~/Desktop")
 
 
 
@@ -123,6 +134,6 @@ quartz(h=12, w=12)
 layout(matrix(1:16, nrow=4, byrow=TRUE))
 par(mar=rep(0.25, 4), oma=rep(1,4))
 for(i in 1:nlayers(mad_anoms)){
-  plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n")
+  plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE)
   title(years[i])
 }
