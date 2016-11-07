@@ -1,24 +1,27 @@
 library(raster)
 library(RColorBrewer)
 
-PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", MAXPIXELS=5e6, PVALUETHRESH=0.05, MEDIANCUTOFFS=NULL, MEDIANCUTOFFSQUANTS=c(0.02, 0.98), SLOPECUTOFFS=NULL, SLOPECUTOFFSQUANTS=c(0.05, 0.95), MADCUTOFFS=c(0, 21), MADCUTOFFSQUANTS=c(0, 0.98), WATERCOLOR=rgb(0.7, 0.7, 0.7), LANDCOLOR=rgb(0.2, 0.2, 0.2), LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
+PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
   # plotting for INCA output
-  # MAXPIXELS <- 2.5e6
-  # PVALUETHRESH <- 0.05
-  # MEDIANCUTOFFS <- NULL
-  # MEDIANCUTOFFSQUANTS <- c(0.02, 0.98)
-  # SLOPECUTOFFS <- NULL
-  # SLOPECUTOFFSQUANTS <- c(0.05, 0.95)
-  # MADCUTOFFS <- c(0, 28)
-  # MADCUTOFFSQUANTS <- c(0, 0.98)
-  # SLOPEBGCOLOR <- rgb(0.2, 0.2, 0.2 )
-  # LWMASKDIR <- "/Volumes/research/fer/jmgray2/MODIS/LWMASK500"
+  MAXPIXELS <- 2.5e6
+  PVALUETHRESH <- 0.05
+  MEDIANCUTOFFS <- NULL
+  MEDIANCUTOFFSQUANTS <- c(0.02, 0.98)
+  SLOPECUTOFFS <- NULL
+  SLOPECUTOFFSQUANTS <- c(0.05, 0.95)
+  MADCUTOFFS <- c(0, 21)
+  MADCUTOFFSQUANTS <- c(0, 0.98)
+  WATERCOLOR <- rgb(0.7, 0.7, 0.7)
+  LANDCOLOR <- rgb(0.2, 0.2, 0.2)
 
   # the color palettes
   div_pal <- colorRampPalette(rev(brewer.pal(11, "RdYlBu")))
   median_pal <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
   # mad_pal <- colorRampPalette(brewer.pal(9, "PuRd"))
-  mad_pal <- colorRampPalette(brewer.pal(9, "GnBu"))
+  mad_pal <- colorRampPalette(brewer.pal(9, "PuBuGn"))
+  LEGENDAXISCEX <- 1
+  LEGENDMAINCEX <- 1
+  LEGENDWIDTH <- 3.5
 
   ###################################
   # input_file <- "~/Desktop/INCA_summary_h11v04_halfspring.tif"
@@ -91,8 +94,8 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", MAXPIX
   legend_at <- round(seq(median_breaks[2], median_breaks[length(median_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
-  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=median_pal(length(median_breaks)-1), axis.args=list(at=legend_at, labels=legend_labels))
-  # title("Median")
+  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=median_pal(length(median_breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+  # title("Medsian")
   title(paste(tile, metric_name, "Median"))
 
   # plot the MAD map
@@ -101,7 +104,7 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", MAXPIX
   legend_at <- round(seq(mad_breaks[2], mad_breaks[length(mad_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
-  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=mad_pal(length(mad_breaks)-1), axis.args=list(at=legend_at, labels=legend_labels))
+  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=mad_pal(length(mad_breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
   # title("Median Abs. Dev.")
   title(paste(tile, metric_name, "Med. Abs. Dev."))
 
@@ -112,28 +115,28 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", MAXPIX
   legend_at <- round(seq(slope_breaks[2], slope_breaks[length(slope_breaks) - 1], len=7))
   legend_at_date <- legend_at
   legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
-  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(slope_breaks)-1), axis.args=list(at=legend_at, labels=legend_labels))
+  plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(slope_breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
   title(paste(tile, metric_name, "Theil-Sen Slope (where p <=", PVALUETHRESH, ")"))
+
+  # plot the annual median anomalies as multiples of the MAD
+  MADANOMCUTOFFS <- c(-3, 3)
+  mad_anoms <- subset(s, 21:34)
+  madanom_extreme <- max(c(max(maxValue(mad_anoms)), abs(min(minValue(mad_anoms)))))
+  madanom_breaks <- c(-1*madanom_extreme, seq(MADANOMCUTOFFS[1], MADANOMCUTOFFS[2], len=254), madanom_extreme)
+  years <- 2001:2014
+
+  # quartz(h=12, w=12)
+  # layout(matrix(1:16, nrow=4, byrow=TRUE))
+  layout(matrix(1:14, nrow=2, byrow=TRUE))
+  par(mar=rep(0.25, 4), oma=rep(1, 4))
+  for(i in 1:nlayers(mad_anoms)){
+    plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+    plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+    title(years[i])
+  }
 
   if(!is.null(out_pdf)) dev.off()
 }
 
 # Example:
-PlotINCASummary("~/Desktop/INCA_summary_h12v04_halfspring.tif", out_pdf="~/Desktop/halfspring_h12v04_inca.pdf", LWMASKDIR="~/Desktop")
-
-
-
-# quartz(h=7, w=21.5)
-MADANOMCUTOFFS <- c(-3, 3)
-mad_anoms <- subset(s, 21:34)
-madanom_extreme <- max(c(max(maxValue(mad_anoms)), abs(min(minValue(mad_anoms)))))
-madanom_breaks <- c(-1*madanom_extreme, seq(MADANOMCUTOFFS[1], MADANOMCUTOFFS[2], len=254), madanom_extreme)
-years <- 2001:2014
-
-quartz(h=12, w=12)
-layout(matrix(1:16, nrow=4, byrow=TRUE))
-par(mar=rep(0.25, 4), oma=rep(1,4))
-for(i in 1:nlayers(mad_anoms)){
-  plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE)
-  title(years[i])
-}
+PlotINCASummary("~/Desktop/INCA_summary_h12v04_halfspring.tif", out_pdf="~/Desktop/test.pdf", LWMASKDIR="~/Desktop")
