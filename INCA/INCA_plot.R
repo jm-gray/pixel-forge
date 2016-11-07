@@ -128,15 +128,24 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASK
   # quartz(h=12, w=12)
   # layout(matrix(1:16, nrow=4, byrow=TRUE))
   layout(matrix(1:14, nrow=2, byrow=TRUE))
-  par(mar=rep(0.25, 4), oma=rep(1, 4))
+  par(mar=c(0.25, 0.25, 0.75, 0.25), oma=c(1,2,1,3.5))
   for(i in 1:nlayers(mad_anoms)){
     plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
     plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
     title(years[i])
+    if(i == 1 | i == 8){
+      mtext(paste(tile, metric_name), side=2, line=1)
+    }
+    if(i == 14){
+      legend_at <- round(seq(madanom_breaks[2], madanom_breaks[length(madanom_breaks) - 1], len=7))
+      legend_at_date <- legend_at
+      legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
+      plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(madanom_breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+    }
   }
 
   if(!is.null(out_pdf)) dev.off()
 }
 
 # Example:
-PlotINCASummary("~/Desktop/INCA_summary_h12v04_halfspring.tif", out_pdf="~/Desktop/test.pdf", LWMASKDIR="~/Desktop")
+PlotINCASummary("~/Desktop/INCA_summary_h10v04_halfspring.tif", out_pdf="~/Desktop/test.pdf", LWMASKDIR="~/Desktop", metric_name="HalfSpring")
