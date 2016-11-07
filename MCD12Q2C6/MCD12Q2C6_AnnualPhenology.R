@@ -59,7 +59,7 @@ arg_parser$add_argument("-chunk_line_size", type="integer", default=480) # lines
 arg_parser$add_argument("-cluster_size", type="integer", default=16) # number of CPU cores to use for processing
 
 args <- arg_parser$parse_args()
-# args <- arg_parser$parse_args(c("-tile","h11v04","-year",2003))
+# args <- arg_parser$parse_args(c("-tile","h12v04","-year",2003))
 
 # if a parameter file is specified, retrieve the parameters from there, use defaults otherwise
 if(is.null(args$params)){

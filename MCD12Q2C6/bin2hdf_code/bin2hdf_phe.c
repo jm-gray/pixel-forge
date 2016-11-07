@@ -90,6 +90,10 @@ Externals:
     printf("\nphe_BIP_TILE--Input Binary file name (2400x2400)\n");
     printf("phe_HDF_TILE--Output HDF file name\n");
     printf("phe_TYPE--The name of phenology parameter type. It should be one of the followings\n");
+
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
     printf("      ----Onset_Greenness_Increase------------(3d-int16)\n");
     printf("      ----Onset_Greenness_Maximum-------------(3d-int16)\n");
     printf("      ----Onset_Greenness_Decrease-----------(3d-int16)\n");
@@ -97,7 +101,7 @@ Externals:
     printf("      ----NBAR_EVI_Onset_Greenness_Maximum-------------(3d-int16)\n");
     printf("      ----NBAR_EVI_Onset_Greenness_Minimum---------(3d-int16)\n");
     printf("      ----NBAR_EVI_Area--------------------(3d-uint16)\n");
-    printf("      ----Time_Series_Assessment-----(3d-uint8, 1-madatory, 2-assessment)\n");
+    printf("      ----Time_Series_Assessment-----(3d-uint8, 1-mandatory, 2-assessment)\n");
     printf("Tile_Row--The number of row in the tile\n");
     printf("Tile_Col--The number of column in the tile\n");
     printf("BeginYear--The beginning year of calculated phenology\n");
@@ -282,21 +286,28 @@ Externals:
 
 
   /*initialize all output longnames*/
-    strcpy(all->smet.ln[0], "TCV_Detail_1");
-    strcpy(all->smet.ln[1], "TCV_Detail_2");
-    strcpy(all->smet.ln[2], "TCV_Detail_3");
-    strcpy(all->smet.ln[3], "TCV_Detail_4");
-    strcpy(all->smet.ln[4], "TCV_Detail_5");
-    strcpy(all->smet.ln[5], "Time_Series_Assessment");
-    strcpy(all->smet.ln[6], "Onset_Greenness_Increase");
-    strcpy(all->smet.ln[7], "Onset_Greenness_Maximum");
-    strcpy(all->smet.ln[8], "Onset_Greenness_Decrease");
-    strcpy(all->smet.ln[9], "Onset_Greenness_Minimum");
-    strcpy(all->smet.ln[10], "Peak_Greenness");
-    strcpy(all->smet.ln[11], "NBAR_EVI_Onset_Greenness_Minimum");
-    strcpy(all->smet.ln[12], "NBAR_EVI_Onset_Greenness_Maximum");
-    strcpy(all->smet.ln[13], "NBAR_EVI_Area");
-    strcpy(all->smet.ln[14], "VI_TBD");
+  //#######################
+  // MAKE C6 CHANGES HERE
+  //#######################
+  strcpy(all->smet.ln[0], "Num_Cycles");
+  strcpy(all->smet.ln[1], "Overall_QA");
+  strcpy(all->smet.ln[2], "Onset_Greenness_Increase");
+
+  // strcpy(all->smet.ln[0], "TCV_Detail_1");
+  // strcpy(all->smet.ln[1], "TCV_Detail_2");
+  // strcpy(all->smet.ln[2], "TCV_Detail_3");
+  // strcpy(all->smet.ln[3], "TCV_Detail_4");
+  // strcpy(all->smet.ln[4], "TCV_Detail_5");
+  // strcpy(all->smet.ln[5], "Time_Series_Assessment");
+  // strcpy(all->smet.ln[6], "Onset_Greenness_Increase");
+  // strcpy(all->smet.ln[7], "Onset_Greenness_Maximum");
+  // strcpy(all->smet.ln[8], "Onset_Greenness_Decrease");
+  // strcpy(all->smet.ln[9], "Onset_Greenness_Minimum");
+  // strcpy(all->smet.ln[10], "Peak_Greenness");
+  // strcpy(all->smet.ln[11], "NBAR_EVI_Onset_Greenness_Minimum");
+  // strcpy(all->smet.ln[12], "NBAR_EVI_Onset_Greenness_Maximum");
+  // strcpy(all->smet.ln[13], "NBAR_EVI_Area");
+  // strcpy(all->smet.ln[14], "VI_TBD");
   // # layer_names <- c("num_cycles", "fill_code", "evi_area_cycle1", "evi_amp_cycle1", "evi_min_cycle1", "frac_filled_gup_cycle1", "frac_filled_gdown_cycle1", "length_gup_cycle1", "length_gdown_cycle1", "ogi_cycle1", "midgup_cycle1", "mat_cycle1", "peak_cycle1", "sen_cycle1", "midgdown_cycle1", "dor_cycle1", "ogi_qual_cycle1", "midgup_qual_cycle1", "mat_qual_cycle1", "peak_qual_cycle1", "sen_qual_cycle1", "midgdown_qual_cycle1", "dor_qual_cycle1", "evi_area_cycle2", "evi_amp_cycle2", "evi_min_cycle2", "frac_filled_gup_cycle2", "frac_filled_gdown_cycle2", "length_gup_cycle2", "length_gdown_cycle2", "ogi_cycle2", "midgup_cycle2", "mat_cycle2", "peak_cycle2", "sen_cycle2", "midgdown_cycle2", "dor_cycle2", "ogi_qual_cycle2", "midgup_qual_cycle2", "mat_qual_cycle2", "peak_qual_cycle2", "sen_qual_cycle2", "midgdown_qual_cycle2", "dor_qual_cycle2")
 
   // /*initialize all output longnames*/
@@ -327,90 +338,109 @@ Externals:
 
 
     /*initialize all output units*/
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
+    strcpy(all->smet.unit[0], "count");
+    strcpy(all->smet.unit[1], "concatenated flags");
+    strcpy(all->smet.unit[2], "date");
 
-  strcpy(all->smet.unit[0], "vector");
-    strcpy(all->smet.unit[1], "vector");
-    strcpy(all->smet.unit[2], "vector");
-    strcpy(all->smet.unit[3], "vector");
-    strcpy(all->smet.unit[4], "vector");
-    strcpy(all->smet.unit[5], "concatenated flags");
-    strcpy(all->smet.unit[6], "date");
-    strcpy(all->smet.unit[7], "date");
-    strcpy(all->smet.unit[8], "date");
-    strcpy(all->smet.unit[9], "date");
-    strcpy(all->smet.unit[10], "date");
 
-    strcpy(all->smet.unit[11], "VI value");
-    strcpy(all->smet.unit[12], "VI value");
-    strcpy(all->smet.unit[13], "VI area");
-    strcpy(all->smet.unit[14], "flags for now");
-    //DEBUG: Josh
-   printf("Init 2\n");
+    // strcpy(all->smet.unit[0], "vector");
+    // strcpy(all->smet.unit[1], "vector");
+    // strcpy(all->smet.unit[2], "vector");
+    // strcpy(all->smet.unit[3], "vector");
+    // strcpy(all->smet.unit[4], "vector");
+    // strcpy(all->smet.unit[5], "concatenated flags");
+    // strcpy(all->smet.unit[6], "date");
+    // strcpy(all->smet.unit[7], "date");
+    // strcpy(all->smet.unit[8], "date");
+    // strcpy(all->smet.unit[9], "date");
+    // strcpy(all->smet.unit[10], "date");
+    //
+    // strcpy(all->smet.unit[11], "VI value");
+    // strcpy(all->smet.unit[12], "VI value");
+    // strcpy(all->smet.unit[13], "VI area");
+    // strcpy(all->smet.unit[14], "flags for now");
 
-    all->smet.vr_tcv1[0]=0;
-    all->smet.vr_tcv1[1]=32766;
-    all->smet.vr_tcv2[0]=0;
-    all->smet.vr_tcv2[1]=32766;
-    all->smet.vr_tcv3[0]=0;
-    all->smet.vr_tcv3[1]=32766;
-    all->smet.vr_tcv4[0]=0;
-    all->smet.vr_tcv4[1]=32766;
-    all->smet.vr_tcv5[0]=0;
-    all->smet.vr_tcv5[1]=32766;
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
+    all->smet.vr_numcycles[0]=0;
+    all->smet.vr_numcycles[1]=254;
     all->smet.vr_dyqc[0]=0;
     all->smet.vr_dyqc[1]=254;
-
     all->smet.vr_phe1[0]=0;
     all->smet.vr_phe1[1]=32766;   /*-356----356?**/
-    all->smet.vr_phe2[0]=0;
-    all->smet.vr_phe2[1]=32766;   /*-356----356?**/
-    all->smet.vr_phe3[0]=0;
-    all->smet.vr_phe3[1]=32766;   /*-356----356?**/
-    all->smet.vr_phe4[0]=0;
-    all->smet.vr_phe4[1]=32766;   /*-356----356?**/
-    all->smet.vr_pkge[0]=0;
-    all->smet.vr_pkge[1]=32766;   /*-356----356?**/
 
-    all->smet.vr_vige[0]=0;
-    all->smet.vr_vige[1]=32766;
-    all->smet.vr_vima[0]=0;
-    all->smet.vr_vima[1]=32766;
-     all->smet.vr_viar[0]=0;
-    all->smet.vr_viar[1]=32766;
 
-    all->smet.vr_vtbd[0]=0;
-    all->smet.vr_vtbd[1]=32766;   /*TBD**/
-    //DEBUG: Josh
-   printf("Init 3\n");
+    //
+    // all->smet.vr_tcv1[0]=0;
+    // all->smet.vr_tcv1[1]=32766;
+    // all->smet.vr_tcv2[0]=0;
+    // all->smet.vr_tcv2[1]=32766;
+    // all->smet.vr_tcv3[0]=0;
+    // all->smet.vr_tcv3[1]=32766;
+    // all->smet.vr_tcv4[0]=0;
+    // all->smet.vr_tcv4[1]=32766;
+    // all->smet.vr_tcv5[0]=0;
+    // all->smet.vr_tcv5[1]=32766;
+    // all->smet.vr_dyqc[0]=0;
+    // all->smet.vr_dyqc[1]=254;
+    //
+    // all->smet.vr_phe1[0]=0;
+    // all->smet.vr_phe1[1]=32766;   /*-356----356?**/
+    // all->smet.vr_phe2[0]=0;
+    // all->smet.vr_phe2[1]=32766;   /*-356----356?**/
+    // all->smet.vr_phe3[0]=0;
+    // all->smet.vr_phe3[1]=32766;   /*-356----356?**/
+    // all->smet.vr_phe4[0]=0;
+    // all->smet.vr_phe4[1]=32766;   /*-356----356?**/
+    // all->smet.vr_pkge[0]=0;
+    // all->smet.vr_pkge[1]=32766;   /*-356----356?**/
+    //
+    // all->smet.vr_vige[0]=0;
+    // all->smet.vr_vige[1]=32766;
+    // all->smet.vr_vima[0]=0;
+    // all->smet.vr_vima[1]=32766;
+    //  all->smet.vr_viar[0]=0;
+    // all->smet.vr_viar[1]=32766;
+    //
+    // all->smet.vr_vtbd[0]=0;
+    // all->smet.vr_vtbd[1]=32766;   /*TBD**/
 
 
     /*initialize all output fill values*/
-
-    all->smet.fv_tcv1=32767;
-    all->smet.fv_tcv2=32767;
-    all->smet.fv_tcv3=32767;
-    all->smet.fv_tcv4=32767;
-    all->smet.fv_tcv5=32767;
-
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
+    all->smet.fv_numcycles=255;
     all->smet.fv_dyqc=255;
     all->smet.fv_phe1=32767;
-    all->smet.fv_phe2=32767;
-    all->smet.fv_phe3=32767;
-    all->smet.fv_phe4=32767;
 
-    all->smet.fv_pkge=32767;
-    all->smet.fv_vige=32767;
-    all->smet.fv_vima=32767;
-
-    all->smet.fv_viar=32767;
-    all->smet.fv_vtbd=32767;
-
-
-    all->smet.vr_lct[0]=0;
-    all->smet.vr_lct[1]=254;
-    all->smet.fv_lct=255;
-    //DEBUG: Josh
-   printf("Init 4\n");
+    // all->smet.fv_tcv1=32767;
+    // all->smet.fv_tcv2=32767;
+    // all->smet.fv_tcv3=32767;
+    // all->smet.fv_tcv4=32767;
+    // all->smet.fv_tcv5=32767;
+    //
+    // all->smet.fv_dyqc=255;
+    // all->smet.fv_phe1=32767;
+    // all->smet.fv_phe2=32767;
+    // all->smet.fv_phe3=32767;
+    // all->smet.fv_phe4=32767;
+    //
+    // all->smet.fv_pkge=32767;
+    // all->smet.fv_vige=32767;
+    // all->smet.fv_vima=32767;
+    //
+    // all->smet.fv_viar=32767;
+    // all->smet.fv_vtbd=32767;
+    //
+    //
+    // all->smet.vr_lct[0]=0;
+    // all->smet.vr_lct[1]=254;
+    // all->smet.fv_lct=255;
 
 
     /* output scalefactor, calibrated_nt, add_offset, add_offset_err*/
@@ -421,24 +451,28 @@ Externals:
 
 
     /*initialize igbp class names*/
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
+    strcpy(all->arrnm.arrnm_mod12[0], "Num_Cycles");
+    strcpy(all->arrnm.arrnm_mod12[1], "Overall_QA");
+    strcpy(all->arrnm.arrnm_mod12[2], "Onset_Greenness_Increase");
 
-      strcpy(all->arrnm.arrnm_mod12[0], "TCV_Detail_1");
-  strcpy(all->arrnm.arrnm_mod12[1], "TCV_Detail_2");
-  strcpy(all->arrnm.arrnm_mod12[2], "TCV_Detail_3");
-  strcpy(all->arrnm.arrnm_mod12[3], "TCV_Detail_4");
-  strcpy(all->arrnm.arrnm_mod12[4], "TCV_Detail_5");
-  strcpy(all->arrnm.arrnm_mod12[5], "Time_Series_Assessment");
-  strcpy(all->arrnm.arrnm_mod12[6], "Onset_Greenness_Increase");
-  strcpy(all->arrnm.arrnm_mod12[7], "Onset_Greenness_Maximum");
-  strcpy(all->arrnm.arrnm_mod12[8], "Onset_Greenness_Decrease");
-  strcpy(all->arrnm.arrnm_mod12[9], "Onset_Greenness_Minimum");
-  strcpy(all->arrnm.arrnm_mod12[10], "Peak_Greenness");
-  strcpy(all->arrnm.arrnm_mod12[11], "NBAR_EVI_Onset_Greenness_Minimum");
-  strcpy(all->arrnm.arrnm_mod12[12], "NBAR_EVI_Onset_Greenness_Maximum");
-  strcpy(all->arrnm.arrnm_mod12[13], "NBAR_EVI_Area");
-  strcpy(all->arrnm.arrnm_mod12[14], "VI_TBD");
-  //DEBUG: Josh
-   printf("Init 5\n");
+  // strcpy(all->arrnm.arrnm_mod12[0], "TCV_Detail_1");
+  // strcpy(all->arrnm.arrnm_mod12[1], "TCV_Detail_2");
+  // strcpy(all->arrnm.arrnm_mod12[2], "TCV_Detail_3");
+  // strcpy(all->arrnm.arrnm_mod12[3], "TCV_Detail_4");
+  // strcpy(all->arrnm.arrnm_mod12[4], "TCV_Detail_5");
+  // strcpy(all->arrnm.arrnm_mod12[5], "Time_Series_Assessment");
+  // strcpy(all->arrnm.arrnm_mod12[6], "Onset_Greenness_Increase");
+  // strcpy(all->arrnm.arrnm_mod12[7], "Onset_Greenness_Maximum");
+  // strcpy(all->arrnm.arrnm_mod12[8], "Onset_Greenness_Decrease");
+  // strcpy(all->arrnm.arrnm_mod12[9], "Onset_Greenness_Minimum");
+  // strcpy(all->arrnm.arrnm_mod12[10], "Peak_Greenness");
+  // strcpy(all->arrnm.arrnm_mod12[11], "NBAR_EVI_Onset_Greenness_Minimum");
+  // strcpy(all->arrnm.arrnm_mod12[12], "NBAR_EVI_Onset_Greenness_Maximum");
+  // strcpy(all->arrnm.arrnm_mod12[13], "NBAR_EVI_Area");
+  // strcpy(all->arrnm.arrnm_mod12[14], "VI_TBD");
 
 
 
@@ -447,8 +481,6 @@ Externals:
 
 
   strcpy(all->grpnm.grpnm, "\0");
-  //DEBUG: Josh
-   printf("Init 6\n");
 
 
 
@@ -468,60 +500,71 @@ Externals:
 
 
   }
-  //DEBUG: Josh
-   printf("Init 7\n");
 
-    strcpy(all->dtype.datatype_mod12[0], "uint16");
-    all->rank.rank_mod12[0]=2;
-    strcpy(all->dtype.datatype_mod12[1], "uint16");
-    all->rank.rank_mod12[1]=2;
-    strcpy(all->dtype.datatype_mod12[2], "uint16");
-    all->rank.rank_mod12[2]=2;
-    strcpy(all->dtype.datatype_mod12[3], "uint16");
-    all->rank.rank_mod12[3]=2;
-    strcpy(all->dtype.datatype_mod12[4], "uint16");
-    all->rank.rank_mod12[4]=2;
+  //#######################
+  // MAKE C6 CHANGES HERE
+  //#######################
+  strcpy(all->dtype.datatype_mod12[0], "uint8");
+  all->rank.rank_mod12[0]=3;
+  strcpy(all->dtype.datatype_mod12[1], "uint8");
+  all->rank.rank_mod12[1]=3;
+  strcpy(all->dtype.datatype_mod12[2], "uint16");
+  all->rank.rank_mod12[2]=3;
+  all->dims.dimsizes_mod12[2][2]=NUMMODES;
 
-    strcpy(all->dtype.datatype_mod12[5], "uint8");
-    all->rank.rank_mod12[5]=3;
-     all->dims.dimsizes_mod12[5][2]=NUMMODES;
 
-     //DEBUG: Josh
-   printf("Init 8\n");
 
-    strcpy(all->dtype.datatype_mod12[6], "uint16");
-    all->rank.rank_mod12[6]=3;
-    all->dims.dimsizes_mod12[6][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[7], "uint16");
-    all->rank.rank_mod12[7]=3;
-   all->dims.dimsizes_mod12[7][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[8], "uint16");
-    all->rank.rank_mod12[8]=3;
-   all->dims.dimsizes_mod12[8][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[9], "uint16");
-    all->rank.rank_mod12[9]=3;
-   all->dims.dimsizes_mod12[9][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[10], "uint16");
-    all->rank.rank_mod12[10]=3;
-   all->dims.dimsizes_mod12[10][2]=NUMMODES;
-   //DEBUG: Josh
-   printf("Init 9\n");
-
-    strcpy(all->dtype.datatype_mod12[11], "uint16");
-    all->rank.rank_mod12[11]=3;
-   all->dims.dimsizes_mod12[11][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[12], "uin16");
-    all->rank.rank_mod12[12]=3;
-   all->dims.dimsizes_mod12[12][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[13], "uint16");
-    all->rank.rank_mod12[13]=3;
-   all->dims.dimsizes_mod12[13][2]=NUMMODES;
-    strcpy(all->dtype.datatype_mod12[14], "uint16");
-    all->rank.rank_mod12[14]=3;
-   all->dims.dimsizes_mod12[14][2]=NUMMODES;
-
-   //DEBUG: Josh
-   printf("Init 10\n");
+  //   strcpy(all->dtype.datatype_mod12[0], "uint16");
+  //   all->rank.rank_mod12[0]=2;
+  //   strcpy(all->dtype.datatype_mod12[1], "uint16");
+  //   all->rank.rank_mod12[1]=2;
+  //   strcpy(all->dtype.datatype_mod12[2], "uint16");
+  //   all->rank.rank_mod12[2]=2;
+  //   strcpy(all->dtype.datatype_mod12[3], "uint16");
+  //   all->rank.rank_mod12[3]=2;
+  //   strcpy(all->dtype.datatype_mod12[4], "uint16");
+  //   all->rank.rank_mod12[4]=2;
+   //
+  //   strcpy(all->dtype.datatype_mod12[5], "uint8");
+  //   all->rank.rank_mod12[5]=3;
+  //    all->dims.dimsizes_mod12[5][2]=NUMMODES;
+   //
+  //    //DEBUG: Josh
+  //  printf("Init 8\n");
+   //
+  //   strcpy(all->dtype.datatype_mod12[6], "uint16");
+  //   all->rank.rank_mod12[6]=3;
+  //   all->dims.dimsizes_mod12[6][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[7], "uint16");
+  //   all->rank.rank_mod12[7]=3;
+  //  all->dims.dimsizes_mod12[7][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[8], "uint16");
+  //   all->rank.rank_mod12[8]=3;
+  //  all->dims.dimsizes_mod12[8][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[9], "uint16");
+  //   all->rank.rank_mod12[9]=3;
+  //  all->dims.dimsizes_mod12[9][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[10], "uint16");
+  //   all->rank.rank_mod12[10]=3;
+  //  all->dims.dimsizes_mod12[10][2]=NUMMODES;
+  //  //DEBUG: Josh
+  //  printf("Init 9\n");
+   //
+  //   strcpy(all->dtype.datatype_mod12[11], "uint16");
+  //   all->rank.rank_mod12[11]=3;
+  //  all->dims.dimsizes_mod12[11][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[12], "uin16");
+  //   all->rank.rank_mod12[12]=3;
+  //  all->dims.dimsizes_mod12[12][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[13], "uint16");
+  //   all->rank.rank_mod12[13]=3;
+  //  all->dims.dimsizes_mod12[13][2]=NUMMODES;
+  //   strcpy(all->dtype.datatype_mod12[14], "uint16");
+  //   all->rank.rank_mod12[14]=3;
+  //  all->dims.dimsizes_mod12[14][2]=NUMMODES;
+   //
+  //  //DEBUG: Josh
+  //  printf("Init 10\n");
 
 
 
@@ -849,165 +892,204 @@ Externals:
 
 
 
-
-
-/*PHE  SDS*/
-	for(i=0;i<5;i++)
-     	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-  		{
-
-
-			/* TCV1 SDS */
-  			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
-					    required*/
-  			strcat(dimlist,",");
- 			strcat(dimlist,all->smet.attribute[1]);
-  			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
-			                  dimlist,DFNT_UINT16,HDFE_NOMERGE);
-  			if(ier==GRID_ERRCODE)
-			{
-    				sprintf (string,"Not successful in defining TCV1 SDS");
-    				modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: quarterly2.c");
-  			}
- 		}
+  //#######################
+  // MAKE C6 CHANGES HERE
+  //#######################
+  // single-layer, UINT8 SDS
+  for(i=0;i<2;i++){
+    if(strcmp(SDS_NAME,all->smet.ln[i])==0){
+      // ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
+      // if(ier==GRID_ERRCODE){
+      //   sprintf (string,"Not successful in defining layers grid dimension");
+      //   modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: phe_bin2hdf.c");
+      // }
+      strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are*/
+      strcat(dimlist,",");
+      strcat(dimlist,all->smet.attribute[1]);
+      ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i], dimlist,DFNT_UINT8,HDFE_NOMERGE);
+      if(ier==GRID_ERRCODE){
+        // sprintf (string,"Not successful in defining TCV1 SDS");
+        sprintf (string,"Not successful in defining C6 SDS");
+        modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: quarterly2.c");
       }
+    }
+  }
 
-	/* Time_Series_Assessment SDS *2layers***/
-	if(strcmp(SDS_NAME,all->smet.ln[5])==0)
-	{
-
-		ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[5][2]);
-		if(ier==GRID_ERRCODE){
-			sprintf (string,"Not successful in defining nbar_bands grid dimension");
-			modsmf(MODIS_E_FUNCTION_ERROR, string,
-				"create_output_arrays: phe_bin2hdf.c");
-		}
-	/* time series*/
-		strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
-		      required*/
-		strcat(dimlist,",");
-		strcat(dimlist,all->smet.attribute[1]);
-		strcat(dimlist,",");
-		strcat(dimlist,all->smet.attribute[3]);
-
-		ier = GDdeffield(gid,all->arrnm.arrnm_mod12[5],
-		dimlist,DFNT_UINT8,HDFE_NOMERGE);
-		if(ier==GRID_ERRCODE){
-			sprintf (string,"Not successful in defining Dynamic QC SDS");
-			modsmf(MODIS_E_FUNCTION_ERROR, string,
-				"create_output_arrays: quarterly2.c");
-		}
-	}
-
-
-	for(i=6;i<11;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-			/* define grid dimensions for those SDSs that have more than
-			2 dimensions *** change*****/
-			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining nbar_bands grid dimension");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-					"create_output_arrays: phe_bin2hdf.c");
-			}
+  // two-layer, UINT16 SDS
+  for(i=2;i<3;i++){
+    if(strcmp(SDS_NAME,all->smet.ln[i])==0){
+      ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
+      if(ier==GRID_ERRCODE){
+        sprintf (string,"Not successful in defining layers grid dimension");
+        modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: phe_bin2hdf.c");
+      }
+      strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are*/
+      strcat(dimlist,",");
+      strcat(dimlist,all->smet.attribute[1]);
+      strcat(dimlist,",");
+      strcat(dimlist,all->smet.attribute[3]);
+      ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i], dimlist,DFNT_UINT16,HDFE_NOMERGE);
+      if(ier==GRID_ERRCODE){
+        // sprintf (string,"Not successful in defining TCV1 SDS");
+        sprintf (string,"Not successful in defining C6 SDS");
+        modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: quarterly2.c");
+      }
+    }
+  }
 
 
 
-			/* Onset_Greenness */
-			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
-				      required*/
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[1]);
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[3]);
+//////////////////////////////////////////////////////////////////////////////////
 
-			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
-			dimlist,DFNT_INT16,HDFE_NOMERGE);
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining PHE1 SDS");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-					"create_output_arrays: quarterly2.c");
-			}
-		}
-	}
-
-
-
-	for(i=11;i<13;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-
-			/* define grid dimensions for those SDSs that have more than
-			2 dimensions *** change*****/
-			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining nbar_bands grid dimension");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-					"create_output_arrays: phe_bin2hdf.c");
-			}
-
-
-			/*VI_Greenness */
-			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
-				      required*/
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[1]);
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[3]);
-
-			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
-			dimlist,DFNT_INT16,HDFE_NOMERGE);
-
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining VIGE SDS");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-			"create_output_arrays: quarterly2.c");
-			}
-		}
-	}
-
-
-
-	for(i=13;i<15;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-		/*VI_Area*/
-
-		/* define grid dimensions for those SDSs that have more than
-		2 dimensions *** change*****/
-			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining nbar_bands grid dimension");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-					"create_output_arrays: phe_bin2hdf.c");
-			}
-
-
-
-			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
-				      required*/
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[1]);
-			strcat(dimlist,",");
-			strcat(dimlist,all->smet.attribute[3]);
-
-			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
-			dimlist,DFNT_UINT16,HDFE_NOMERGE);
-			if(ier==GRID_ERRCODE){
-				sprintf (string,"Not successful in defining VIAR SDS");
-				modsmf(MODIS_E_FUNCTION_ERROR, string,
-					"create_output_arrays: quarterly2.c");
-			}
-
-		}
-	}
+// /*PHE  SDS*/
+// for(i=0;i<5;i++){
+//   if(strcmp(SDS_NAME,all->smet.ln[i])==0){
+//     /* TCV1 SDS */
+//     strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
+//     required*/
+//     strcat(dimlist,",");
+//     strcat(dimlist,all->smet.attribute[1]);
+//     ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i], dimlist,DFNT_UINT16,HDFE_NOMERGE);
+//
+//     if(ier==GRID_ERRCODE){
+//       sprintf (string,"Not successful in defining TCV1 SDS");
+//       modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: quarterly2.c");
+//     }
+//   }
+// }
+//
+// 	/* Time_Series_Assessment SDS *2layers***/
+// if(strcmp(SDS_NAME,all->smet.ln[5])==0){
+//   ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[5][2]);
+//   if(ier==GRID_ERRCODE){
+//     sprintf (string,"Not successful in defining nbar_bands grid dimension");
+//     modsmf(MODIS_E_FUNCTION_ERROR, string,"create_output_arrays: phe_bin2hdf.c");
+//   }
+//   /* time series*/
+//   strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
+//   required*/
+//   strcat(dimlist,",");
+//   strcat(dimlist,all->smet.attribute[1]);
+//   strcat(dimlist,",");
+//   strcat(dimlist,all->smet.attribute[3]);
+//
+//   ier = GDdeffield(gid,all->arrnm.arrnm_mod12[5],
+//   dimlist,DFNT_UINT8,HDFE_NOMERGE);
+//   if(ier==GRID_ERRCODE){
+//     sprintf (string,"Not successful in defining Dynamic QC SDS");
+//     modsmf(MODIS_E_FUNCTION_ERROR, string,
+//     "create_output_arrays: quarterly2.c");
+//   }
+// }
+//
+//
+// 	for(i=6;i<11;i++)
+// 	{
+// 		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+// 		{
+//
+// 			/* define grid dimensions for those SDSs that have more than
+// 			2 dimensions *** change*****/
+// 			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining nbar_bands grid dimension");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 					"create_output_arrays: phe_bin2hdf.c");
+// 			}
+//
+//
+//
+// 			/* Onset_Greenness */
+// 			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
+// 				      required*/
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[1]);
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[3]);
+//
+// 			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
+// 			dimlist,DFNT_INT16,HDFE_NOMERGE);
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining PHE1 SDS");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 					"create_output_arrays: quarterly2.c");
+// 			}
+// 		}
+// 	}
+//
+//
+//
+// 	for(i=11;i<13;i++)
+// 	{
+// 		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+// 		{
+//
+//
+// 			/* define grid dimensions for those SDSs that have more than
+// 			2 dimensions *** change*****/
+// 			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining nbar_bands grid dimension");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 					"create_output_arrays: phe_bin2hdf.c");
+// 			}
+//
+//
+// 			/*VI_Greenness */
+// 			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
+// 				      required*/
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[1]);
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[3]);
+//
+// 			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
+// 			dimlist,DFNT_INT16,HDFE_NOMERGE);
+//
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining VIGE SDS");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 			"create_output_arrays: quarterly2.c");
+// 			}
+// 		}
+// 	}
+//
+//
+//
+// 	for(i=13;i<15;i++)
+// 	{
+// 		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+// 		{
+// 		/*VI_Area*/
+//
+// 		/* define grid dimensions for those SDSs that have more than
+// 		2 dimensions *** change*****/
+// 			ier=GDdefdim(gid,all->smet.attribute[3],all->dims.dimsizes_mod12[i][2]);
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining nbar_bands grid dimension");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 					"create_output_arrays: phe_bin2hdf.c");
+// 			}
+//
+//
+//
+// 			strcpy(dimlist,all->smet.attribute[0]); /*Note that names YDim, XDim are
+// 				      required*/
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[1]);
+// 			strcat(dimlist,",");
+// 			strcat(dimlist,all->smet.attribute[3]);
+//
+// 			ier = GDdeffield(gid,all->arrnm.arrnm_mod12[i],
+// 			dimlist,DFNT_UINT16,HDFE_NOMERGE);
+// 			if(ier==GRID_ERRCODE){
+// 				sprintf (string,"Not successful in defining VIAR SDS");
+// 				modsmf(MODIS_E_FUNCTION_ERROR, string,
+// 					"create_output_arrays: quarterly2.c");
+// 			}
+//
+// 		}
+// 	}
 
 
 	/* detach grid */
@@ -1165,170 +1247,197 @@ Externals:
 
   /***MOD12Q2**/
 
-  ier=allocate_2d((void ***)&all->ptrs.marray.tcv1_data, 1, Data_Columns,
-		  sizeof(uint16));
+  //#######################
+  // MAKE C6 CHANGES HERE
+  //#######################
+  ier=allocate_3d((void ****)&all->ptrs.marray.numcycles_data,1,Data_Columns,1,sizeof(uint8));
   if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[0]);
+    sprintf(string, "allocate_3d, %s, quarterly2.c",all->arrnm.arrnm_mod12[5]);
     modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
     return(FAILURE);
   }
 
- ier=allocate_2d((void ***)&all->ptrs.marray.tcv2_data, 1, Data_Columns,
-		  sizeof(uint16));
+  ier=allocate_3d((void ****)&all->ptrs.marray.dyqc_data,1,Data_Columns,1,sizeof(uint8));
   if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[1]);
+    sprintf(string, "allocate_3d, %s, quarterly2.c",all->arrnm.arrnm_mod12[5]);
     modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
     return(FAILURE);
   }
-
-
- ier=allocate_2d((void ***)&all->ptrs.marray.tcv3_data, 1, Data_Columns,
-		  sizeof(uint16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[2]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-  }
-
- ier=allocate_2d((void ***)&all->ptrs.marray.tcv4_data, 1, Data_Columns,
-		  sizeof(uint16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[3]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-  }
-
- ier=allocate_2d((void ***)&all->ptrs.marray.tcv5_data, 1, Data_Columns,
-		  sizeof(uint16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[4]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-  }
-
-
-
-
-
-
-  ier=allocate_3d((void ****)&all->ptrs.marray.dyqc_data,1,
-		  Data_Columns,NUMMODES, sizeof(uint8));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[5]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-  }
-  /**dyqc is based on the Time_Series_Assessment format**/
-
-
 
   /*phenology data is stored in a BIP format**/
-    ier=allocate_3d((void ****)&all->ptrs.marray.phe1_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
+  ier=allocate_3d((void ****)&all->ptrs.marray.phe1_data,1, Data_Columns, NUMMODES, sizeof(int16));
   if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[6]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.phe2_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[7]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.phe3_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[8]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.phe4_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[9]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.pkge_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[10]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.vige_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[11]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.vima_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[12]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.viar_data,
-		    1, Data_Columns, NUMMODES, sizeof(int16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[13]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-
-    ier=allocate_3d((void ****)&all->ptrs.marray.vtbd_data,
-		    1, Data_Columns, NUMMODES, sizeof(uint16));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_3d, %s, quarterly2.c",
-	    all->arrnm.arrnm_mod12[14]);
-    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
-    return(FAILURE);
-    }
-  /*Allocate for MODIS data file arrays;
-    on a per-line basis*/
-
-
-
-  /*MOD12*/
-
-
-  ier=allocate_2d((void ***)&all->ptrs.marray.type1_data, 1, Data_Columns,
-		  sizeof(uint8));
-  if(ier==FAILURE){
-    sprintf(string, "allocate_2d, %s, bin2hdf_phe.c",
-	    all->arrnm.arrnm_mod12[0]);
+    sprintf(string, "allocate_3d, %s, quarterly2.c", all->arrnm.arrnm_mod12[6]);
     modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
     return(FAILURE);
   }
+
+
+////////////////////////////////////////////////////////////////////////////
+ //  ier=allocate_2d((void ***)&all->ptrs.marray.tcv1_data, 1, Data_Columns,
+ // 	  sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_2d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[0]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //
+ // ier=allocate_2d((void ***)&all->ptrs.marray.tcv2_data, 1, Data_Columns,
+ // 	  sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_2d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[1]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //
+ //
+ // ier=allocate_2d((void ***)&all->ptrs.marray.tcv3_data, 1, Data_Columns,
+ // 	  sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_2d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[2]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //
+ // ier=allocate_2d((void ***)&all->ptrs.marray.tcv4_data, 1, Data_Columns,
+ // 	  sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_2d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[3]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //
+ // ier=allocate_2d((void ***)&all->ptrs.marray.tcv5_data, 1, Data_Columns,
+ // 	  sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_2d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[4]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //
+ //
+ //
+ //
+ //
+ //
+ //  ier=allocate_3d((void ****)&all->ptrs.marray.dyqc_data,1,
+ // 	  Data_Columns,NUMMODES, sizeof(uint8));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[5]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //  }
+ //  /**dyqc is based on the Time_Series_Assessment format**/
+ //
+ //
+ //
+ //  /*phenology data is stored in a BIP format**/
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.phe1_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[6]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.phe2_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[7]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.phe3_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[8]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.phe4_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[9]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.pkge_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[10]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.vige_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[11]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.vima_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[12]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.viar_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(int16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[13]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //
+ //    ier=allocate_3d((void ****)&all->ptrs.marray.vtbd_data,
+ // 	    1, Data_Columns, NUMMODES, sizeof(uint16));
+ //  if(ier==FAILURE){
+ //    sprintf(string, "allocate_3d, %s, quarterly2.c",
+ //     all->arrnm.arrnm_mod12[14]);
+ //    modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+ //    return(FAILURE);
+ //    }
+ //  /*Allocate for MODIS data file arrays;
+ //    on a per-line basis*/
+  //
+  //
+  //
+  // /*MOD12*/
+  //
+  //
+  // ier=allocate_2d((void ***)&all->ptrs.marray.type1_data, 1, Data_Columns,
+	// 	  sizeof(uint8));
+  // if(ier==FAILURE){
+  //   sprintf(string, "allocate_2d, %s, bin2hdf_phe.c",
+	//     all->arrnm.arrnm_mod12[0]);
+  //   modsmf(MODIS_E_FUNCTION_ERROR, F_ERR, string);
+  //   return(FAILURE);
+  // }
 
 
   return(SUCCESS);
@@ -1391,294 +1500,398 @@ int put_sds_met(struct vars_and_ptrs *all)
 
     /*Write SDS-level metadata*/
 
-
-	for(i=0;i<15;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-			/*long_name*/
-
-			/**  all->smet.nelementsS=(long)strleSTR_MAX;**/
-			all->smet.nelementsS=strlen(all->smet.ln[i]);
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.ln_name,
-			all->smet.ln_type,
-			all->smet.nelementsS,
-			all->smet.ln[i]);
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarinfo, %s, phe_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-			/*units*/
-
-
-			/**  all->smet.nelementsS=(long)STR_MAX;**/
-			all->smet.nelementsS=strlen(all->smet.unit[i]);
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.unit_name,
-			all->smet.unit_type,
-			all->smet.nelementsS,
-			all->smet.unit[i]);
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-		}
-	}
-	for(i=0;i<5;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-		/*valid range*/
-
-
-			all->smet.nelements2=2L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.vr_name,
-			all->smet.vr_type2,
-			all->smet.nelements2,
-			all->smet.vr_tcv1);
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-
-			/*fill values*/
-
-			all->smet.nelements1=1L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.fv_name,
-			all->smet.fv_type2,
-			all->smet.nelements1,
-			&all->smet.fv_tcv1);
-
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
-
-
-
-	if(strcmp(SDS_NAME,all->smet.ln[5])==0)
-	{
-		/*valid range*/
-		all->smet.nelements2=2L;
-		ier=putMODISarinfo(all->ptrs.fp.ofp,
-		all->arrnm.arrnm_mod12[5],
-		all->grpnm.grpnm,
-		all->smet.vr_name,
-		all->smet.vr_type1,
-		all->smet.nelements2,
-		all->smet.vr_lct);
-		if(ier==FAILURE){
-
-			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-				all->arrnm.arrnm_mod12[i]);
-			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-			return(FAILURE);
-		}
-
-
-
-		/*fill values*/
-
-		all->smet.nelements1=1L;
-		ier=putMODISarinfo(all->ptrs.fp.ofp,
-		all->arrnm.arrnm_mod12[5],
-		all->grpnm.grpnm,
-		all->smet.fv_name,
-		all->smet.fv_type1,
-		all->smet.nelements1,
-		&all->smet.fv_lct);
-		if(ier==FAILURE){
-
-			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-				all->arrnm.arrnm_mod12[i]);
-			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-			return(FAILURE);
-		}
-	}
-
-
-
-
-	for(i=6;i<11;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-		/*valid range*/
-
-
-			all->smet.nelements2=2L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.vr_name,
-			all->smet.vr_type4,
-			all->smet.nelements2,
-			all->smet.vr_phe1);
-
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-
-			/*fill values*/
-
-			all->smet.nelements1=1L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.fv_name,
-			all->smet.fv_type4,
-			all->smet.nelements1,
-			&all->smet.fv_phe1);
-
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
-
-
-
-
-
-	for(i=11;i<13;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-		/*valid range*/
-
-
-			all->smet.nelements2=2L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.vr_name,
-			all->smet.vr_type4,
-			all->smet.nelements2,
-			all->smet.vr_vige);
-
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-
-			/*fill values*/
-
-			all->smet.nelements1=1L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.fv_name,
-			all->smet.fv_type4,
-			all->smet.nelements1,
-			&all->smet.fv_vige);
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
-
-
-
-	for(i=13;i<15;i++)
-	{
-		if(strcmp(SDS_NAME,all->smet.ln[i])==0)
-		{
-
-		/*valid range*/
-
-
-			all->smet.nelements2=2L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.vr_name,
-			all->smet.vr_type2,
-			all->smet.nelements2,
-			all->smet.vr_viar);
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-
-			/*fill values*/
-
-			all->smet.nelements1=1L;
-			ier=putMODISarinfo(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->smet.fv_name,
-			all->smet.fv_type2,
-			all->smet.nelements1,
-			&all->smet.fv_viar);
-
-			if(ier==FAILURE){
-
-				sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
+    //#######################
+    // MAKE C6 CHANGES HERE
+    //#######################
+    for(i=0;i<3;i++){
+      if(strcmp(SDS_NAME,all->smet.ln[i])==0){
+        all->smet.nelementsS=strlen(all->smet.ln[i]);
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.ln_name,
+        all->smet.ln_type,
+        all->smet.nelementsS,
+        all->smet.ln[i]);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, phe_bin2hdf.c",
+          all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+        all->smet.nelementsS=strlen(all->smet.unit[i]);
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.unit_name,
+        all->smet.unit_type,
+        all->smet.nelementsS,
+        all->smet.unit[i]);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+      }
+    }
+
+    // set 1-layer Uint8 layer attributes
+    for(i=0;i<2;i++){
+      if(strcmp(SDS_NAME,all->smet.ln[5])==0){
+        /*valid range*/
+        all->smet.nelements2=2L;
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.vr_name,
+        all->smet.vr_type1,
+        all->smet.nelements2,
+        all->smet.vr_lct);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+        /*fill values*/
+        all->smet.nelements1=1L;
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.fv_name,
+        all->smet.fv_type1,
+        all->smet.nelements1,
+        &all->smet.fv_lct);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+      }
+    }
+
+    for(i=2;i<3;i++){
+      if(strcmp(SDS_NAME,all->smet.ln[i])==0){
+        /*valid range*/
+        all->smet.nelements2=2L;
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.vr_name,
+        all->smet.vr_type4,
+        all->smet.nelements2,
+        all->smet.vr_phe1);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c", all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+        /*fill values*/
+        all->smet.nelements1=1L;
+        ier=putMODISarinfo(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->smet.fv_name,
+        all->smet.fv_type4,
+        all->smet.nelements1,
+        &all->smet.fv_phe1);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+      }
+    }
+
+
+
+//////////////////////////////////////////////////////////////////////////
+	// for(i=0;i<15;i++)
+	// {
+	// 	if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+	// 	{
+  //
+	// 		/*long_name*/
+  //
+	// 		/**  all->smet.nelementsS=(long)strleSTR_MAX;**/
+	// 		all->smet.nelementsS=strlen(all->smet.ln[i]);
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.ln_name,
+	// 		all->smet.ln_type,
+	// 		all->smet.nelementsS,
+	// 		all->smet.ln[i]);
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarinfo, %s, phe_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+	// 		/*units*/
+  //
+  //
+	// 		/**  all->smet.nelementsS=(long)STR_MAX;**/
+	// 		all->smet.nelementsS=strlen(all->smet.unit[i]);
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.unit_name,
+	// 		all->smet.unit_type,
+	// 		all->smet.nelementsS,
+	// 		all->smet.unit[i]);
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+	// 	}
+	// }
+	// for(i=0;i<5;i++)
+	// {
+	// 	if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+	// 	{
+  //
+	// 	/*valid range*/
+  //
+  //
+	// 		all->smet.nelements2=2L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.vr_name,
+	// 		all->smet.vr_type2,
+	// 		all->smet.nelements2,
+	// 		all->smet.vr_tcv1);
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+  //
+	// 		/*fill values*/
+  //
+	// 		all->smet.nelements1=1L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.fv_name,
+	// 		all->smet.fv_type2,
+	// 		all->smet.nelements1,
+	// 		&all->smet.fv_tcv1);
+  //
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
+
+  //
+  //
+	// if(strcmp(SDS_NAME,all->smet.ln[5])==0)
+	// {
+	// 	/*valid range*/
+	// 	all->smet.nelements2=2L;
+	// 	ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 	all->arrnm.arrnm_mod12[5],
+	// 	all->grpnm.grpnm,
+	// 	all->smet.vr_name,
+	// 	all->smet.vr_type1,
+	// 	all->smet.nelements2,
+	// 	all->smet.vr_lct);
+	// 	if(ier==FAILURE){
+  //
+	// 		sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 			all->arrnm.arrnm_mod12[i]);
+	// 		modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 		return(FAILURE);
+	// 	}
+  //
+  //
+  //
+	// 	/*fill values*/
+  //
+	// 	all->smet.nelements1=1L;
+	// 	ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 	all->arrnm.arrnm_mod12[5],
+	// 	all->grpnm.grpnm,
+	// 	all->smet.fv_name,
+	// 	all->smet.fv_type1,
+	// 	all->smet.nelements1,
+	// 	&all->smet.fv_lct);
+	// 	if(ier==FAILURE){
+  //
+	// 		sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 			all->arrnm.arrnm_mod12[i]);
+	// 		modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 		return(FAILURE);
+	// 	}
+	// }
+  //
+
+
+
+	// for(i=6;i<11;i++)
+	// {
+	// 	if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+	// 	{
+  //
+	// 	/*valid range*/
+  //
+  //
+	// 		all->smet.nelements2=2L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.vr_name,
+	// 		all->smet.vr_type4,
+	// 		all->smet.nelements2,
+	// 		all->smet.vr_phe1);
+  //
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+  //
+	// 		/*fill values*/
+  //
+	// 		all->smet.nelements1=1L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.fv_name,
+	// 		all->smet.fv_type4,
+	// 		all->smet.nelements1,
+	// 		&all->smet.fv_phe1);
+  //
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
+
+
+
+
+
+	// for(i=11;i<13;i++)
+	// {
+	// 	if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+	// 	{
+  //
+	// 	/*valid range*/
+  //
+  //
+	// 		all->smet.nelements2=2L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.vr_name,
+	// 		all->smet.vr_type4,
+	// 		all->smet.nelements2,
+	// 		all->smet.vr_vige);
+  //
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+  //
+	// 		/*fill values*/
+  //
+	// 		all->smet.nelements1=1L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.fv_name,
+	// 		all->smet.fv_type4,
+	// 		all->smet.nelements1,
+	// 		&all->smet.fv_vige);
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
+  //
+  //
+  //
+	// for(i=13;i<15;i++)
+	// {
+	// 	if(strcmp(SDS_NAME,all->smet.ln[i])==0)
+	// 	{
+  //
+	// 	/*valid range*/
+  //
+  //
+	// 		all->smet.nelements2=2L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.vr_name,
+	// 		all->smet.vr_type2,
+	// 		all->smet.nelements2,
+	// 		all->smet.vr_viar);
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+  //
+	// 		/*fill values*/
+  //
+	// 		all->smet.nelements1=1L;
+	// 		ier=putMODISarinfo(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->smet.fv_name,
+	// 		all->smet.fv_type2,
+	// 		all->smet.nelements1,
+	// 		&all->smet.fv_viar);
+  //
+	// 		if(ier==FAILURE){
+  //
+	// 			sprintf(string, "putMODISarinfo, %s, lc_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
 
 
 
@@ -1920,129 +2133,165 @@ int put_arrays(struct vars_and_ptrs *all)
    int i=0;
     /*land cover classification arrays*/
 
+    ////////////////////////
+    // MAKE C6 CHANGES HERE
+    ////////////////////////
+    for(i=0;i<2;i++){
+      if(strcmp(SDS_NAME, all->smet.ln[i])==0){
+    		ier=putMODISarray(all->ptrs.fp.ofp,
+    		all->arrnm.arrnm_mod12[i],
+    		all->grpnm.grpnm,
+    		all->start.start_mod12_type1,
+    		all->dims.dimsizes_mod12[i],
+    		all->ptrs.marray.dyqc_data[0][0]);
+    		if(ier==FAILURE){
+    			sprintf(string, "putMODISarray, %s, lc_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+    			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+    			return(FAILURE);
+    		}
+    	}
+    }
 
-	for(i=0;i<5;i++)
-	{
-		if(strcmp(SDS_NAME, all->smet.ln[i])==0)
-		{
-			ier=putMODISarray(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->start.start_mod12q2_tcv1,
-			all->dims.dimsizes_mod12[i],
-			all->ptrs.marray.tcv1_data[0]);
-
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-
-		}
-	}
-
-
-
-	for(i=6;i<11;i++)
-	{
-		if(strcmp(SDS_NAME, all->smet.ln[i])==0)
-		{
-
-		/** printf("333 phe=%d\n",all->ptrs.marray.phe1_data[0][3][10]); **/
-
-			ier=putMODISarray(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->start.start_mod12q2_phe1,
-			all->dims.dimsizes_mod12[i],
-			all->ptrs.marray.phe1_data[0][0]);
-
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
+    for(i=2;i<3;i++){
+      if(strcmp(SDS_NAME, all->smet.ln[i])==0){
+        ier=putMODISarray(all->ptrs.fp.ofp,
+        all->arrnm.arrnm_mod12[i],
+        all->grpnm.grpnm,
+        all->start.start_mod12q2_phe1,
+        all->dims.dimsizes_mod12[i],
+        all->ptrs.marray.phe1_data[0][0]);
+        if(ier==FAILURE){
+          sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",all->arrnm.arrnm_mod12[i]);
+          modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+          return(FAILURE);
+        }
+      }
+    }
 
 
 
+	// for(i=0;i<5;i++)
+	// {
+	// 	if(strcmp(SDS_NAME, all->smet.ln[i])==0)
+	// 	{
+	// 		ier=putMODISarray(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->start.start_mod12q2_tcv1,
+	// 		all->dims.dimsizes_mod12[i],
+	// 		all->ptrs.marray.tcv1_data[0]);
+  //
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+  //
+	// 	}
+	// }
 
 
-	for(i=13;i<15;i++)
-	{
 
-		if(strcmp(SDS_NAME, all->smet.ln[i])==0)
-		{
-
-			ier=putMODISarray(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->start.start_mod12q2_viar,
-			all->dims.dimsizes_mod12[i],
-			all->ptrs.marray.viar_data[0][0]);
-
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-
-		}
-	}
-
-
-	for(i=11;i<13;i++)
-	{
-
-		if(strcmp(SDS_NAME, all->smet.ln[i])==0)
-		{
-
-			ier=putMODISarray(all->ptrs.fp.ofp,
-			all->arrnm.arrnm_mod12[i],
-			all->grpnm.grpnm,
-			all->start.start_mod12q2_vige,
-			all->dims.dimsizes_mod12[i],
-			all->ptrs.marray.vige_data[0][0]);
-
-			if(ier==FAILURE){
-				sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
-					all->arrnm.arrnm_mod12[i]);
-				modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-				return(FAILURE);
-			}
-		}
-	}
+	// for(i=6;i<11;i++)
+	// {
+	// 	if(strcmp(SDS_NAME, all->smet.ln[i])==0)
+	// 	{
+  //
+	// 	/** printf("333 phe=%d\n",all->ptrs.marray.phe1_data[0][3][10]); **/
+  //
+	// 		ier=putMODISarray(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->start.start_mod12q2_phe1,
+	// 		all->dims.dimsizes_mod12[i],
+	// 		all->ptrs.marray.phe1_data[0][0]);
+  //
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
 
 
 
 
 
-	if(strcmp(SDS_NAME, all->smet.ln[5])==0)
-	{
-
-		ier=putMODISarray(all->ptrs.fp.ofp,
-		all->arrnm.arrnm_mod12[5],
-		all->grpnm.grpnm,
-		all->start.start_mod12_type1,
-		all->dims.dimsizes_mod12[5],
-		all->ptrs.marray.dyqc_data[0][0]);
-
-		if(ier==FAILURE){
-			sprintf(string, "putMODISarray, %s, lc_bin2hdf.c",
-				all->arrnm.arrnm_mod12[5]);
-			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
-			return(FAILURE);
-		}
-
-
-	}
-
+	// for(i=13;i<15;i++)
+	// {
+  //
+	// 	if(strcmp(SDS_NAME, all->smet.ln[i])==0)
+	// 	{
+  //
+	// 		ier=putMODISarray(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->start.start_mod12q2_viar,
+	// 		all->dims.dimsizes_mod12[i],
+	// 		all->ptrs.marray.viar_data[0][0]);
+  //
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+  //
+	// 	}
+	// }
+  //
+  //
+	// for(i=11;i<13;i++)
+	// {
+  //
+	// 	if(strcmp(SDS_NAME, all->smet.ln[i])==0)
+	// 	{
+  //
+	// 		ier=putMODISarray(all->ptrs.fp.ofp,
+	// 		all->arrnm.arrnm_mod12[i],
+	// 		all->grpnm.grpnm,
+	// 		all->start.start_mod12q2_vige,
+	// 		all->dims.dimsizes_mod12[i],
+	// 		all->ptrs.marray.vige_data[0][0]);
+  //
+	// 		if(ier==FAILURE){
+	// 			sprintf(string, "putMODISarray, %s, phe_bin2hdf.c",
+	// 				all->arrnm.arrnm_mod12[i]);
+	// 			modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 			return(FAILURE);
+	// 		}
+	// 	}
+	// }
+  //
+  //
+  //
+  //
+  //
+	// if(strcmp(SDS_NAME, all->smet.ln[5])==0)
+	// {
+  //
+	// 	ier=putMODISarray(all->ptrs.fp.ofp,
+	// 	all->arrnm.arrnm_mod12[5],
+	// 	all->grpnm.grpnm,
+	// 	all->start.start_mod12_type1,
+	// 	all->dims.dimsizes_mod12[5],
+	// 	all->ptrs.marray.dyqc_data[0][0]);
+  //
+	// 	if(ier==FAILURE){
+	// 		sprintf(string, "putMODISarray, %s, lc_bin2hdf.c",
+	// 			all->arrnm.arrnm_mod12[5]);
+	// 		modsmf(MODIS_E_FUNCTION_ERROR, I_ERR, string);
+	// 		return(FAILURE);
+	// 	}
+  //
+  //
+	// }
+  //
 
 	return(SUCCESS);
 
@@ -2133,6 +2382,78 @@ int get_phe(struct vars_and_ptrs *all, int16 newyear)
 		all->start.start_mod12q2_viar[0]=(long)line_counter;
 
 		/*read PHE types from binary file */
+
+    /////////////////////////////
+    // MAKE C6 CHANGES HERE
+    ////////////////////////////
+    // for num_cycles
+    if(strcmp(SDS_NAME,all->smet.ln[0])==0){
+      fread(datau8,sizeof(uint8),Data_Columns,in);
+      j=0;
+      for(i=0;i<Data_Columns;i++){
+        for(imod=0;imod<2;imod++){
+          all->ptrs.marray.numcycles_data[0][i][imod]=datau83[j];
+          j=j+1;
+        }
+      }
+    }
+
+    if(strcmp(SDS_NAME,all->smet.ln[0])==0){
+      fread(datau8,sizeof(uint8),Data_Columns,in);
+      j=0;
+      for(i=0;i<Data_Columns;i++){
+        for(imod=0;imod<2;imod++){
+          all->ptrs.marray.numcycles_data[0][i][imod]=datau83[j];
+          j=j+1;
+        }
+      }
+    }
+
+    if(strcmp(SDS_NAME,all->smet.ln[1])==0||strcmp(SDS_NAME,all->smet.ln[2])==0){
+      year=(PGSt_integer)newyear;
+      julday=PGS_TD_julday(2000,1,1);   /**first day of year 2000**/
+      julday1=PGS_TD_julday(year,1,1); /**first day of concerned year**/
+      doy=(uint16)(julday1-julday);    /**days first day of year 2000**/
+      fread(datau83,sizeof(uint8),2*Data_Columns,in);
+      /****three dims*int16*/
+      j=0;
+      for(i=0;i<Data_Columns;i++){
+        for(imod=0;imod<2;imod++){
+          if((data16[j]==all->smet.fv_phe1)||(data16[j]==0)){
+            all->ptrs.marray.phe1_data[0][i][imod]=data16[j];
+          }
+          else{
+            /***if input data for phenology calculation range three years (2000, 2001, 2003),
+            the calculated DOY is from -1 to -368 for 2000;
+            the calculated DOY is from 1 to  368 for 2001---current year the NewYear;
+            the calculated DOY is from 369 to 730   for 2002;
+            *****xyz***2005**/
+            if((data16[j]<-365)&&(data16[j]>-369))
+              data16[j]=-365;
+            /*   if((data16[j]<0)&&(data16[j]>-366))
+            {
+            all->ptrs.marray.phe1_data[0][i][imod]=doy-365+abs(data16[j]);
+            }
+            */
+            if((data16[j]<369)&&(data16[j]>365))
+              data16[j]=365;/*
+            if((data16[j]>0)&&(data16[j]<366))
+              all->ptrs.marray.phe1_data[0][i][imod]=data16[j]+doy;
+            */
+            /*  if(data16[j]>368)   /**368-365=3**/
+            /* all->ptrs.marray.phe1_data[0][i][imod]=data16[j]+doy-3;*/
+            if(data16[j]>368)   /**368-365=3**/
+              data16[j]=data16[j]-3;
+            all->ptrs.marray.phe1_data[0][i][imod]=data16[j]+doy-3;
+
+          }
+
+          j=j+1;
+        }
+      }
+    }
+
+
 
 		if(strcmp(SDS_NAME,all->smet.ln[0])==0||strcmp(SDS_NAME,all->smet.ln[1])==0||strcmp(SDS_NAME,all->smet.ln[2])==0||strcmp(SDS_NAME,all->smet.ln[3])==0||strcmp(SDS_NAME,all->smet.ln[4])==0)
 		{

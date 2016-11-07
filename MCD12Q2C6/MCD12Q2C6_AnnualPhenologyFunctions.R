@@ -934,6 +934,7 @@ PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T,
 
     # add the data/spline with fill/miss/snow info
     points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
+		# points(dates[is.na(resids) & (snowflags == 1 | snowflags == 5)], filtered[is.na(resids) & (snowflags == 1 | snowflags == 5)], type="p", pch=pchs[is.na(resids) & (snowflags == 1 | snowflags == 5)], cex=0.75, col=cols[is.na(resids) & (snowflags == 1 | snowflags == 5)])
     points(dates, filtered, type="l", lwd=2, col="darkgrey")
 
     for(seg_metric in seg_metrics){

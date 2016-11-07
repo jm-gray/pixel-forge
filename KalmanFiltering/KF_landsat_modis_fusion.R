@@ -20,7 +20,8 @@ source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_fun
 
 #-------------------------------------------------------------------------------
 # get the landsat data and dates
-landsat_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat"
+# landsat_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat"
+landsat_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/Landsat"
 landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2_landsat_overlap.tif", rec=T, full=T)
 landsat_evi2_files <- landsat_evi2_files[order(GetLandsatDate(landsat_evi2_files))]
 landsat_blue_files <- dir(landsat_data_dir, pattern="band1_landsat_overlap.tif", rec=T, full=T)
@@ -35,7 +36,8 @@ landsat_dates <- sort(GetLandsatDate(landsat_nir_files))
 
 #-------------------------------------------------------------------------------
 # get the modis data and dates
-modis_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP"
+# modis_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP"
+modis_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/MODIS"
 modis_evi2_files <- dir(modis_data_dir, pattern="evi2_modis_overlap.tif", full=T)
 modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
 modis_evi2_files <- modis_evi2_files[order(modis_dates)]
@@ -55,14 +57,20 @@ modis_dates <- sort(modis_dates)
 
 #-------------------------------------------------------------------------------
 # get the CDL files
-cdl_files <- dir("/projectnb/modislc/users/joshgray/DL_Landsat/CDL_sub", pattern="landsat_overlap.tif", full=T)
+# cdl_files <- dir("/projectnb/modislc/users/joshgray/DL_Landsat/CDL_sub", pattern="landsat_overlap.tif", full=T)
+cdl_files <- dir("/Users/jmgray2/Documents/NebraskaFusion/CDL", pattern="landsat_overlap.tif", full=T)
 cdl_years <- as.numeric(substr(basename(cdl_files), 5, 8))
 
 #---------------------------------------------------------------------
 # set up the cluster
-cl <- makeCluster(16)
+# cl <- makeCluster(16)
+cl <- makeCluster(8)
 clusterEvalQ(cl, {source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R")})
 
+#---------------------------------------------------------------------
+# Calculate the RMSE between Landsat-MODIS at the pixel scale
+#	This can be accomplished by only considering matching dates, or from splines
+#
 # data may be too large to keep in memory, read and process blocks of lines instead
 rows_to_read <- 1e3
 tmp_r <- raster(landsat_evi2_files[1])
@@ -89,7 +97,8 @@ for(i in is){
 	}
 }
 # save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse.Rdata")
-save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match.Rdata")
+# save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match.Rdata")
+save(out_rmse, file="/Users/jmgray2/Documents/NebraskaFusion/out_rmse_match.Rdata")
 
 #-------------------------------------------------------------------------------
 scale_factor <- 1e4
