@@ -164,6 +164,6 @@ out_pdf <- file.path(args$out_dir, paste("INCA_plot_", args$tile, ".pdf", sep=""
 pdf(file=out_pdf, h=7, w=24)
 for(metric in metrics){
   in_file <- dir(args$data_dir, pattern=paste("INCA_summary_", args$tile, "_", metric, ".tif", sep=""), full=T)
-  PlotINCASummary(in_file, out_pdf=out_pdf, metric_name=metric)
+  PlotINCASummary(in_file, metric_name=metric)
 }
 dev.off()
