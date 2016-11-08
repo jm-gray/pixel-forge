@@ -3,7 +3,7 @@ library(raster)
 library(RColorBrewer)
 library(argparse)
 
-PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share//jmgray2/MODIS/LWMASK500"){
+PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jmgray2/MODIS/LWMASK500"){
   # plotting for INCA output
   MAXPIXELS <- 2.5e6
   PVALUETHRESH <- 0.05
