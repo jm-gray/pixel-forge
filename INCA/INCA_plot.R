@@ -3,7 +3,7 @@ library(raster)
 library(RColorBrewer)
 library(argparse)
 
-PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
+PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share//jmgray2/MODIS/LWMASK500"){
   # plotting for INCA output
   MAXPIXELS <- 2.5e6
   PVALUETHRESH <- 0.05
@@ -28,6 +28,10 @@ PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/Volumes/
   # input_file <- "~/Desktop/INCA_summary_h11v04_halfspring.tif"
   tile <- gsub(".*(h[0-9][0-9]v[0-9][0-9]).*", "\\1", basename(input_file))
   lwmask_file <- dir(LWMASKDIR, pattern=paste(".*", tile, ".*", "bin$", sep=""), full=T)
+
+  #DEBUG
+  print(input_file)
+  print(lwmask_file)
 
   s <- stack(input_file)
   lwmask <- raster(lwmask_file)
@@ -164,6 +168,7 @@ out_pdf <- file.path(args$out_dir, paste("INCA_plot_", args$tile, ".pdf", sep=""
 pdf(file=out_pdf, h=7, w=24)
 for(metric in metrics){
   in_file <- dir(args$data_dir, pattern=paste("INCA_summary_", args$tile, "_", metric, ".tif", sep=""), full=T)
+  print(in_file)
   PlotINCASummary(in_file, metric_name=metric)
 }
 dev.off()
