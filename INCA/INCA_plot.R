@@ -164,7 +164,7 @@ args <- arg_parser$parse_args()
 
 metrics <- c("ogi", "halfspring", "halffall", "dormancy", "gsl")
 # metrics <- c("halfspring")
-out_pdf <- file.path(args$out_dir, paste("INCA_plot_", args$tile, ".pdf", sep=""))
+out_pdf <- file.path(args$output_dir, paste("INCA_plot_", args$tile, ".pdf", sep=""))
 pdf(file=out_pdf, h=7, w=24)
 for(metric in metrics){
   in_file <- dir(args$data_dir, pattern=paste("INCA_summary_", args$tile, "_", metric, ".tif", sep=""), full=T)
