@@ -1,7 +1,9 @@
+.libPaths("/home/jmgray2/R/x86_64-unknown-linux-gnu-library/3.1")
 library(raster)
 library(RColorBrewer)
+library(argparse)
 
-PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASKDIR="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
+PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jmgray2/MODIS/LWMASK500"){
   # plotting for INCA output
   MAXPIXELS <- 2.5e6
   PVALUETHRESH <- 0.05
@@ -13,20 +15,23 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASK
   MADCUTOFFSQUANTS <- c(0, 0.98)
   WATERCOLOR <- rgb(0.7, 0.7, 0.7)
   LANDCOLOR <- rgb(0.2, 0.2, 0.2)
+  LEGENDAXISCEX <- 1
+  LEGENDMAINCEX <- 1
+  LEGENDWIDTH <- 3.5
 
   # the color palettes
   div_pal <- colorRampPalette(rev(brewer.pal(11, "RdYlBu")))
   median_pal <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
-  # mad_pal <- colorRampPalette(brewer.pal(9, "PuRd"))
   mad_pal <- colorRampPalette(brewer.pal(9, "PuBuGn"))
-  LEGENDAXISCEX <- 1
-  LEGENDMAINCEX <- 1
-  LEGENDWIDTH <- 3.5
 
   ###################################
   # input_file <- "~/Desktop/INCA_summary_h11v04_halfspring.tif"
   tile <- gsub(".*(h[0-9][0-9]v[0-9][0-9]).*", "\\1", basename(input_file))
   lwmask_file <- dir(LWMASKDIR, pattern=paste(".*", tile, ".*", "bin$", sep=""), full=T)
+
+  #DEBUG
+  print(input_file)
+  print(lwmask_file)
 
   s <- stack(input_file)
   lwmask <- raster(lwmask_file)
@@ -78,11 +83,11 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASK
   ###################################
   # setup the plot
   # quartz(h=7, w=21.5)
-  if(!is.null(out_pdf)){
-    pdf(file=out_pdf, h=7, w=24)
-  }else{
-    quartz(h=7, w=24)
-  }
+  # if(!is.null(out_pdf)){
+  #   pdf(file=out_pdf, h=7, w=24)
+  # }else{
+  #   quartz(h=7, w=24)
+  # }
 
   layout(matrix(1:3, nrow=1))
   par(mar=c(1, 1, 1, 3), oma=rep(1, 4))
@@ -134,18 +139,36 @@ PlotINCASummary <- function(input_file, out_pdf=NULL, metric_name="INCA", LWMASK
     plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
     title(years[i])
     if(i == 1 | i == 8){
-      mtext(paste(tile, metric_name), side=2, line=1)
+      mtext(paste(tile, metric_name), side=2, line=0.5)
     }
     if(i == 14){
       legend_at <- round(seq(madanom_breaks[2], madanom_breaks[length(madanom_breaks) - 1], len=7))
       legend_at_date <- legend_at
       legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
-      plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(madanom_breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+      plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=div_pal(length(madanom_breaks)-1), legend.width=1, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
     }
   }
-
-  if(!is.null(out_pdf)) dev.off()
+  # if(!is.null(out_pdf)) dev.off()
 }
 
 # Example:
-PlotINCASummary("~/Desktop/INCA_summary_h10v04_halfspring.tif", out_pdf="~/Desktop/test.pdf", LWMASKDIR="~/Desktop", metric_name="HalfSpring")
+# PlotINCASummary("~/Desktop/INCA_summary_h10v04_halfspring.tif", out_pdf="~/Desktop/test.pdf", LWMASKDIR="~/Desktop", metric_name="HalfSpring")
+
+#===========================================================================
+# parse the command line arguments
+arg_parser <- ArgumentParser()
+arg_parser$add_argument("-tile", type="character") # tile to process
+arg_parser$add_argument("-output_dir", type="character", default="/share/jmgray2/INCA") # output directory
+arg_parser$add_argument("-data_dir", type="character", default="/share/jmgray2/INCA/output") # input binary splined evi data directory
+args <- arg_parser$parse_args()
+
+metrics <- c("ogi", "halfspring", "halffall", "dormancy", "gsl")
+# metrics <- c("halfspring")
+out_pdf <- file.path(args$output_dir, paste("INCA_plot_", args$tile, ".pdf", sep=""))
+pdf(file=out_pdf, h=7, w=24)
+for(metric in metrics){
+  in_file <- dir(args$data_dir, pattern=paste("INCA_summary_", args$tile, "_", metric, ".tif", sep=""), full=T)
+  print(in_file)
+  PlotINCASummary(in_file, metric_name=metric)
+}
+dev.off()
