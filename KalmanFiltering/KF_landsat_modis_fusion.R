@@ -99,13 +99,31 @@ for(i in is){
 # save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse.Rdata")
 # save(out_rmse, file="/projectnb/modislc/users/joshgray/DL_Landsat/out_rmse_match.Rdata")
 save(out_rmse, file="/Users/jmgray2/Documents/NebraskaFusion/out_rmse_match.Rdata")
+rmse <- tmp_r
+values(rmse) <- out_rmse
 
 #-------------------------------------------------------------------------------
+# get a block of data including a particular pixel
+rows_to_read <- 1e3
+plot(rmse); myc <- click(rmse, cell=T)
+start_row <- rowFromCell(tmp_r, myc$cell[1]) - round(rows_to_read / 2)
+nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+cdl_v <- GetValuesGDAL(cdl_files, start_row, nrows)
+landsat_v <- GetValuesGDAL(landsat_evi2_files, start_row, nrows)
+rmse_v <- getValues(rmse, start_row, nrows)
+modis_v <- GetValuesGDAL(modis_evi2_files, start_row, nrows)
+modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+modis_v[modis_snow_v == 1] <- NA # screen out all snow
+V <- cbind(cdl_v, landsat_v, modis_v)
+tmp_cell <- ((rows_to_read / 2) * ncol(rmse)) + colFromCell(rmse, myc$cell[1]) # determine the row in V of original cell
+num_cdl_years <- length(cdl_years)
+
 scale_factor <- 1e4
 landsat_measurement_error <- 0.05
 min_quant <- 0.1
 year_to_do <- 2008
-x <- V[myc$cell[3], ]
+# x <- V[myc$cell[3], ]
+x <- V[tmp_cell, ]
 x_v <- x[(num_cdl_years + 1):(length(landsat_dates) + num_cdl_years)] / scale_factor
 y_v <- x[(length(landsat_dates) + num_cdl_years + 1):(length(landsat_dates) + num_cdl_years + length(modis_dates))] / scale_factor
 # x_v <- log(x_v); y_v <- log(y_v)
@@ -186,3 +204,24 @@ plot(1:365, c(change_rate, change_rate[length(change_rate)]), type="l", col=brew
 abline(h=1, lty=2, lwd=1, col=1)
 # par(new=T)
 # plot(1:365, x_smooth, type="l", lty=3, col=brewer.pal(5, "Greys")[4], lwd=3, xlab="", ylab="", xaxt="n", yaxt="n")
+
+
+#-------------------------------------------------------------------------------
+Y <- cbind(x_tmp, y_tmp)
+
+ff <- matrix(c(1, 1), nrow=2)
+gg <- matrix(1)
+# v <- diag(1e6, dim(ff)[1])
+v <- diag(c(0.005, 0.25))
+w <- 0.0001
+m0 <- 0
+C0 <- 1e6
+my_dlm <- dlm(list(m0=m0, C0=C0, FF=ff, GG=gg, V=v, W=w))
+
+
+tmp <- dlmSmooth(Y, my_dlm)
+
+plot(x_tmp, pch=16, col=2, ylim=c(0, 0.5))
+points(y_tmp, pch=16, col=4)
+points(dropFirst(tmp$s), type="l")
+legend("topleft", legend=c("x", "y"), col=c(2, 4), pch=16)
