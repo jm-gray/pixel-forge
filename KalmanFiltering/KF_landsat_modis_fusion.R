@@ -207,21 +207,260 @@ abline(h=1, lty=2, lwd=1, col=1)
 
 
 #-------------------------------------------------------------------------------
+x_int <- approx(1:365, x_tmp, xout=1:365, rule=2)
+y_int <- approx(1:365, y_tmp, xout=1:365, rule=2)
+
 Y <- cbind(x_tmp, y_tmp)
+Y_int <- cbind(x_int$y, y_int$y)
 
 ff <- matrix(c(1, 1), nrow=2)
 gg <- matrix(1)
 # v <- diag(1e6, dim(ff)[1])
-v <- diag(c(0.005, 0.25))
-w <- 0.0001
+v <- diag(c(0.01, 0.0169))
+w <- 0.001
 m0 <- 0
 C0 <- 1e6
 my_dlm <- dlm(list(m0=m0, C0=C0, FF=ff, GG=gg, V=v, W=w))
 
 
-tmp <- dlmSmooth(Y, my_dlm)
+# tmp <- dlmSmooth(Y, my_dlm)
+# tmp <- dlmSmooth(Y_int, my_dlm)
+# plot(x_tmp, pch=16, col=2, ylim=c(0, 0.5))
+# points(y_tmp, pch=16, col=4)
+# points(dropFirst(tmp$s), type="l")
+# legend("topleft", legend=c("x", "y"), col=c(2, 4), pch=16)
 
-plot(x_tmp, pch=16, col=2, ylim=c(0, 0.5))
-points(y_tmp, pch=16, col=4)
-points(dropFirst(tmp$s), type="l")
-legend("topleft", legend=c("x", "y"), col=c(2, 4), pch=16)
+# smooth <- dlmSmooth(Y, my_dlm)
+smooth <- dlmSmooth(Y_int, my_dlm)
+filt_m <- ExtractSmoothMeans(smooth)
+filt_se <- ExtractSmoothSE(smooth)
+PlotForecast(filt_m, filt_se, signal=Y)
+points(x_tmp)
+points(y_tmp, col=2)
+# points(x_smooth, type="l")
+
+KF_rmse_fuse <- function(x, x_dates, y_dates, do_rmse=T, do_interp=T, x_measurement_error=0.05, y_measurement_error=0.05, model_error=0.001, scale_factor=1e4, do_plot=F, ylim=c(0, 0.7)){
+	na_return <- rep(NA, 365)
+	if(all(is.na(x))) return(na_return) # handle the case where there is no data
+
+	x_v <- x[2:(length(x_dates) + 1)] / scale_factor
+	y_v <- x[(length(x_dates) + 2):(length(x_dates) + 1 + length(y_dates))] / scale_factor
+
+	x_doys <- as.numeric(strftime(x_dates, format="%j"))
+	x_tmp <- rep(NA, 365)
+	x_tmp[x_doys] <- x_v
+	y_doys <- as.numeric(strftime(y_dates, format="%j"))
+	y_tmp <- rep(NA, 365)
+	y_tmp[y_doys] <- y_v
+
+	# retrieve the landsat-modis RMSE value
+	if(do_rmse){
+		rmse <- x[1] / scale_factor
+		if(is.na(rmse)) rmse <- 1e6
+	}else{
+		rmse <- y_measurement_error
+	}
+
+	# interpolate missing values if requested
+	if(do_interp){
+		x_sig <- try(approx(1:365, x_tmp, xout=1:365, rule=2)$y)
+		if(inherits(x_sig, 'try-error')) return(na_return)
+		y_sig <- try(approx(1:365, y_tmp, xout=1:365, rule=2)$y)
+		if(inherits(y_sig, 'try-error')) return(na_return)
+	}else{
+		x_sig <- x_tmp
+		y_sig <- y_tmp
+	}
+
+	my_dlm <- MakeMultiDLM(num_states=1, sensors=2, time_varying=F)
+	diag(V(my_dlm)) <- c(x_measurement_error, rmse)
+	W(my_dlm) <- model_error
+	m0(my_dlm) <- min(x_sig, na.rm=T)
+	Y <- cbind(x_sig, y_sig)
+	smooth <- try(dlmSmooth(Y, my_dlm))
+	if(inherits(smooth, 'try-error')) return(na_return)
+	filt_m <- try(ExtractSmoothMeans(smooth))
+	if(inherits(filt_m, 'try-error')) return(na_return)
+	filt_se <- try(ExtractSmoothSE(smooth))
+	if(inherits(filt_se, 'try-error')) return(na_return)
+	if(do_plot){
+		PlotForecast(filt_m, filt_se, signal=list(x_tmp, y_tmp), ylim=ylim)
+	}
+	return(filt_m)
+}
+
+good_cell <- 1664260
+bad_cell <- 1512279
+trash <- KF_rmse_fuse(V[good_cell, ], x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008, do_plot=T)
+trash <- KF_rmse_fuse(V[bad_cell, ], x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008, do_plot=T)
+random_cell <- sample(1:dim(V)[1],1)
+trash <- KF_rmse_fuse(V[random_cell, ], x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008, do_plot=T)
+
+#==================================================================================
+cl <- makeCluster(detectCores())
+clusterExport(cl, c("ModisOveralapPreprocessNBAR", "GetSDSName", "GetSDSNameQA", "GetSDSNameSnow", "ModisOveralapPreprocessQA"))
+clusterEvalQ(cl, {source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R");library(dlm)})
+# system.time(trash <- parApply(cl, V[1:1e4,], 1, KF_rmse_fuse, x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008))
+
+
+landsat_data_dir <- "~/Desktop/KF_fusion_data_new/landsat"
+landsat_evi2_files <- dir(landsat_data_dir, pattern=".tif", full=T)
+landsat_evi2_files <- landsat_evi2_files[order(GetLandsatDate(landsat_evi2_files))]
+landsat_dates <- GetLandsatDate(landsat_evi2_files)
+landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
+
+modis_data_dir <- "~/Desktop/KF_fusion_data_new/modis"
+modis_evi2_files <- dir(modis_data_dir, pattern=".tif", full=T)
+modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
+modis_evi2_files <- modis_evi2_files[order(modis_dates)]
+modis_doys <- as.integer(strftime(modis_dates, format="%j"))
+
+rmse_sub <- raster("~/Desktop/KF_fusion_data_new/rmse_sub.tif")
+
+year_to_do <- 2008
+rows_to_read <- 1e3
+tmp_r <- raster(landsat_evi2_files[1])
+is <- 1:(ceiling(nrow(tmp_r) / rows_to_read))
+for(i in is){
+	print(paste("Working on block", i))
+	# get the data
+	start_row <- ((i - 1) * rows_to_read) + 1
+	nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+	# cdl_v <- GetValuesGDAL(cdl_files, start_row, nrows)
+	landsat_v <- GetValuesGDAL(landsat_evi2_files, start_row, nrows)
+	modis_v <- GetValuesGDAL(modis_evi2_files, start_row, nrows)
+	# modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+	# modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	rmse_v <- getValues(rmse_sub, start_row, nrows)
+	# V <- cbind(rmse_v, cdl_v, landsat_v, modis_v)
+	# V <- cbind(rmse_v, cdl_v, landsat_v, modis_v)
+	V <- cbind(rmse_v, landsat_v, modis_v)
+	rm(rmse_v, cdl_v, landsat_v, modis_v)
+	# system.time(kf_block <- parApply(cl, V, 1, KF_rmse_fuse, x_dates=landsat_dates, y_dates=modis_dates))
+	system.time(kf_block <- parApply(cl, V, 1, KF_rmse_fuse, x_dates=landsat_dates, y_dates=modis_dates, do_interp=F, do_rmse=F))
+	# system.time(kf_block <- parApply(cl, V[1:1e4,], 1, KF_rmse_fuse, x_dates=landsat_dates, y_dates=modis_dates))
+	# out_file <- file.path("~/Desktop", paste("kf_block_", i, ".Rdata", sep=""))
+	# save(kf_block, file=out_file)
+	if(i == 1){
+		kf_results <- kf_block
+	}else{
+		kf_results <- cbind(kf_results, kf_block)
+	}
+}
+
+# kf_out_dir <- "~/Desktop/KF_fusion_data_new/rmse_kf_output"
+kf_out_dir <- "~/Desktop/KF_fusion_data_new/no_rmse_kf_output"
+tmp_r <- rmse_sub
+for(i in 1:365){
+	values(tmp_r) <- kf_block[i, ]
+	# out_file <- file.path(kf_out_dir, paste("kf_rmse_doy", formatC(i, width=3, flag="0"), ".tif", sep=""))
+	out_file <- file.path(kf_out_dir, paste("kf_no_rmse_doy", formatC(i, width=3, flag="0"), ".tif", sep=""))
+	writeRaster(tmp_r, file=out_file)
+}
+
+# do the fusion plotting
+# fig_out_dir <- "~/Desktop/KF_fusion_data_new/rmse_kf_figs"
+fig_out_dir <- "~/Desktop/KF_fusion_data_new/no_rmse_kf_figs"
+# out_prefix <- "rmse_kf_"
+out_prefix <- "no_rmse_kf_"
+blank_raster <- rmse_sub
+values(blank_raster) <- NA
+modis_r <- landsat_r <- blank_raster
+for(i in 1:365){
+	kf_r <- raster(dir(kf_out_dir, pattern=formatC(i, width=3, flag="0"), full=T))
+	landsat_ind <- which(landsat_doys == i)
+	if(length(landsat_ind)!=0){
+		landsat_r <- raster(landsat_evi2_files[landsat_ind]) / scale_factor
+	}
+	modis_ind <- which(modis_doys == i)
+	if(length(modis_ind)!=0){
+		modis_r <- raster(modis_evi2_files[modis_ind]) / scale_factor
+	}
+  print(paste("Plotting day", i))
+  out_file <- file.path(fig_out_dir, paste(out_prefix, formatC(i, width=3, flag="0"), ".jpg", sep=""))
+  jpeg(file=out_file, width=1214, height=round(772+(772/2)), quality=75)
+  PlotFusion(landsat_r, modis_r, kf_r, label=paste("DOY:", i))
+  dev.off()
+}
+
+# ffmpeg -framerate 4 -i rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" rmse_kf.mp4
+# ffmpeg -framerate 4 -i no_rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" no_rmse_kf.mp4
+
+#---------------------------------------------------------
+# analyze GDD
+gdd_data_dir <- "~/Desktop/KF_fusion_data_new/gdd"
+gdd_files <- dir(gdd_data_dir, pattern="tif", full=T)
+gdd_v <- GetValuesGDAL(gdd_files, start_row, nrows)
+
+#-------------------------------
+# preprocess to new subset area
+rmse_sub <- raster("~/Desktop/KF_fusion_data_new/rmse_sub.tif")
+year_to_do <- 2008
+landsat_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/Landsat"
+landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2_landsat_overlap.tif", rec=T, full=T)
+landsat_dates <- GetLandsatDate(landsat_evi2_files)
+landsat_years <- as.integer(strftime(landsat_dates, format="%Y"))
+landsat_evi2_files <- landsat_evi2_files[landsat_years == year_to_do]
+landsat_out_dir <- "~/Desktop/KF_fusion_data_new/landsat"
+i <- 1
+for(in_file in landsat_evi2_files){
+	print(paste("Processing", i, "of", length(landsat_evi2_files)))
+	r <- raster(in_file)
+	r_sub <- crop(r, extent(rmse_sub))
+	out_file <- file.path(landsat_out_dir, paste(unlist(strsplit(basename(in_file), split="_"))[1], "_sub_evi2.tif", sep=""))
+	writeRaster(r_sub, file=out_file)
+	i <- i + 1
+}
+
+modis_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/MODIS"
+modis_evi2_files <- dir(modis_data_dir, pattern="evi2_modis_overlap.tif", full=T)
+modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
+modis_years <- as.integer(strftime(modis_dates, format="%Y"))
+modis_evi2_files <- modis_evi2_files[modis_years == year_to_do]
+modis_out_dir <- "~/Desktop/KF_fusion_data_new/modis"
+i <- 1
+for(in_file in modis_evi2_files){
+	print(paste("Processing", i, "of", length(modis_evi2_files)))
+	r <- raster(in_file)
+	r_sub <- crop(r, extent(rmse_sub))
+	out_file <- file.path(modis_out_dir, paste(unlist(strsplit(basename(in_file), split="_"))[1], "_sub_evi2.tif", sep=""))
+	writeRaster(r_sub, file=out_file)
+	i <- i + 1
+}
+
+gdd_data_dir <- "/Users/jmgray2/Desktop/UofIMet_GDD_resampled"
+gdd_files <- dir(gdd_data_dir, pattern="tif", full=T)
+gdd_dates <- as.Date(basename(gdd_files), format="gdd_%Y%j")
+gdd_years <- as.integer(strftime(gdd_dates, format="%Y"))
+gdd_files <- gdd_files[gdd_years == year_to_do]
+gdd_out_dir <- "~/Desktop/KF_fusion_data_new/gdd"
+i <- 1
+for(in_file in gdd_files){
+	print(paste("Processing", i, "of", length(gdd_files)))
+	r <- raster(in_file)
+	r_sub <- crop(r, extent(rmse_sub))
+	out_file <- file.path(gdd_out_dir, paste(gsub("(.*).tif$", "\\1", basename(in_file)), "_sub.tif", sep=""))
+	writeRaster(r_sub, file=out_file)
+	i <- i + 1
+}
+
+
+
+
+# # plot the rmse figure
+# pal <- colorRampPalette(brewer.pal(11, "Spectral"))
+# v <- values(rmse_sub)
+# qs <- quantile(v, c(0,0.02, 0.98,1),na.rm=T)
+# breaks <- c(qs[1], seq(qs[2], qs[3], len=254), qs[4])
+# LEGENDAXISCEX <- 1
+# LEGENDMAINCEX <- 1
+# LEGENDWIDTH <- 2
+# par(oma=rep(2,4))
+# # plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+# plot(rmse_sub, breaks=breaks, col=pal(255), maxpixels=900e3, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE)
+# legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
+# legend_at_date <- legend_at/scale_factor
+# legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
+# plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+# # title("Medsian")
+# title("MODIS-Landsat long-term RMSE")
