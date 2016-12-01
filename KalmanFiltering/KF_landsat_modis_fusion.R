@@ -383,8 +383,8 @@ for(i in 1:365){
   dev.off()
 }
 
-# ffmpeg -framerate 4 -i rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" rmse_kf.mp4
-# ffmpeg -framerate 4 -i no_rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" no_rmse_kf.mp4
+# ffmpeg -framerate 10 -i rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" rmse_kf_fast.mp4
+# ffmpeg -framerate 10 -i no_rmse_kf_%03d.jpg -pix_fmt yuv420p -vf scale="720:trunc(ow/a/2)*2" no_rmse_kf_fast.mp4
 
 #---------------------------------------------------------
 # analyze GDD
@@ -464,3 +464,27 @@ for(in_file in gdd_files){
 # plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
 # # title("Medsian")
 # title("MODIS-Landsat long-term RMSE")
+
+
+# Combining two Normal Distributions:
+# uinit <- 1.25
+# varinit <- 1.5
+#
+# u0 <- 2
+# var0 <- 2
+# u1 <- 3
+# var1 <- 4
+#
+# u2 <- u0 + ((var0 * (u1 - u0))/(var1 + var0))
+# var2 <- var0 - ((var0^2)/(var0+var1))
+#
+# pal <- colorRampPalette(c("red", "orange", "yellow"))
+# cols <- pal(3)
+#
+# par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
+# t <- seq(-5, 10, len=1e3)
+# plot(t, dnorm(t, uinit, sqrt(varinit)), type="l", col=cols[1], lwd=3, ylim=c(0, 0.4), xlab="value", ylab="density")
+# plot(t, dnorm(t, uinit, sqrt(varinit)), type="l", col=rgb(1,0,0,0.25), lwd=3, ylim=c(0, 0.4))
+# points(t, dnorm(t, u0, sqrt(var0)), type="l", col=cols[1], lwd=3)
+# points(t, dnorm(t, u1, sqrt(var1)), type="l", col=cols[3], lwd=3)
+# points(t, dnorm(t, u2, sqrt(var2)), type="l", col=cols[2], lwd=3)
