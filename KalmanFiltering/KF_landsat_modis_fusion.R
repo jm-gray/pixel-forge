@@ -304,13 +304,13 @@ clusterEvalQ(cl, {source("https://raw.github.com/jm-gray/pixel-forge/master/Kalm
 
 
 landsat_data_dir <- "~/Desktop/KF_fusion_data_new/landsat"
-landsat_evi2_files <- dir(landsat_data_dir, pattern=".tif", full=T)
+landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2.tif", full=T)
 landsat_evi2_files <- landsat_evi2_files[order(GetLandsatDate(landsat_evi2_files))]
 landsat_dates <- GetLandsatDate(landsat_evi2_files)
 landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
 
 modis_data_dir <- "~/Desktop/KF_fusion_data_new/modis"
-modis_evi2_files <- dir(modis_data_dir, pattern=".tif", full=T)
+modis_evi2_files <- dir(modis_data_dir, pattern="evi2.tif", full=T)
 modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
 modis_evi2_files <- modis_evi2_files[order(modis_dates)]
 modis_doys <- as.integer(strftime(modis_dates, format="%j"))
