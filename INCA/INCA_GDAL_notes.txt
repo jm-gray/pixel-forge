@@ -11,3 +11,12 @@ gdalwarp -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=
 
 # consider using -tr flag to go to different resolution
 gdalwarp -tr 5000 5000 -r average -cutline conus.shp -crop_to_cutline CONUS_2012_LC1.tif LC_INT.tif
+
+
+# For LWMASK
+gdal_merge.py -o /Volumes/research/fer/jmgray2/MODIS/LWMASK500_CONUS/LWMASK500_CONUS.tif *.bin
+
+gdalwarp -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs' -cutline conus.shp -crop_to_cutline /Volumes/research/fer/jmgray2/MODIS/LWMASK500_CONUS/LWMASK500_CONUS.tif LWMASK500_CONUS_AEA.tif
+
+# consider using -tr flag to go to different resolution
+gdalwarp -tr 5000 5000 -r average -cutline conus.shp -crop_to_cutline LWMASK500_CONUS_AEA.tif LWMASK5k_CONUS_AEA.tif
