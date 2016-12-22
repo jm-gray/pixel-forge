@@ -447,24 +447,28 @@ for(in_file in gdd_files){
 
 
 
-# # plot the rmse figure
-# pal <- colorRampPalette(brewer.pal(11, "Spectral"))
-# v <- values(rmse_sub)
-# qs <- quantile(v, c(0,0.02, 0.98,1),na.rm=T)
-# breaks <- c(qs[1], seq(qs[2], qs[3], len=254), qs[4])
-# LEGENDAXISCEX <- 1
-# LEGENDMAINCEX <- 1
-# LEGENDWIDTH <- 2
-# par(oma=rep(2,4))
-# # plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
-# plot(rmse_sub, breaks=breaks, col=pal(255), maxpixels=900e3, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE)
-# legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
-# legend_at_date <- legend_at/scale_factor
-# legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
-# plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
-# # title("Medsian")
+# plot the rmse figure
+# par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
+pal <- colorRampPalette(brewer.pal(11, "Spectral"))
+v <- values(rmse_sub)
+qs <- quantile(v, c(0,0.02, 0.98,1),na.rm=T)
+breaks <- c(qs[1], seq(qs[2], qs[3], len=254), qs[4])
+LEGENDAXISCEX <- 1
+LEGENDMAINCEX <- 1
+LEGENDWIDTH <- 2
+par(oma=rep(2,4))
+# plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
+plot(rmse_sub, breaks=breaks, col=pal(255), maxpixels=900e3, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE)
+legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
+legend_at_date <- legend_at/scale_factor
+legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))
+# par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
+plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX, col.axis="red", col.sub="red"))
+# title("Medsian")
 # title("MODIS-Landsat long-term RMSE")
 
+par(bg="white")
+plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=1, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX, col.axis="red", col.sub="red"))
 
 # Combining two Normal Distributions:
 # uinit <- 1.25

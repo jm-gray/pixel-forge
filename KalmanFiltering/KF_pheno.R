@@ -102,6 +102,7 @@ doy <- 1:365
 sim_evi <- mygenlog(1:183, A=0.02, K=0.45, B=0.07, M=110, S=0.3) # calculate gen logistic function for doy 1:183
 sim_evi <- c(sim_evi, rev(sim_evi[1:182])) # mirror for senescence
 
+
 #-----------------------------------------------------
 # create sample data.frame of shifted, sampled, noisy signal
 NUM_TO_DO <- 1e4
@@ -117,6 +118,18 @@ for(i in 1:NUM_TO_DO){
 mean_evi <- colMeans(sim_evi_df, na.rm=T)
 sd_evi <- apply(sim_evi_df, 2, sd, na.rm=T)
 # var_evi <- apply(sim_evi_df, 2, "var", na.rm=T)
+
+# make plot
+par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
+plot(NA, type="n", xlim=c(0,52), ylim=c(0, 0.6), xlab="week", ylab="Simulated EVI")
+for(i in 1:NUM_TO_DO){
+	points(1:SAMPLES_PER_YEAR, sim_evi_df[i,], type="l", col="grey")
+}
+reds <- brewer.pal(5,"Reds")[3:5]
+points(1:SAMPLES_PER_YEAR, sim_evi_df[9149,], type="l", col=reds[1], lwd=2)
+points(1:SAMPLES_PER_YEAR, sim_evi_df[2861,], type="l", col=reds[2], lwd=2)
+points(1:SAMPLES_PER_YEAR, sim_evi_df[7362,], type="l", col=reds[3], lwd=2)
+points(1:SAMPLES_PER_YEAR, mean_evi, type="l", col="black", lwd=3)
 
 #-----------------------------------------------------
 # Create a dlm KF to estimate EVI evolution
@@ -282,7 +295,7 @@ mean_true_peak <- CrossingDates(sim_evi, upfracs=1, downfracs=c())
 mean_true_halfautumn <- CrossingDates(sim_evi, upfracs=c(), downfracs=c(0.5))
 mean_true_eos <- CrossingDates(sim_evi, upfracs=c(), downfracs=c(0.2))
 system.time(
-	for(N in 1:1e2){
+	for(N in 1:1e3){
 	# for(N in 1:NUM_TO_DO){
 		true_sos <- mean_true_sos + shifts[N] # the sample's true SOS, taking into account the shift
 		true_halfspring <- mean_true_halfspring + shifts[N]
@@ -323,28 +336,53 @@ mean_absolute_peak_error <- colMeans(abs(tmp), na.rm=T)
 mean_absolute_halfautumn_error <- colMeans(abs(halfautumn_error_mat), na.rm=T)
 mean_absolute_eos_error <- colMeans(abs(eos_error_mat), na.rm=T)
 
+reds <- brewer.pal(5, "Reds")[2:5]
+par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
 # plot(1:dim(error_mat)[2] - error_doy_add, colMeans(abs(error_mat), na.rm=T), xlim=c(-175, 210), xlab="", ylab="", type="n")
-plot(1:dim(sos_error_mat)[2] - error_doy_add, colMeans(abs(sos_error_mat), na.rm=T), xlim=c(-250, 210), xlab="", ylab="", type="n", ylim=c(0, 45))
-polygon(x=c(-250, 210, 210, -250), y=c(1, 1, -1, -1), border=NA, col="pink", density=NA)
+plot(1:dim(sos_error_mat)[2] - error_doy_add, colMeans(abs(sos_error_mat), na.rm=T), xlim=c(-250, 210), xlab="", ylab="", type="n", ylim=c(0, 15))
+abline(h=1, lty=2, col="white", lwd=2)
+abline(v=0, lty=1, col="white")
+abline(h=0, lty=1, col="white")
+
+# polygon(x=c(-250, 210, 210, -250), y=c(1, 1, -1, -1), border=NA, col="pink", density=NA)
 # polygon(
 # 	x=c(1:dim(error_mat)[2] - error_doy_add, rev(1:dim(error_mat)[2] - error_doy_add)),
 # 	y=c(mean_absolute_error + (2 * sd_error), rev(mean_absolute_error - (2 * sd_error))),
 # 	col="lightgrey", border=0
 # )
 # points(1:dim(error_mat)[2] - error_doy_add, mean_absolute_error, xlim=c(-175, 210), pch=16)
-points(1:dim(sos_error_mat)[2] - error_doy_add, mean_absolute_sos_error, pch=16, col=1)
-points(1:dim(halfspring_error_mat)[2] - error_doy_add, mean_absolute_halfspring_error, pch=16, col=2)
-points(1:dim(peak_error_mat)[2] - error_doy_add, mean_absolute_peak_error, pch=16, col=3)
-points(1:dim(halfautumn_error_mat)[2] - error_doy_add, mean_absolute_halfautumn_error, pch=16, col=4)
-points(1:dim(eos_error_mat)[2] - error_doy_add, mean_absolute_eos_error, pch=16, col=5)
+x <- 1:dim(sos_error_mat)[2] - error_doy_add
+y <- mean_absolute_sos_error
+y.smooth <- smooth.spline(x[!is.na(y)], y[!is.na(y)])
+points(y.smooth$x, y.smooth$y, type="l", lwd=2, col=reds[1])
 
-abline(v=0, lty=2)
-abline(h=0, lty=2)
+x <- 1:dim(halfspring_error_mat)[2] - error_doy_add
+y <- mean_absolute_halfspring_error
+y.smooth <- smooth.spline(x[!is.na(y)], y[!is.na(y)])
+points(y.smooth$x, y.smooth$y, type="l", lwd=2, col=reds[2])
+
+x <- 1:dim(halfautumn_error_mat)[2] - error_doy_add
+y <- mean_absolute_halfautumn_error
+y.smooth <- smooth.spline(x[!is.na(y)], y[!is.na(y)])
+points(y.smooth$x, y.smooth$y, type="l", lwd=2, col=reds[3])
+
+x <- 1:dim(eos_error_mat)[2] - error_doy_add
+y <- mean_absolute_eos_error
+y.smooth <- smooth.spline(x[!is.na(y)], y[!is.na(y)])
+points(y.smooth$x, y.smooth$y, type="l", lwd=2, col=reds[4])
+
+# points(1:dim(sos_error_mat)[2] - error_doy_add, mean_absolute_sos_error, pch=16, col=reds[1])
+# points(1:dim(halfspring_error_mat)[2] - error_doy_add, mean_absolute_halfspring_error, pch=16, col=reds[2])
+# points(1:dim(peak_error_mat)[2] - error_doy_add, mean_absolute_peak_error, pch=16, col=3)
+# points(1:dim(halfautumn_error_mat)[2] - error_doy_add, mean_absolute_halfautumn_error, pch=16, col=reds[3])
+# points(1:dim(eos_error_mat)[2] - error_doy_add, mean_absolute_eos_error, pch=16, col=reds[4])
+
 # legend("topright", legend=c("Error", "Sample/Noise Error"), col=c(1, "pink"), pch=c(16, 15), bty="o", bg="white", pt.cex=c(1, 2))
-legend("topright", legend=c("SOS MAE(t)", "1/2 Spring MAE(t)", "Peak MAE(t)", "1/2 Autumn MAE(t)", "EOS MAE(t)", "Sample/Noise Error"), col=c(1:5, "pink"), pch=c(rep(16, 5), 15), bty="o", bg="white", pt.cex=c(rep(1, 5), 2))
-mtext("abs(Estimate - True SOS) (DOY)", side=2, line=2, cex=1.25)
+# legend("topright", legend=c("SOS MAE(t)", "1/2 Spring MAE(t)", "Peak MAE(t)", "1/2 Autumn MAE(t)", "EOS MAE(t)", "Sample/Noise Error"), col=c(1:5, "pink"), pch=c(rep(16, 5), 15), bty="o", bg="white", pt.cex=c(rep(1, 5), 2))
+legend("topright", legend=c("SOS MAE(t)", "1/2 Spring MAE(t)", "1/2 Autumn MAE(t)", "EOS MAE(t)", "Sample/Noise Error"), col=c(reds, "white"), lwd=2, bty="n")
+mtext("abs(Estimate - Actual) (DOY)", side=2, line=2, cex=1.25)
 mtext("t (Days from event)", side=1, line=2.2, cex=1.25)
-title("Mean Absolute Forecast Error",cex=1.75)
+# title("Mean Absolute Forecast Error",cex=1.75)
 
 
 as.numeric(cut(0:error_doy_add, seq(0, error_doy_add + 7, by=7), include.lowest=T))
