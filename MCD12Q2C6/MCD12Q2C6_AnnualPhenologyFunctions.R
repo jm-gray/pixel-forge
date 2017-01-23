@@ -30,8 +30,8 @@ DefaultPhenoParameters <- function(){
 		## date thresholds ##
 	  ogi_thresh=0.15,
 	  midgup_thresh=0.5,
-	  mat_thresh=0.95, #???
-	  sen_thresh=0.8, #???
+	  mat_thresh=0.9, #???
+	  sen_thresh=0.9, #???
 	  midgdown_thresh=0.5,
 	  dor_thresh=0.15,
 		## QA parameters ##
