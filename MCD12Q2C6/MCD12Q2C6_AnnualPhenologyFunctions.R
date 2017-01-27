@@ -34,10 +34,13 @@ DefaultPhenoParameters <- function(){
 	  sen_thresh=0.9, #???
 	  midgdown_thresh=0.5,
 	  dor_thresh=0.15,
+
 		## QA parameters ##
 		qual_buffer_days=14, # buffer around phenometric for QA calc
 		qual_r2_weight=1, # rel weight of r2 in composite QA
 		qual_fill_weight=4, # rel weight of fill fraction in composite QA
+		qual_ranges=c(0, 0.25, 0.5, 0.75, 1), # ranges for casting continuous QA scores to qualitative
+
 		## data in/out parameters ##
 	  nbar_scale_factor=1e4,
 	  nbar_NA_value=32767,
@@ -55,22 +58,81 @@ ReadPhenoParameters <- function(parameter_file, year_of_interest){
 }
 
 #---------------------------------------------------------------------
+# PhenoReturnValue <- function(default_value=NA){
+# 	# returns a blank AnnualPhenologyC6 return value
+#
+# 	ret_value <- list(
+# 		# segment metrics
+# 		num_cycles=default_value, # 1
+# 		fill_code=default_value, # 2
+#
+# 		# cycle 1 metrics
+# 		evi_area_cycle1=default_value, # 3
+# 		evi_amp_cycle1=default_value, # 4
+# 		evi_min_cycle1=default_value, # 5
+# 		frac_filled_gup_cycle1=default_value, # 6
+# 		frac_filled_gdown_cycle1=default_value, # 7
+# 		length_gup_cycle1=default_value, # 8
+# 		length_gdown_cycle1=default_value, # 9
+# 		ogi_cycle1=default_value, # 10
+# 		midgup_cycle1=default_value, # 11
+# 		mat_cycle1=default_value, # 12
+# 		peak_cycle1=default_value, # 13
+# 		sen_cycle1=default_value, # 14
+# 		midgdown_cycle1=default_value, # 15
+# 		dor_cycle1=default_value, # 16
+# 		ogi_qual_cycle1=default_value, # 17
+# 		midgup_qual_cycle1=default_value, # 18
+# 		mat_qual_cycle1=default_value, # 19
+# 		peak_qual_cycle1=default_value, # 20
+# 		sen_qual_cycle1=default_value, # 21
+# 		midgdown_qual_cycle1=default_value, # 22
+# 		dor_qual_cycle1=default_value, # 23
+#
+# 		# cycle 2 metrics
+# 		evi_area_cycle2=default_value, # 24
+# 		evi_amp_cycle2=default_value, # 25
+# 		evi_min_cycle2=default_value, # 26
+# 		frac_filled_gup_cycle2=default_value, # 27
+# 		frac_filled_gdown_cycle2=default_value, # 28
+# 		length_gup_cycle2=default_value, # 29
+# 		length_gdown_cycle2=default_value, # 30
+# 		ogi_cycle2=default_value, # 31
+# 		midgup_cycle2=default_value, # 32
+# 		mat_cycle2=default_value, # 33
+# 		peak_cycle2=default_value, # 34
+# 		sen_cycle2=default_value, # 35
+# 		midgdown_cycle2=default_value, # 36
+# 		dor_cycle2=default_value, # 37
+# 		ogi_qual_cycle2=default_value, # 38
+# 		midgup_qual_cycle2=default_value, # 39
+# 		mat_qual_cycle2=default_value, # 40
+# 		peak_qual_cycle2=default_value, # 41
+# 		sen_qual_cycle2=default_value, # 42
+# 		midgdown_qual_cycle2=default_value, # 43
+# 		dor_qual_cycle2=default_value # 44
+# 	)
+# 	return(ret_value)
+# }
+
+#---------------------------------------------------------------------
 PhenoReturnValue <- function(default_value=NA){
 	# returns a blank AnnualPhenologyC6 return value
 
 	ret_value <- list(
 		# segment metrics
 		num_cycles=default_value, # 1
-		fill_code=default_value, # 2
+		overall_qa=default_value, # 2
+		detailed_qa=default_value, # 3
 
 		# cycle 1 metrics
-		evi_area_cycle1=default_value, # 3
-		evi_amp_cycle1=default_value, # 4
-		evi_min_cycle1=default_value, # 5
-		frac_filled_gup_cycle1=default_value, # 6
-		frac_filled_gdown_cycle1=default_value, # 7
-		length_gup_cycle1=default_value, # 8
-		length_gdown_cycle1=default_value, # 9
+		evi_area_cycle1=default_value, # 4
+		evi_amp_cycle1=default_value, # 5
+		evi_min_cycle1=default_value, # 6
+		# frac_filled_gup_cycle1=default_value, # 6
+		# frac_filled_gdown_cycle1=default_value, # 7
+		# length_gup_cycle1=default_value, # 8
+		# length_gdown_cycle1=default_value, # 9
 		ogi_cycle1=default_value, # 10
 		midgup_cycle1=default_value, # 11
 		mat_cycle1=default_value, # 12
@@ -78,36 +140,36 @@ PhenoReturnValue <- function(default_value=NA){
 		sen_cycle1=default_value, # 14
 		midgdown_cycle1=default_value, # 15
 		dor_cycle1=default_value, # 16
-		ogi_qual_cycle1=default_value, # 17
-		midgup_qual_cycle1=default_value, # 18
-		mat_qual_cycle1=default_value, # 19
-		peak_qual_cycle1=default_value, # 20
-		sen_qual_cycle1=default_value, # 21
-		midgdown_qual_cycle1=default_value, # 22
-		dor_qual_cycle1=default_value, # 23
+		# ogi_qual_cycle1=default_value, # 17
+		# midgup_qual_cycle1=default_value, # 18
+		# mat_qual_cycle1=default_value, # 19
+		# peak_qual_cycle1=default_value, # 20
+		# sen_qual_cycle1=default_value, # 21
+		# midgdown_qual_cycle1=default_value, # 22
+		# dor_qual_cycle1=default_value, # 23
 
 		# cycle 2 metrics
 		evi_area_cycle2=default_value, # 24
 		evi_amp_cycle2=default_value, # 25
 		evi_min_cycle2=default_value, # 26
-		frac_filled_gup_cycle2=default_value, # 27
-		frac_filled_gdown_cycle2=default_value, # 28
-		length_gup_cycle2=default_value, # 29
-		length_gdown_cycle2=default_value, # 30
+		# frac_filled_gup_cycle2=default_value, # 27
+		# frac_filled_gdown_cycle2=default_value, # 28
+		# length_gup_cycle2=default_value, # 29
+		# length_gdown_cycle2=default_value, # 30
 		ogi_cycle2=default_value, # 31
 		midgup_cycle2=default_value, # 32
 		mat_cycle2=default_value, # 33
 		peak_cycle2=default_value, # 34
 		sen_cycle2=default_value, # 35
 		midgdown_cycle2=default_value, # 36
-		dor_cycle2=default_value, # 37
-		ogi_qual_cycle2=default_value, # 38
-		midgup_qual_cycle2=default_value, # 39
-		mat_qual_cycle2=default_value, # 40
-		peak_qual_cycle2=default_value, # 41
-		sen_qual_cycle2=default_value, # 42
-		midgdown_qual_cycle2=default_value, # 43
-		dor_qual_cycle2=default_value # 44
+		dor_cycle2=default_value # 37
+		# ogi_qual_cycle2=default_value, # 38
+		# midgup_qual_cycle2=default_value, # 39
+		# mat_qual_cycle2=default_value, # 40
+		# peak_qual_cycle2=default_value, # 41
+		# sen_qual_cycle2=default_value, # 42
+		# midgdown_qual_cycle2=default_value, # 43
+		# dor_qual_cycle2=default_value # 44
 	)
 	return(ret_value)
 }
@@ -119,28 +181,28 @@ ScaleToIntegerAndSetNA <- function(annual_pheno_metrics, scale=1e4, outNA=32767)
 	annual_pheno_metrics$evi_area_cycle1=round(annual_pheno_metrics$evi_area_cycle1 / 1e3 * scale) # so we don't exceed 32767!
 	annual_pheno_metrics$evi_amp_cycle1=round(annual_pheno_metrics$evi_amp_cycle1 * scale)
 	annual_pheno_metrics$evi_min_cycle1=round(annual_pheno_metrics$evi_min_cycle1 * scale)
-	annual_pheno_metrics$frac_filled_gup_cycle1=round(annual_pheno_metrics$frac_filled_gup_cycle1 * scale)
-	annual_pheno_metrics$frac_filled_gdown_cycle1=round(annual_pheno_metrics$frac_filled_gdown_cycle1 * scale)
-	annual_pheno_metrics$ogi_qual_cycle1=round(annual_pheno_metrics$ogi_qual_cycle1 * scale)
-	annual_pheno_metrics$midgup_qual_cycle1=round(annual_pheno_metrics$midgup_qual_cycle1 * scale)
-	annual_pheno_metrics$mat_qual_cycle1=round(annual_pheno_metrics$mat_qual_cycle1 * scale)
-	annual_pheno_metrics$peak_qual_cycle1=round(annual_pheno_metrics$peak_qual_cycle1 * scale)
-	annual_pheno_metrics$sen_qual_cycle1=round(annual_pheno_metrics$sen_qual_cycle1 * scale)
-	annual_pheno_metrics$midgdown_qual_cycle1=round(annual_pheno_metrics$midgdown_qual_cycle1 * scale)
-	annual_pheno_metrics$dor_qual_cycle1=round(annual_pheno_metrics$dor_qual_cycle1 * scale)
+	# annual_pheno_metrics$frac_filled_gup_cycle1=round(annual_pheno_metrics$frac_filled_gup_cycle1 * scale)
+	# annual_pheno_metrics$frac_filled_gdown_cycle1=round(annual_pheno_metrics$frac_filled_gdown_cycle1 * scale)
+	# annual_pheno_metrics$ogi_qual_cycle1=round(annual_pheno_metrics$ogi_qual_cycle1 * scale)
+	# annual_pheno_metrics$midgup_qual_cycle1=round(annual_pheno_metrics$midgup_qual_cycle1 * scale)
+	# annual_pheno_metrics$mat_qual_cycle1=round(annual_pheno_metrics$mat_qual_cycle1 * scale)
+	# annual_pheno_metrics$peak_qual_cycle1=round(annual_pheno_metrics$peak_qual_cycle1 * scale)
+	# annual_pheno_metrics$sen_qual_cycle1=round(annual_pheno_metrics$sen_qual_cycle1 * scale)
+	# annual_pheno_metrics$midgdown_qual_cycle1=round(annual_pheno_metrics$midgdown_qual_cycle1 * scale)
+	# annual_pheno_metrics$dor_qual_cycle1=round(annual_pheno_metrics$dor_qual_cycle1 * scale)
 
 	annual_pheno_metrics$evi_area_cycle2=round(annual_pheno_metrics$evi_area_cycle2 / 1e3 * scale) # so we don't exceed 32767!
 	annual_pheno_metrics$evi_amp_cycle2=round(annual_pheno_metrics$evi_amp_cycle2 * scale)
 	annual_pheno_metrics$evi_min_cycle2=round(annual_pheno_metrics$evi_min_cycle2 * scale)
-	annual_pheno_metrics$frac_filled_gup_cycle2=round(annual_pheno_metrics$frac_filled_gup_cycle2 * scale)
-	annual_pheno_metrics$frac_filled_gdown_cycle2=round(annual_pheno_metrics$frac_filled_gdown_cycle2 * scale)
-	annual_pheno_metrics$ogi_qual_cycle2=round(annual_pheno_metrics$ogi_qual_cycle2 * scale)
-	annual_pheno_metrics$midgup_qual_cycle2=round(annual_pheno_metrics$midgup_qual_cycle2 * scale)
-	annual_pheno_metrics$mat_qual_cycle2=round(annual_pheno_metrics$mat_qual_cycle2 * scale)
-	annual_pheno_metrics$peak_qual_cycle2=round(annual_pheno_metrics$peak_qual_cycle2 * scale)
-	annual_pheno_metrics$sen_qual_cycle2=round(annual_pheno_metrics$sen_qual_cycle2 * scale)
-	annual_pheno_metrics$midgdown_qual_cycle2=round(annual_pheno_metrics$midgdown_qual_cycle2 * scale)
-	annual_pheno_metrics$dor_qual_cycle2=round(annual_pheno_metrics$dor_qual_cycle2 * scale)
+	# annual_pheno_metrics$frac_filled_gup_cycle2=round(annual_pheno_metrics$frac_filled_gup_cycle2 * scale)
+	# annual_pheno_metrics$frac_filled_gdown_cycle2=round(annual_pheno_metrics$frac_filled_gdown_cycle2 * scale)
+	# annual_pheno_metrics$ogi_qual_cycle2=round(annual_pheno_metrics$ogi_qual_cycle2 * scale)
+	# annual_pheno_metrics$midgup_qual_cycle2=round(annual_pheno_metrics$midgup_qual_cycle2 * scale)
+	# annual_pheno_metrics$mat_qual_cycle2=round(annual_pheno_metrics$mat_qual_cycle2 * scale)
+	# annual_pheno_metrics$peak_qual_cycle2=round(annual_pheno_metrics$peak_qual_cycle2 * scale)
+	# annual_pheno_metrics$sen_qual_cycle2=round(annual_pheno_metrics$sen_qual_cycle2 * scale)
+	# annual_pheno_metrics$midgdown_qual_cycle2=round(annual_pheno_metrics$midgdown_qual_cycle2 * scale)
+	# annual_pheno_metrics$dor_qual_cycle2=round(annual_pheno_metrics$dor_qual_cycle2 * scale)
 	annual_pheno_metrics[is.na(annual_pheno_metrics)] <- outNA
 	return(as.integer(annual_pheno_metrics))
 }
@@ -212,7 +274,7 @@ Get3YearDataChunk <- function(evi2_files, resid_files, snow_files, year_of_inter
 }
 
 #---------------------------------------------------------------------
-WritePhenologyData <- function(out_file, pheno_values_bip, tile, nbands=44){
+WritePhenologyData <- function(out_file, pheno_values_bip, tile, nbands=23){
 	# Appends a chunk of phenology data to a file, or creates and writes a chunk if the file doesn't exist.
 	# Output is BIP Int16. Thanks to DSM for ENVI header code
 
@@ -517,21 +579,25 @@ SegMet <- function(seg, x, dates, pheno_pars){
 		evi2_area=NA, #
 		evi2_min=NA, # GUP min (not max amp when min(gdown)>min(gup), but consistent in the case of LCLUC)
 		evi2_amp=NA, # GUP amplitude (not max amp when amp(gdown)>amp(gup), but consistent in the case of LCLUC)
-		frac_filled_gup=NA, # fraction missing, snow, interpolated, or below-min filled
-		frac_filled_gdown=NA,
-		length_gup=NA,
-		length_gdown=NA,
-		spline_r2_gup=NA,
-		spline_r2_gdown=NA,
+		# frac_filled_gup=NA, # fraction missing, snow, interpolated, or below-min filled
+		# frac_filled_gdown=NA,
+		# length_gup=NA,
+		# length_gdown=NA,
+		# spline_r2_gup=NA,
+		# spline_r2_gdown=NA,
 
 		# phenometric QA scores
-		ogi_qual=NA,
-		midgup_qual=NA,
-		mat_qual=NA,
-		peak_qual=NA,
-		sen_qual=NA,
-		midgdown_qual=NA,
-		dor_qual=NA
+		# ogi_qual=NA,
+		# midgup_qual=NA,
+		# mat_qual=NA,
+		# peak_qual=NA,
+		# sen_qual=NA,
+		# midgdown_qual=NA,
+		# dor_qual=NA
+
+		# QA scores
+		overall_qa=NA,
+		detailed_qa=NA
 	)
 
 	# unpack the x vector into component parts
@@ -540,10 +606,12 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	evi <- x[1:data_length] / pheno_pars$nbar_scale_factor
 	evi_gup <- evi[seg[1]:seg[2]]
 	evi_gdown <- evi[seg[2]:seg[3]]
+	evi_overall <- evi[seg[1]:seg[3]]
 	# residuals
 	resids <- x[(data_length + 1):(2 * data_length)] / pheno_pars$nbar_scale_factor
 	resids_gup <- resids[seg[1]:seg[2]]
 	resids_gdown <- resids[seg[2]:seg[3]]
+	resids_overall <- resids[seg[1]:seg[3]]
 
 	#--------------------------------------
 	# new snowflag values:
@@ -555,9 +623,11 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	# 5 - interpolated value off-stride, snow
 
 	snowflags <- x[(2 * data_length + 1):(3 * data_length)]
-	snowflags[snowflags == 2] <- 0 # NOTE: I think flag=2 only happens for stride-fills, which are irrelevant for QA purposes
+	snowflags[snowflags == 2] <- 0 # truncated to min, no snow
+	snowflags[snowflags == 1] <- 0 # stride fills, not snow
 	snowflags_gup <- snowflags[seg[1]:seg[2]]
 	snowflags_gdown <- snowflags[seg[2]:seg[3]]
+	snowflags_overall <- snowflags[seg[1]:seg[3]]
 
 	# calculate GUP minimum, amplitude, and thresholds
 	evi2_min_gup <- evi_gup[1]
@@ -603,20 +673,25 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	seg_metrics$dor <- as.numeric(dates[dor_seg_ind] - as.Date("1970-1-1"))
 
 	# calculate GUP and GDOWN spline R^2
+	r2_overall <- R2(evi_overall, resids_overall)
+
 	r2_gup <- R2(evi_gup, resids_gup)
-	seg_metrics$spline_r2_gup <- r2_gup
+	# seg_metrics$spline_r2_gup <- r2_gup
 	r2_gdown <- R2(evi_gdown, resids_gdown)
-	seg_metrics$spline_r2_gdown <- r2_gdown
+	# seg_metrics$spline_r2_gdown <- r2_gdown
 
 	# calculate GUP/GDOWN length, and filled fractions
+	length_overall <- as.numeric(dates[seg[3]] - dates[seg[1]])
+	frac_filled_overall <- sum(snowflags_overall != 0) / length_overall
+
 	length_gup <- as.numeric(dates[seg[2]] - dates[seg[1]])
-	seg_metrics$length_gup <- length_gup
+	# seg_metrics$length_gup <- length_gup
 	frac_filled_gup <- sum(snowflags_gup != 0) / length_gup
-	seg_metrics$frac_filled_gup <- frac_filled_gup
+	# seg_metrics$frac_filled_gup <- frac_filled_gup
 	length_gdown <- as.numeric(dates[seg[3]] - dates[seg[2]])
-	seg_metrics$length_gdown <- length_gdown
+	# seg_metrics$length_gdown <- length_gdown
 	frac_filled_gdown <- sum(snowflags_gdown != 0 & snowflags_gdown != 2) / length_gdown
-	seg_metrics$frac_filled_gdown <- frac_filled_gdown
+	# seg_metrics$frac_filled_gdown <- frac_filled_gdown
 
 	# calculate phenometric-vicinity filled/missing/snow fraction
 	ogi_frac_filled <- sum(snowflags[max(0, (ogi_seg_ind - pheno_pars$qual_buffer_days)):min(length(snowflags), (ogi_seg_ind + pheno_pars$qual_buffer_days))] != 0) / (min(length(snowflags), (ogi_seg_ind + pheno_pars$qual_buffer_days)) - max(0, (ogi_seg_ind - pheno_pars$qual_buffer_days)) + 1)
@@ -638,55 +713,97 @@ SegMet <- function(seg, x, dates, pheno_pars){
 
 	# calculate phenometric quality scores
 	# NOTE: what to do if the R2 is NA?, currently the qual is NA, perhaps it should be 0?
+	overall_qual <- ((pheno_pars$qual_fill_weight * (1 - frac_filled_overall)) + (pheno_pars$qual_r2_weight * r2_overall)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
+
 	ogi_qual <- ((pheno_pars$qual_fill_weight * (1 - ogi_frac_filled)) + (pheno_pars$qual_r2_weight * ogi_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$ogi_qual <- ogi_qual
+	# seg_metrics$ogi_qual <- ogi_qual
 	midgup_qual <- ((pheno_pars$qual_fill_weight * (1 - midgup_frac_filled)) + (pheno_pars$qual_r2_weight * midgup_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$midgup_qual <- midgup_qual
+	# seg_metrics$midgup_qual <- midgup_qual
 	mat_qual <- ((pheno_pars$qual_fill_weight * (1 - mat_frac_filled)) + (pheno_pars$qual_r2_weight * mat_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$mat_qual <- mat_qual
+	# seg_metrics$mat_qual <- mat_qual
 	peak_qual <- ((pheno_pars$qual_fill_weight * (1 - peak_frac_filled)) + (pheno_pars$qual_r2_weight * peak_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$peak_qual <- peak_qual
+	# seg_metrics$peak_qual <- peak_qual
 	sen_qual <- ((pheno_pars$qual_fill_weight * (1 - sen_frac_filled)) + (pheno_pars$qual_r2_weight * sen_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$sen_qual <- sen_qual
+	# seg_metrics$sen_qual <- sen_qual
 	midgdown_qual <- ((pheno_pars$qual_fill_weight * (1 - midgdown_frac_filled)) + (pheno_pars$qual_r2_weight * midgdown_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$midgdown_qual <- midgdown_qual
+	# seg_metrics$midgdown_qual <- midgdown_qual
 	dor_qual <- ((pheno_pars$qual_fill_weight * (1 - dor_frac_filled)) + (pheno_pars$qual_r2_weight * dor_r2)) / (pheno_pars$qual_fill_weight + pheno_pars$qual_r2_weight)
-	seg_metrics$dor_qual <- dor_qual
+	# seg_metrics$dor_qual <- dor_qual
+
+	# collapse continuous to qualitative QA scores; create bit-packed detailed quality and overall quality scores
+	remap_qual <- c(3, 2, 1, 0) # findInterval requires increasing ranges, so we have to reverse and rescale 0-3
+	overall_qual_score <- findInterval(overall_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(overall_qual_score)) overall_qual_score <- 1
+	overall_qual_score <- remap_qual[overall_qual_score]
+
+	ogi_qual_score <- findInterval(ogi_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(ogi_qual_score)) ogi_qual_score <- 1
+	ogi_qual_score <- remap_qual[ogi_qual_score]
+
+	midgup_qual_score <- findInterval(midgup_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(midgup_qual_score)) midgup_qual_score <- 1
+	midgup_qual_score <- remap_qual[midgup_qual_score]
+
+	mat_qual_score <- findInterval(mat_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(mat_qual_score)) mat_qual_score <- 1
+	mat_qual_score <- remap_qual[mat_qual_score]
+
+	peak_qual_score <- findInterval(peak_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(peak_qual_score)) peak_qual_score <- 1
+	peak_qual_score <- remap_qual[peak_qual_score]
+
+	sen_qual_score <- findInterval(sen_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(sen_qual_score)) sen_qual_score <- 1
+	sen_qual_score <- remap_qual[sen_qual_score]
+
+	midgdown_qual_score <- findInterval(midgdown_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(midgdown_qual_score)) midgdown_qual_score <- 1
+	midgdown_qual_score <- remap_qual[midgdown_qual_score]
+
+	dor_qual_score <- findInterval(dor_qual, pheno_pars$qual_ranges, rightmost.closed=T, all.inside=T)
+	if(is.na(dor_qual_score)) dor_qual_score <- 1
+	dor_qual_score <- remap_qual[dor_qual_score]
+
+	# do the bit packing here
+	seg_metrics$detailed_qa <- QualPack(c(ogi_qual_score, midgup_qual_score, mat_qual_score, peak_qual_score, sen_qual_score, midgdown_qual_score, dor_qual_score, overall_qual_score))
+	seg_metrics$overall_qa <- overall_qual_score
 
 	return(seg_metrics)
 }
 
 #---------------------------------------------------------------------
+# converts an individual quality score to a bit
+QualBit <- function(x) as.integer(intToBits(x))[1:2]
+
+#---------------------------------------------------------------------
+# creates a bit-packed version of the 0-3 quality scores, "quals"
+# Example: rev(as.integer(intToBits(37553)))
+QualPack <- function(quals) sum(unlist(lapply(quals, QualBit)) * (2^(0:15)))
+
+#---------------------------------------------------------------------
 SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=NA, fill_code=NA){
 	# sets return object annual_pheno_metrics values for cycle 1 or 2 using the SegMet return object seg_met
-	# and num_cycles and fill_code arguments
-
-	######################
-	# NOTE: here is where we collapse quality scores from continuous to 0-3, calculate
-	# overall quality, and do the bitpacking
-	# quals order: gup, midgup, mat, peak, sen, midsen, dor, overall:
-	# quals <- c(1, 0, 3, 2, 2, 0, 1, 2) # example
-	# QualBit <- function(x) as.integer(intToBits(x))[1:2]
-	# QualPack <- function(quals) sum(unlist(lapply(quals, QualBit)) * (2^(0:15)))
-
-
 	if(!is.na(num_cycles)){
 		annual_pheno_metrics$num_cycles <- num_cycles
 	}
 
-	if(!is.na(fill_code)){
-		annual_pheno_metrics$fill_code <- fill_code
-	}
+	# set overall and detailed QA output
+	annual_pheno_metrics$overall_qa <-seg_met$overall_qa
+	annual_pheno_metrics$detailed_qa <-seg_met$detailed_qa
+
+	# if(!is.na(fill_code)){
+	# 	annual_pheno_metrics$fill_code <- fill_code
+	# }
 
 	if(cycle==1){
 		# cycle 1 metrics
 		annual_pheno_metrics$evi_area_cycle1=seg_met$evi2_area
 		annual_pheno_metrics$evi_amp_cycle1=seg_met$evi2_amp
 		annual_pheno_metrics$evi_min_cycle1=seg_met$evi2_min
-		annual_pheno_metrics$frac_filled_gup_cycle1=seg_met$frac_filled_gup
-		annual_pheno_metrics$frac_filled_gdown_cycle1=seg_met$frac_filled_gdown
-		annual_pheno_metrics$length_gup_cycle1=seg_met$length_gup
-		annual_pheno_metrics$length_gdown_cycle1=seg_met$length_gdown
+		# annual_pheno_metrics$frac_filled_gup_cycle1=seg_met$frac_filled_gup
+		# annual_pheno_metrics$frac_filled_gdown_cycle1=seg_met$frac_filled_gdown
+		# annual_pheno_metrics$length_gup_cycle1=seg_met$length_gup
+		# annual_pheno_metrics$length_gdown_cycle1=seg_met$length_gdown
 		annual_pheno_metrics$ogi_cycle1=seg_met$ogi
 		annual_pheno_metrics$midgup_cycle1=seg_met$midgup
 		annual_pheno_metrics$mat_cycle1=seg_met$mat
@@ -694,22 +811,22 @@ SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=N
 		annual_pheno_metrics$sen_cycle1=seg_met$sen
 		annual_pheno_metrics$midgdown_cycle1=seg_met$midgdown
 		annual_pheno_metrics$dor_cycle1=seg_met$dor
-		annual_pheno_metrics$ogi_qual_cycle1=seg_met$ogi_qual
-		annual_pheno_metrics$midgup_qual_cycle1=seg_met$midgup_qual
-		annual_pheno_metrics$mat_qual_cycle1=seg_met$mat_qual
-		annual_pheno_metrics$peak_qual_cycle1=seg_met$peak_qual
-		annual_pheno_metrics$sen_qual_cycle1=seg_met$sen_qual
-		annual_pheno_metrics$midgdown_qual_cycle1=seg_met$midgdown_qual
-		annual_pheno_metrics$dor_qual_cycle1=seg_met$dor_qual
+		# annual_pheno_metrics$ogi_qual_cycle1=seg_met$ogi_qual
+		# annual_pheno_metrics$midgup_qual_cycle1=seg_met$midgup_qual
+		# annual_pheno_metrics$mat_qual_cycle1=seg_met$mat_qual
+		# annual_pheno_metrics$peak_qual_cycle1=seg_met$peak_qual
+		# annual_pheno_metrics$sen_qual_cycle1=seg_met$sen_qual
+		# annual_pheno_metrics$midgdown_qual_cycle1=seg_met$midgdown_qual
+		# annual_pheno_metrics$dor_qual_cycle1=seg_met$dor_qual
 	}else{
 		# cycle 2 metrics
 		annual_pheno_metrics$evi_area_cycle2=seg_met$evi2_area
 		annual_pheno_metrics$evi_amp_cycle2=seg_met$evi2_amp
 		annual_pheno_metrics$evi_min_cycle2=seg_met$evi2_min
-		annual_pheno_metrics$frac_filled_gup_cycle2=seg_met$frac_filled_gup
-		annual_pheno_metrics$frac_filled_gdown_cycle2=seg_met$frac_filled_gdown
-		annual_pheno_metrics$length_gup_cycle2=seg_met$length_gup
-		annual_pheno_metrics$length_gdown_cycle2=seg_met$length_gdown
+		# annual_pheno_metrics$frac_filled_gup_cycle2=seg_met$frac_filled_gup
+		# annual_pheno_metrics$frac_filled_gdown_cycle2=seg_met$frac_filled_gdown
+		# annual_pheno_metrics$length_gup_cycle2=seg_met$length_gup
+		# annual_pheno_metrics$length_gdown_cycle2=seg_met$length_gdown
 		annual_pheno_metrics$ogi_cycle2=seg_met$ogi
 		annual_pheno_metrics$midgup_cycle2=seg_met$midgup
 		annual_pheno_metrics$mat_cycle2=seg_met$mat
@@ -717,13 +834,13 @@ SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=N
 		annual_pheno_metrics$sen_cycle2=seg_met$sen
 		annual_pheno_metrics$midgdown_cycle2=seg_met$midgdown
 		annual_pheno_metrics$dor_cycle2=seg_met$dor
-		annual_pheno_metrics$ogi_qual_cycle2=seg_met$ogi_qual
-		annual_pheno_metrics$midgup_qual_cycle2=seg_met$midgup_qual
-		annual_pheno_metrics$mat_qual_cycle2=seg_met$mat_qual
-		annual_pheno_metrics$peak_qual_cycle2=seg_met$peak_qual
-		annual_pheno_metrics$sen_qual_cycle2=seg_met$sen_qual
-		annual_pheno_metrics$midgdown_qual_cycle2=seg_met$midgdown_qual
-		annual_pheno_metrics$dor_qual_cycle2=seg_met$dor_qual
+		# annual_pheno_metrics$ogi_qual_cycle2=seg_met$ogi_qual
+		# annual_pheno_metrics$midgup_qual_cycle2=seg_met$midgup_qual
+		# annual_pheno_metrics$mat_qual_cycle2=seg_met$mat_qual
+		# annual_pheno_metrics$peak_qual_cycle2=seg_met$peak_qual
+		# annual_pheno_metrics$sen_qual_cycle2=seg_met$sen_qual
+		# annual_pheno_metrics$midgdown_qual_cycle2=seg_met$midgdown_qual
+		# annual_pheno_metrics$dor_qual_cycle2=seg_met$dor_qual
 	}
 
 	return(annual_pheno_metrics)
@@ -1179,98 +1296,98 @@ PlotStretch <- function(r, year, cutoffs=c(0, 1), pdf_out=NULL, plot_height=12, 
 
 
 #---------------------------------------------------------------------
-PlotPhenology <- function(x, dates, pheno_pars=DefaultPhenoParameters(), NA_value=32767, scale_value=1e4, ylim=NULL, plot_legend=T, grid=T, plot_dates=T, blackBG=F){
-# PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T, seg_metrics=NA, ylim=NULL, grid=T){
-	# function for plotting an individual time series row w/ or w/o seg metrics
-  mycols <- c("#636363", "#DE2D26", "#3182BD", "#31A354", "#756BB1", "#E6550D")
-  # gup_poly_color <- "lightgreen"
-	gup_poly_color <- rgb(144,238,144,155,max=255)
-  # gdown_poly_color <- "pink"
-	gdown_poly_color <- rgb(255,192,203,155,max=255)
-  poly_density <- 25
-  x[x==NA_value] <- NA
-  data_length <- length(x) / 3
-  filtered <- x[1:data_length] / scale_value
-  resids <- x[(data_length + 1):(2 * data_length)] / scale_value
-  snowflags <- x[(2 * data_length + 1):(3 * data_length)]
-  cols <- mycols[snowflags + 1]
-  pchs <- snowflags + 1
-
-  # # check if pheno_period_start/end are provided, if not use the whole time series
-  # if(is.na(pheno_period_start) | is.na(pheno_period_end)){
-  #   pheno_period_start <- min(dates, na.rm=T)
-  #   pheno_period_end <- max(dates, na.rm=T)
-  # }
-
-  # retrieve phenology
-  # pheno_values <- AnnualPhenologyC6(x, dates, pheno_pars, pheno_period_start, pheno_period_end)
-  valid_peaks <- try(FindPeaks(filtered), silent=T)
-  full_segs <- try(GetSegs(valid_peaks, filtered, pheno_pars), silent=T)
-  seg_metrics <- lapply(full_segs, SegMet, x=x, dates=dates, pheno_pars=pheno_pars)
-
-  # start plotting
-	if(!is.null(ylim)) ylim <- ylim
-	if(blackBG){
-		par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", bg="black", mar=c(4, 4, 2, 2), oma=rep(1, 4))
-	}
-  plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2", ylim=ylim)
-	if(grid){
-		grid(nx=NA, ny=NULL) # plot horizontal grid lines at tick marks
-		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-1-1", sep="")), col="lightgray", lty="dotted")
-		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-7-1", sep="")), col="lightgray", lty="dotted")
-	}
-
-  # more extensive plotting if seg_metrics are available
-  if(length(seg_metrics) > 0){
-    for(seg_metric in seg_metrics){
-      # plot the segment data
-      # gup_x_tmp <- as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"):as.Date(seg_metric$peak, origin="1970-1-1")
-			gup_x_tmp <- dates[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
-      gup_x <- c(gup_x_tmp, rev(gup_x_tmp))
-      gup_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
-      gup_y <- c(gup_y_tmp, rep(par()$usr[3], length(gup_x_tmp)))
-      # polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color, density=poly_density, angle=45)
-			polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color)
-
-      # gdown_x_tmp <- as.Date(seg_metric$peak, origin="1970-1-1"):as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1")
-			gdown_x_tmp <- dates[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
-      gdown_x <- c(gdown_x_tmp, rev(gdown_x_tmp))
-      gdown_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
-      gdown_y <- c(gdown_y_tmp, rep(par()$usr[3], length(gdown_x_tmp)))
-      # polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color, density=poly_density, angle=-45)
-			polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color)
-
-      # this creates simple rectangle fills:
-      # polygon(x=c(rep(as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.87, 0.87, 0.87))
-      # polygon(x=c(rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.82, 0.82, 0.82))
-    } # end seg loop
-
-    # add the data/spline with fill/miss/snow info
-    points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
-    points(dates, filtered, type="l", lwd=2, col="darkgrey")
-
-		if(plot_dates){
-			for(seg_metric in seg_metrics){
-	      # add vertical lines for phenometrics
-	      abline(v=as.Date(seg_metric$ogi, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$midgup, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$mat, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$peak, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$sen, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$midgdown, origin="1970-1-1"), lty=2, col=mycols[1])
-	      abline(v=as.Date(seg_metric$dor, origin="1970-1-1"), lty=2, col=mycols[1])
-
-	      # annotate with QA information
-	    } # end seg loop
-		}
-
-
-    # create a legend
-		if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
-  }else{
-    # plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2")
-    points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
-    points(dates, filtered, type="l", lwd=2, col="darkgrey")
-    if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
-  }
-}
+# PlotPhenology <- function(x, dates, pheno_pars=DefaultPhenoParameters(), NA_value=32767, scale_value=1e4, ylim=NULL, plot_legend=T, grid=T, plot_dates=T, blackBG=F){
+# # PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T, seg_metrics=NA, ylim=NULL, grid=T){
+# 	# function for plotting an individual time series row w/ or w/o seg metrics
+#   mycols <- c("#636363", "#DE2D26", "#3182BD", "#31A354", "#756BB1", "#E6550D")
+#   # gup_poly_color <- "lightgreen"
+# 	gup_poly_color <- rgb(144,238,144,155,max=255)
+#   # gdown_poly_color <- "pink"
+# 	gdown_poly_color <- rgb(255,192,203,155,max=255)
+#   poly_density <- 25
+#   x[x==NA_value] <- NA
+#   data_length <- length(x) / 3
+#   filtered <- x[1:data_length] / scale_value
+#   resids <- x[(data_length + 1):(2 * data_length)] / scale_value
+#   snowflags <- x[(2 * data_length + 1):(3 * data_length)]
+#   cols <- mycols[snowflags + 1]
+#   pchs <- snowflags + 1
+#
+#   # # check if pheno_period_start/end are provided, if not use the whole time series
+#   # if(is.na(pheno_period_start) | is.na(pheno_period_end)){
+#   #   pheno_period_start <- min(dates, na.rm=T)
+#   #   pheno_period_end <- max(dates, na.rm=T)
+#   # }
+#
+#   # retrieve phenology
+#   # pheno_values <- AnnualPhenologyC6(x, dates, pheno_pars, pheno_period_start, pheno_period_end)
+#   valid_peaks <- try(FindPeaks(filtered), silent=T)
+#   full_segs <- try(GetSegs(valid_peaks, filtered, pheno_pars), silent=T)
+#   seg_metrics <- lapply(full_segs, SegMet, x=x, dates=dates, pheno_pars=pheno_pars)
+#
+#   # start plotting
+# 	if(!is.null(ylim)) ylim <- ylim
+# 	if(blackBG){
+# 		par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", bg="black", mar=c(4, 4, 2, 2), oma=rep(1, 4))
+# 	}
+#   plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2", ylim=ylim)
+# 	if(grid){
+# 		grid(nx=NA, ny=NULL) # plot horizontal grid lines at tick marks
+# 		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-1-1", sep="")), col="lightgray", lty="dotted")
+# 		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-7-1", sep="")), col="lightgray", lty="dotted")
+# 	}
+#
+#   # more extensive plotting if seg_metrics are available
+#   if(length(seg_metrics) > 0){
+#     for(seg_metric in seg_metrics){
+#       # plot the segment data
+#       # gup_x_tmp <- as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"):as.Date(seg_metric$peak, origin="1970-1-1")
+# 			gup_x_tmp <- dates[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
+#       gup_x <- c(gup_x_tmp, rev(gup_x_tmp))
+#       gup_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
+#       gup_y <- c(gup_y_tmp, rep(par()$usr[3], length(gup_x_tmp)))
+#       # polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color, density=poly_density, angle=45)
+# 			polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color)
+#
+#       # gdown_x_tmp <- as.Date(seg_metric$peak, origin="1970-1-1"):as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1")
+# 			gdown_x_tmp <- dates[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
+#       gdown_x <- c(gdown_x_tmp, rev(gdown_x_tmp))
+#       gdown_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
+#       gdown_y <- c(gdown_y_tmp, rep(par()$usr[3], length(gdown_x_tmp)))
+#       # polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color, density=poly_density, angle=-45)
+# 			polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color)
+#
+#       # this creates simple rectangle fills:
+#       # polygon(x=c(rep(as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.87, 0.87, 0.87))
+#       # polygon(x=c(rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.82, 0.82, 0.82))
+#     } # end seg loop
+#
+#     # add the data/spline with fill/miss/snow info
+#     points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
+#     points(dates, filtered, type="l", lwd=2, col="darkgrey")
+#
+# 		if(plot_dates){
+# 			for(seg_metric in seg_metrics){
+# 	      # add vertical lines for phenometrics
+# 	      abline(v=as.Date(seg_metric$ogi, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$midgup, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$mat, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$peak, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$sen, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$midgdown, origin="1970-1-1"), lty=2, col=mycols[1])
+# 	      abline(v=as.Date(seg_metric$dor, origin="1970-1-1"), lty=2, col=mycols[1])
+#
+# 	      # annotate with QA information
+# 	    } # end seg loop
+# 		}
+#
+#
+#     # create a legend
+# 		if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
+#   }else{
+#     # plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2")
+#     points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
+#     points(dates, filtered, type="l", lwd=2, col="darkgrey")
+#     if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
+#   }
+# }
