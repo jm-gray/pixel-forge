@@ -58,64 +58,6 @@ ReadPhenoParameters <- function(parameter_file, year_of_interest){
 }
 
 #---------------------------------------------------------------------
-# PhenoReturnValue <- function(default_value=NA){
-# 	# returns a blank AnnualPhenologyC6 return value
-#
-# 	ret_value <- list(
-# 		# segment metrics
-# 		num_cycles=default_value, # 1
-# 		fill_code=default_value, # 2
-#
-# 		# cycle 1 metrics
-# 		evi_area_cycle1=default_value, # 3
-# 		evi_amp_cycle1=default_value, # 4
-# 		evi_min_cycle1=default_value, # 5
-# 		frac_filled_gup_cycle1=default_value, # 6
-# 		frac_filled_gdown_cycle1=default_value, # 7
-# 		length_gup_cycle1=default_value, # 8
-# 		length_gdown_cycle1=default_value, # 9
-# 		ogi_cycle1=default_value, # 10
-# 		midgup_cycle1=default_value, # 11
-# 		mat_cycle1=default_value, # 12
-# 		peak_cycle1=default_value, # 13
-# 		sen_cycle1=default_value, # 14
-# 		midgdown_cycle1=default_value, # 15
-# 		dor_cycle1=default_value, # 16
-# 		ogi_qual_cycle1=default_value, # 17
-# 		midgup_qual_cycle1=default_value, # 18
-# 		mat_qual_cycle1=default_value, # 19
-# 		peak_qual_cycle1=default_value, # 20
-# 		sen_qual_cycle1=default_value, # 21
-# 		midgdown_qual_cycle1=default_value, # 22
-# 		dor_qual_cycle1=default_value, # 23
-#
-# 		# cycle 2 metrics
-# 		evi_area_cycle2=default_value, # 24
-# 		evi_amp_cycle2=default_value, # 25
-# 		evi_min_cycle2=default_value, # 26
-# 		frac_filled_gup_cycle2=default_value, # 27
-# 		frac_filled_gdown_cycle2=default_value, # 28
-# 		length_gup_cycle2=default_value, # 29
-# 		length_gdown_cycle2=default_value, # 30
-# 		ogi_cycle2=default_value, # 31
-# 		midgup_cycle2=default_value, # 32
-# 		mat_cycle2=default_value, # 33
-# 		peak_cycle2=default_value, # 34
-# 		sen_cycle2=default_value, # 35
-# 		midgdown_cycle2=default_value, # 36
-# 		dor_cycle2=default_value, # 37
-# 		ogi_qual_cycle2=default_value, # 38
-# 		midgup_qual_cycle2=default_value, # 39
-# 		mat_qual_cycle2=default_value, # 40
-# 		peak_qual_cycle2=default_value, # 41
-# 		sen_qual_cycle2=default_value, # 42
-# 		midgdown_qual_cycle2=default_value, # 43
-# 		dor_qual_cycle2=default_value # 44
-# 	)
-# 	return(ret_value)
-# }
-
-#---------------------------------------------------------------------
 PhenoReturnValue <- function(default_value=NA){
 	# returns a blank AnnualPhenologyC6 return value
 
@@ -129,47 +71,25 @@ PhenoReturnValue <- function(default_value=NA){
 		evi_area_cycle1=default_value, # 4
 		evi_amp_cycle1=default_value, # 5
 		evi_min_cycle1=default_value, # 6
-		# frac_filled_gup_cycle1=default_value, # 6
-		# frac_filled_gdown_cycle1=default_value, # 7
-		# length_gup_cycle1=default_value, # 8
-		# length_gdown_cycle1=default_value, # 9
-		ogi_cycle1=default_value, # 10
-		midgup_cycle1=default_value, # 11
-		mat_cycle1=default_value, # 12
-		peak_cycle1=default_value, # 13
-		sen_cycle1=default_value, # 14
-		midgdown_cycle1=default_value, # 15
-		dor_cycle1=default_value, # 16
-		# ogi_qual_cycle1=default_value, # 17
-		# midgup_qual_cycle1=default_value, # 18
-		# mat_qual_cycle1=default_value, # 19
-		# peak_qual_cycle1=default_value, # 20
-		# sen_qual_cycle1=default_value, # 21
-		# midgdown_qual_cycle1=default_value, # 22
-		# dor_qual_cycle1=default_value, # 23
+		ogi_cycle1=default_value, # 7
+		midgup_cycle1=default_value, # 8
+		mat_cycle1=default_value, # 9
+		peak_cycle1=default_value, # 10
+		sen_cycle1=default_value, # 11
+		midgdown_cycle1=default_value, # 12
+		dor_cycle1=default_value, # 13
 
 		# cycle 2 metrics
-		evi_area_cycle2=default_value, # 24
-		evi_amp_cycle2=default_value, # 25
-		evi_min_cycle2=default_value, # 26
-		# frac_filled_gup_cycle2=default_value, # 27
-		# frac_filled_gdown_cycle2=default_value, # 28
-		# length_gup_cycle2=default_value, # 29
-		# length_gdown_cycle2=default_value, # 30
-		ogi_cycle2=default_value, # 31
-		midgup_cycle2=default_value, # 32
-		mat_cycle2=default_value, # 33
-		peak_cycle2=default_value, # 34
-		sen_cycle2=default_value, # 35
-		midgdown_cycle2=default_value, # 36
-		dor_cycle2=default_value # 37
-		# ogi_qual_cycle2=default_value, # 38
-		# midgup_qual_cycle2=default_value, # 39
-		# mat_qual_cycle2=default_value, # 40
-		# peak_qual_cycle2=default_value, # 41
-		# sen_qual_cycle2=default_value, # 42
-		# midgdown_qual_cycle2=default_value, # 43
-		# dor_qual_cycle2=default_value # 44
+		evi_area_cycle2=default_value, # 14
+		evi_amp_cycle2=default_value, # 15
+		evi_min_cycle2=default_value, # 16
+		ogi_cycle2=default_value, # 17
+		midgup_cycle2=default_value, # 18
+		mat_cycle2=default_value, # 19
+		peak_cycle2=default_value, # 20
+		sen_cycle2=default_value, # 21
+		midgdown_cycle2=default_value, # 22
+		dor_cycle2=default_value # 23
 	)
 	return(ret_value)
 }
