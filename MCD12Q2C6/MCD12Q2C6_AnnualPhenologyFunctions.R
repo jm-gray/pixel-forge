@@ -704,12 +704,12 @@ QualPack <- function(quals) sum(unlist(lapply(quals, QualBit)) * (2^(0:15)))
 SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=NA, fill_code=NA){
 	# sets return object annual_pheno_metrics values for cycle 1 or 2 using the SegMet return object seg_met
 	if(!is.na(num_cycles)){
-		annual_pheno_metrics$num_cycles <- num_cycles
+		annual_pheno_metrics$num_cycles <- num_cycles #1
 	}
 
 	# set overall and detailed QA output
-	annual_pheno_metrics$overall_qa <-seg_met$overall_qa
-	annual_pheno_metrics$detailed_qa <-seg_met$detailed_qa
+	annual_pheno_metrics$overall_qa <-seg_met$overall_qa #2
+	annual_pheno_metrics$detailed_qa <-seg_met$detailed_qa #3
 
 	# if(!is.na(fill_code)){
 	# 	annual_pheno_metrics$fill_code <- fill_code
@@ -717,20 +717,20 @@ SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=N
 
 	if(cycle==1){
 		# cycle 1 metrics
-		annual_pheno_metrics$evi_area_cycle1=seg_met$evi2_area
-		annual_pheno_metrics$evi_amp_cycle1=seg_met$evi2_amp
-		annual_pheno_metrics$evi_min_cycle1=seg_met$evi2_min
+		annual_pheno_metrics$evi_area_cycle1=seg_met$evi2_area #4
+		annual_pheno_metrics$evi_amp_cycle1=seg_met$evi2_amp #5
+		annual_pheno_metrics$evi_min_cycle1=seg_met$evi2_min #6
 		# annual_pheno_metrics$frac_filled_gup_cycle1=seg_met$frac_filled_gup
 		# annual_pheno_metrics$frac_filled_gdown_cycle1=seg_met$frac_filled_gdown
 		# annual_pheno_metrics$length_gup_cycle1=seg_met$length_gup
 		# annual_pheno_metrics$length_gdown_cycle1=seg_met$length_gdown
-		annual_pheno_metrics$ogi_cycle1=seg_met$ogi
-		annual_pheno_metrics$midgup_cycle1=seg_met$midgup
-		annual_pheno_metrics$mat_cycle1=seg_met$mat
-		annual_pheno_metrics$peak_cycle1=seg_met$peak
-		annual_pheno_metrics$sen_cycle1=seg_met$sen
-		annual_pheno_metrics$midgdown_cycle1=seg_met$midgdown
-		annual_pheno_metrics$dor_cycle1=seg_met$dor
+		annual_pheno_metrics$ogi_cycle1=seg_met$ogi #7
+		annual_pheno_metrics$midgup_cycle1=seg_met$midgup #8
+		annual_pheno_metrics$mat_cycle1=seg_met$mat #9
+		annual_pheno_metrics$peak_cycle1=seg_met$peak #10
+		annual_pheno_metrics$sen_cycle1=seg_met$sen #11
+		annual_pheno_metrics$midgdown_cycle1=seg_met$midgdown #12
+		annual_pheno_metrics$dor_cycle1=seg_met$dor #13
 		# annual_pheno_metrics$ogi_qual_cycle1=seg_met$ogi_qual
 		# annual_pheno_metrics$midgup_qual_cycle1=seg_met$midgup_qual
 		# annual_pheno_metrics$mat_qual_cycle1=seg_met$mat_qual
@@ -740,20 +740,20 @@ SetReturnValues <- function(annual_pheno_metrics, seg_met, cycle=1, num_cycles=N
 		# annual_pheno_metrics$dor_qual_cycle1=seg_met$dor_qual
 	}else{
 		# cycle 2 metrics
-		annual_pheno_metrics$evi_area_cycle2=seg_met$evi2_area
-		annual_pheno_metrics$evi_amp_cycle2=seg_met$evi2_amp
-		annual_pheno_metrics$evi_min_cycle2=seg_met$evi2_min
+		annual_pheno_metrics$evi_area_cycle2=seg_met$evi2_area #14
+		annual_pheno_metrics$evi_amp_cycle2=seg_met$evi2_amp #15
+		annual_pheno_metrics$evi_min_cycle2=seg_met$evi2_min #16
 		# annual_pheno_metrics$frac_filled_gup_cycle2=seg_met$frac_filled_gup
 		# annual_pheno_metrics$frac_filled_gdown_cycle2=seg_met$frac_filled_gdown
 		# annual_pheno_metrics$length_gup_cycle2=seg_met$length_gup
 		# annual_pheno_metrics$length_gdown_cycle2=seg_met$length_gdown
-		annual_pheno_metrics$ogi_cycle2=seg_met$ogi
-		annual_pheno_metrics$midgup_cycle2=seg_met$midgup
-		annual_pheno_metrics$mat_cycle2=seg_met$mat
-		annual_pheno_metrics$peak_cycle2=seg_met$peak
-		annual_pheno_metrics$sen_cycle2=seg_met$sen
-		annual_pheno_metrics$midgdown_cycle2=seg_met$midgdown
-		annual_pheno_metrics$dor_cycle2=seg_met$dor
+		annual_pheno_metrics$ogi_cycle2=seg_met$ogi #17
+		annual_pheno_metrics$midgup_cycle2=seg_met$midgup #18
+		annual_pheno_metrics$mat_cycle2=seg_met$mat #19
+		annual_pheno_metrics$peak_cycle2=seg_met$peak #20
+		annual_pheno_metrics$sen_cycle2=seg_met$sen #21
+		annual_pheno_metrics$midgdown_cycle2=seg_met$midgdown #22
+		annual_pheno_metrics$dor_cycle2=seg_met$dor #23
 		# annual_pheno_metrics$ogi_qual_cycle2=seg_met$ogi_qual
 		# annual_pheno_metrics$midgup_qual_cycle2=seg_met$midgup_qual
 		# annual_pheno_metrics$mat_qual_cycle2=seg_met$mat_qual
@@ -798,7 +798,6 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	valid_peaks <- try(FindPeaks(evi), silent=T)
 	# if(inherits(valid_peaks, 'try-error') | is.na(valid_peaks)){
 	if(inherits(valid_peaks, 'try-error') | (length(valid_peaks) == 0)){
-		annual_pheno_metrics$fill_code <- 1 # no valid peaks
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
 		return(annual_pheno_metrics)
 	}
@@ -806,7 +805,6 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	# find full segments
 	full_segs <- try(GetSegs(valid_peaks, evi, pheno_pars), silent=T)
 	if(inherits(full_segs, 'try-error') | is.null(full_segs)){
-		annual_pheno_metrics$fill_code <- 2 # no valid segments
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
 		return(annual_pheno_metrics)
 	}
@@ -815,7 +813,6 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	seg_overlaps <- unlist(lapply(full_segs, SegOverlapsPeriod, dates, pheno_period_start, pheno_period_end))
 	if(all(!seg_overlaps)){
 		# no segs within period of interest
-		annual_pheno_metrics$fill_code <- 2 # no valid segments
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
 		return(annual_pheno_metrics)
 	}
