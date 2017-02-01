@@ -24,15 +24,33 @@
 # samerica_tiles <- c('h10v10', 'h10v07', 'h10v08', 'h10v09', 'h11v10', 'h11v11', 'h11v12', 'h11v07', 'h11v08', 'h11v09', 'h12v10', 'h12v11', 'h12v12', 'h12v13', 'h12v08', 'h12v09', 'h13v10', 'h13v11', 'h13v12', 'h13v13', 'h13v14', 'h13v08', 'h13v09', 'h14v10', 'h14v11', 'h14v14', 'h14v09', 'h08v08', 'h08v09', 'h09v08', 'h09v09')
 # oceania_tiles <- c('h00v10', 'h00v08', 'h01v10', 'h01v11', 'h01v07', 'h01v09', 'h02v10', 'h02v06', 'h02v08', 'h27v10', 'h28v14', 'h29v13', 'h03v10', 'h03v11', 'h03v06', 'h03v07', 'h30v13', 'h31v12', 'h31v13', 'h31v08', 'h32v11', 'h32v12', 'h32v07', 'h32v09', 'h33v10', 'h33v11', 'h33v07', 'h33v08', 'h33v09', 'h34v10', 'h34v07', 'h34v08', 'h34v09', 'h35v10', 'h35v08', 'h35v09', 'h04v09', 'h05v13', 'h06v11', 'h08v11')
 # australia_tiles <- c('h27v11', 'h27v12', 'h27v14', 'h28v11', 'h28v12', 'h28v13', 'h29v10', 'h29v11', 'h29v12', 'h29v13', 'h30v10', 'h30v11', 'h30v12', 'h31v10', 'h31v11', 'h31v12', 'h32v10')
+# all_tiles <- scan("/projectnb/modislc/users/joshgray/MCD12Q2C6/gltiles.txt", what=character(), quiet=T)
 #
 # years <- 2003
 # tiles <- africa_tiles
-# f <- function(x){
+# submitTileYear <- function(x){
 #   sys_cmd <- paste("qsub -V -pe omp 16 -l h_rt=08:00:00 -l mem_total=98G /projectnb/modislc/users/joshgray/MCD12Q2C6/subAnnualPheno.sh", x[1], x[2])
 #   print(paste("Submitting", x[1], "for year", x[2]))
 #   system(sys_cmd)
 # }
-# apply(expand.grid(tiles, years), 1, f)
+#
+# output_dir <- "/projectnb/modislc/users/joshgray/MCD12Q2C6/MCD12Q2C6_OUTPUT"
+# checkExists <- function(tile, year, output_dir){
+#   out_files <- dir(output_dir, paste(".*", tile, ".*", year, ".hdr$", sep=""))
+#   if(length(out_files) == 0){
+#     return(FALSE)
+#   }else{
+#     return(TRUE)
+#   }
+# }
+#
+# # check for existence
+# df <- expand.grid(tiles, years)
+# df$Exists <- apply(df, 1, checkExists, year=years, output_dir=output_dir)
+# df_missing <- subset(df, !Exists)
+#
+# # submit all missing tile-years
+# apply(df_missing, 1, submitTileYear)
 
 # this is for convenience...
 # layer_names <- c("num_cycles", "fill_code", "evi_area_cycle1", "evi_amp_cycle1", "evi_min_cycle1", "frac_filled_gup_cycle1", "frac_filled_gdown_cycle1", "length_gup_cycle1", "length_gdown_cycle1", "ogi_cycle1", "midgup_cycle1", "mat_cycle1", "peak_cycle1", "sen_cycle1", "midgdown_cycle1", "dor_cycle1", "ogi_qual_cycle1", "midgup_qual_cycle1", "mat_qual_cycle1", "peak_qual_cycle1", "sen_qual_cycle1", "midgdown_qual_cycle1", "dor_qual_cycle1", "evi_area_cycle2", "evi_amp_cycle2", "evi_min_cycle2", "frac_filled_gup_cycle2", "frac_filled_gdown_cycle2", "length_gup_cycle2", "length_gdown_cycle2", "ogi_cycle2", "midgup_cycle2", "mat_cycle2", "peak_cycle2", "sen_cycle2", "midgdown_cycle2", "dor_cycle2", "ogi_qual_cycle2", "midgup_qual_cycle2", "mat_qual_cycle2", "peak_qual_cycle2", "sen_qual_cycle2", "midgdown_qual_cycle2", "dor_qual_cycle2")
