@@ -91,9 +91,9 @@ PhenoReturnValue <- function(default_value=NA){
 		peak_cycle2=default_value, # 20
 		sen_cycle2=default_value, # 21
 		midgdown_cycle2=default_value, # 22
-		dor_cycle2=default_value # 23
+		dor_cycle2=default_value, # 23
 		overall_qa_cycle2=default_value, # 24
-		detailed_qa_cycle2=default_value, # 25
+		detailed_qa_cycle2=default_value # 25
 	)
 	return(ret_value)
 }
