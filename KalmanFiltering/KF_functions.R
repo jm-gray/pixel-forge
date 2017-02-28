@@ -136,6 +136,7 @@ GetBandBRDFQualities <- function(x){
 
 #-------------------------------------------------------------------------------
 GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL, head_fill_len=NA, tail_fill_len=NA){
+  if(all(is.na(x))) return(rep(NA, 365))
 	# calculates an annual spline fit to the data in x
 	# values below the quantile specified by min_quant are filled
 	doys <- as.numeric(strftime(dates, format="%j"))
@@ -145,9 +146,10 @@ GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL, head_fill_l
 	# x[x < qmin] <- NA
   x[x < qmin] <- qmin
 	# add background value to head/tail from first/last non-NA value to constrain spline fit
-	start_doy <- min(doys[!is.na(x)])
-	end_doy <- max(doys[!is.na(x)])
-	doys <- c(doys, 1:(start_doy - 1), (end_doy + 1):365)
+	start_doy <- min(doys[!is.na(x)], na.rm=T)
+	end_doy <- max(doys[!is.na(x)], na.rm=T)
+	# doys <- c(doys, 1:(start_doy - 1), (end_doy + 1):365)
+  doys <- c(doys, seq(from=1, to=start_doy - 1, len=start_doy - 1), seq(from=end_doy + 1, to=365, len=365 - end_doy))
 	x <- c(x, rep(qmin, start_doy - 1), rep(qmin, 365 - end_doy))
   # if head/tail fills lengths are supplied, fill w/ background value:
   if(!is.na(head_fill_len)){

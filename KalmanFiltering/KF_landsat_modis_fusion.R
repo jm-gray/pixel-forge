@@ -22,15 +22,15 @@ source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_fun
 # get the landsat data and dates
 # landsat_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat"
 landsat_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/Landsat"
-landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2_landsat_overlap.tif", rec=T, full=T)
+landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2_landsat_overlap.tif$", rec=T, full=T)
 landsat_evi2_files <- landsat_evi2_files[order(GetLandsatDate(landsat_evi2_files))]
-landsat_blue_files <- dir(landsat_data_dir, pattern="band1_landsat_overlap.tif", rec=T, full=T)
+landsat_blue_files <- dir(landsat_data_dir, pattern="band1_landsat_overlap.tif$", rec=T, full=T)
 landsat_blue_files <- landsat_blue_files[order(GetLandsatDate(landsat_blue_files))]
-landsat_green_files <- dir(landsat_data_dir, pattern="band2_landsat_overlap.tif", rec=T, full=T)
+landsat_green_files <- dir(landsat_data_dir, pattern="band2_landsat_overlap.tif$", rec=T, full=T)
 landsat_green_files <- landsat_green_files[order(GetLandsatDate(landsat_green_files))]
-landsat_red_files <- dir(landsat_data_dir, pattern="band3_landsat_overlap.tif", rec=T, full=T)
+landsat_red_files <- dir(landsat_data_dir, pattern="band3_landsat_overlap.tif$", rec=T, full=T)
 landsat_red_files <- landsat_red_files[order(GetLandsatDate(landsat_red_files))]
-landsat_nir_files <- dir(landsat_data_dir, pattern="band4_landsat_overlap.tif", rec=T, full=T)
+landsat_nir_files <- dir(landsat_data_dir, pattern="band4_landsat_overlap.tif$", rec=T, full=T)
 landsat_nir_files <- landsat_nir_files[order(GetLandsatDate(landsat_nir_files))]
 landsat_dates <- sort(GetLandsatDate(landsat_nir_files))
 
@@ -38,27 +38,27 @@ landsat_dates <- sort(GetLandsatDate(landsat_nir_files))
 # get the modis data and dates
 # modis_data_dir <- "/projectnb/modislc/users/joshgray/DL_Landsat/MODISOVERLAP"
 modis_data_dir <- "/Users/jmgray2/Documents/NebraskaFusion/MODIS"
-modis_evi2_files <- dir(modis_data_dir, pattern="evi2_modis_overlap.tif", full=T)
+modis_evi2_files <- dir(modis_data_dir, pattern="evi2_modis_overlap.tif$", full=T)
 modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
 modis_evi2_files <- modis_evi2_files[order(modis_dates)]
-modis_blue_files <- dir(modis_data_dir, pattern="blue_modis_overlap.tif", full=T)
+modis_blue_files <- dir(modis_data_dir, pattern="blue_modis_overlap.tif$", full=T)
 modis_blue_files <- modis_blue_files[order(modis_dates)]
-modis_green_files <- dir(modis_data_dir, pattern="green_modis_overlap.tif", full=T)
+modis_green_files <- dir(modis_data_dir, pattern="green_modis_overlap.tif$", full=T)
 modis_green_files <- modis_green_files[order(modis_dates)]
-modis_red_files <- dir(modis_data_dir, pattern="red_modis_overlap.tif", full=T)
+modis_red_files <- dir(modis_data_dir, pattern="red_modis_overlap.tif$", full=T)
 modis_red_files <- modis_red_files[order(modis_dates)]
-modis_nir_files <- dir(modis_data_dir, pattern="nir_modis_overlap.tif", full=T)
+modis_nir_files <- dir(modis_data_dir, pattern="nir_modis_overlap.tif$", full=T)
 modis_nir_files <- modis_nir_files[order(modis_dates)]
-modis_QA_files <- dir(modis_data_dir, pattern="band_quality_modis_overlap.tif", full=T)
+modis_QA_files <- dir(modis_data_dir, pattern="band_quality_modis_overlap.tif$", full=T)
 modis_QA_files <- modis_QA_files[order(modis_dates)]
-modis_snow_files <- dir(modis_data_dir, pattern="snow_modis_overlap.tif", full=T)
+modis_snow_files <- dir(modis_data_dir, pattern="snow_modis_overlap.tif$", full=T)
 modis_snow_files <- modis_snow_files[order(modis_dates)]
 modis_dates <- sort(modis_dates)
 
 #-------------------------------------------------------------------------------
 # get the CDL files
 # cdl_files <- dir("/projectnb/modislc/users/joshgray/DL_Landsat/CDL_sub", pattern="landsat_overlap.tif", full=T)
-cdl_files <- dir("/Users/jmgray2/Documents/NebraskaFusion/CDL", pattern="landsat_overlap.tif", full=T)
+cdl_files <- dir("/Users/jmgray2/Documents/NebraskaFusion/CDL", pattern="landsat_overlap.tif$", full=T)
 cdl_years <- as.numeric(substr(basename(cdl_files), 5, 8))
 
 #---------------------------------------------------------------------
@@ -107,7 +107,8 @@ values(rmse) <- out_rmse
 rows_to_read <- 1e3
 plot(rmse); myc <- click(rmse, cell=T)
 start_row <- rowFromCell(tmp_r, myc$cell[1]) - round(rows_to_read / 2)
-nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+# nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+nrows <- min(rows_to_read, (nrow(tmp_r) - (start_row - 1))) # last block may have less rows
 cdl_v <- GetValuesGDAL(cdl_files, start_row, nrows)
 landsat_v <- GetValuesGDAL(landsat_evi2_files, start_row, nrows)
 rmse_v <- getValues(rmse, start_row, nrows)
@@ -297,20 +298,21 @@ random_cell <- sample(1:dim(V)[1],1)
 trash <- KF_rmse_fuse(V[random_cell, ], x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008, do_plot=T)
 
 #==================================================================================
+# Working here from now on
 cl <- makeCluster(detectCores())
 clusterExport(cl, c("ModisOveralapPreprocessNBAR", "GetSDSName", "GetSDSNameQA", "GetSDSNameSnow", "ModisOveralapPreprocessQA"))
 clusterEvalQ(cl, {source("https://raw.github.com/jm-gray/pixel-forge/master/KalmanFiltering/KF_functions.R");library(dlm)})
 # system.time(trash <- parApply(cl, V[1:1e4,], 1, KF_rmse_fuse, x_dates=landsat_dates, y_dates=modis_dates, cdl_year=cdl_years, year_to_do=2008))
 
 
-landsat_data_dir <- "~/Desktop/KF_fusion_data_new/landsat"
-landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2.tif", full=T)
+landsat_data_dir <- "~/Desktop/KF_fusion_data_new/landsat_new"
+landsat_evi2_files <- dir(landsat_data_dir, pattern="evi2.*tif$", full=T)
 landsat_evi2_files <- landsat_evi2_files[order(GetLandsatDate(landsat_evi2_files))]
 landsat_dates <- GetLandsatDate(landsat_evi2_files)
 landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
 
-modis_data_dir <- "~/Desktop/KF_fusion_data_new/modis"
-modis_evi2_files <- dir(modis_data_dir, pattern="evi2.tif", full=T)
+modis_data_dir <- "~/Desktop/KF_fusion_data_new/modis_new"
+modis_evi2_files <- dir(modis_data_dir, pattern="evi2.*tif$", full=T)
 modis_dates <- as.Date(unlist(lapply(modis_evi2_files, GetModisDate)), origin="1970-1-1")
 modis_evi2_files <- modis_evi2_files[order(modis_dates)]
 modis_doys <- as.integer(strftime(modis_dates, format="%j"))
