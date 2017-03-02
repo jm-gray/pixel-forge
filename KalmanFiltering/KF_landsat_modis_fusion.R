@@ -451,6 +451,7 @@ for(in_file in gdd_files){
 
 # plot the rmse figure
 # par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white")
+scale_factor <- 1e4
 pal <- colorRampPalette(brewer.pal(11, "Spectral"))
 v <- values(rmse_sub)
 qs <- quantile(v, c(0,0.02, 0.98,1),na.rm=T)

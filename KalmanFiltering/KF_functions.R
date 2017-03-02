@@ -165,6 +165,40 @@ GetDOYSpline <- function(x, dates, min_quant=0.05, spline_spar=NULL, head_fill_l
 	return(x_smooth)
 }
 
+#-------------------------------------------------------------------------------
+GetLandsatProcessSD <- function(x, dates){
+  # fits a spline to each year's worth of daily Landsat data, returns a matrix of the diffs
+  # with as many rows as there are years
+  tmp_years <- as.integer(strftime(dates, format="%Y"))
+  unique_years <- unique(tmp_years)
+  for(i in 1:length(unique_years)){
+    tmp_spline <- GetDOYSpline(x[tmp_years == unique_years[i]], dates[tmp_years == unique_years[i]])
+    if(i == 1){
+      out_val <- diff(tmp_spline)
+    }else{
+      out_val <- rbind(out_val, diff(tmp_spline))
+    }
+  }
+  return(c(t(out_val)))
+}
+
+#-------------------------------------------------------------------------------
+TukeyRestrictedSD <- function(x, k=1.5){
+  # returns the std dev of x, with Tukey outliers screened
+  qs <- quantile(x, na.rm=T)
+  tukey_range <- c(qs[2] - k * (qs[4] - qs[2]), qs[4] + k * (qs[4] - qs[2]))
+  return(sd(x[x >= tukey_range[1] & x <= tukey_range[2]], na.rm=T))
+}
+
+#-------------------------------------------------------------------------------
+QuantileMinReplacement <- function(x, qval=0.05){
+  replacement_value <- quantile(x[x >= 0], qval, na.rm=T)
+  x[x < 0] <- replacement_value
+  return(x)
+}
+
+
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions for creating, implementing, and extracting results from image KF's
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -215,6 +249,96 @@ MakeMultiDLM <- function(num_states=1, sensors=1, time_varying=FALSE){
     my_dlm <- dlm(m0=m0, C0=C0, GG=GG, W=W, FF=FF, V=V)
     return(my_dlm)
   }
+}
+
+#-------------------------------------------------------------------------------
+FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, smooth=T, plot=F, ...){
+  # extract components of x
+  tmp_cdl <- x[1]
+  tmp_rmse <- x[2] / scale_factor
+  x <- x[c(-1, -2)] / scale_factor
+  x_landsat <- x[1:length(landsat_dates)]
+  x_modis <- x[(length(landsat_dates) + 1):length(x)]
+
+  # retrieve the proper time varying process error for this land cover type
+  tv_sd <- cdl_tv_sd[[which(cdl_types == tmp_cdl)]]$splined / scale_factor
+  tv_sd <- c(tv_sd[1], tv_sd) # append the head value b/c sd is 364 long
+
+  # munge to daily series
+  num_years <- length(as.integer(sort(unique(c(strftime(landsat_dates, format="%Y"), strftime(modis_dates, format="%Y"))))))
+
+  # do landsat; eliminate leap year day 366
+  tmp_landsat <- rep(NA, num_years * 365)
+  tmp_landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
+  tmp_landsat_years <- as.integer(strftime(landsat_dates, format="%Y"))
+  x_landsat <- x_landsat[tmp_landsat_doys <= 365]
+  tmp_landsat_doys <- tmp_landsat_doys[tmp_landsat_doys <= 365]
+  tmp_landsat_years <- tmp_landsat_years[tmp_landsat_doys <= 365]
+  daily_landsat_inds <- tmp_landsat_doys + 365 * (tmp_landsat_years - min(tmp_landsat_years))
+  tmp_landsat[daily_landsat_inds] <- x_landsat
+
+  # do modis; eliminate leap year day 366
+  tmp_modis <- rep(NA, num_years * 365)
+  tmp_modis_doys <- as.integer(strftime(modis_dates, format="%j"))
+  tmp_modis_years <- as.integer(strftime(modis_dates, format="%Y"))
+  x_modis <- x_modis[tmp_modis_doys <= 365]
+  tmp_modis_doys <- tmp_modis_doys[tmp_modis_doys <= 365]
+  tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
+  daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
+  tmp_modis[daily_modis_inds] <- x_modis
+
+  # create obs matrix
+  y <- cbind(tmp_landsat, tmp_modis)
+
+  # specify landsat TM and ETM+ errors (7% and 5%, resp)
+  tmp_landsat_error <- rep(NA, length(tmp_landsat))
+  tmp_landsat_error[landsat_sensor == "LE7"] <- tmp_landsat * 0.05
+  tmp_landsat_error[landsat_sensor == "LT5"] <- tmp_landsat * 0.07
+
+  # NOTE: why do observation errors where there are no obersvations affect results?!
+  # # replace all missing landsat error values with closest not-NA value
+  # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
+  # tmp_landsat_error[which(is.na(tmp_landsat_error))] <- tmp_landsat_error[trash]
+
+  tmp_modis_error <- rep(NA, length(tmp_modis))
+  tmp_modis_error[!is.na(tmp_modis)] <- tmp_rmse
+
+  # define dlm components
+  GG <- matrix(1) # process transition
+  W <- matrix(1) # evolution error covariance
+  JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
+  FF <- matrix(c(1, 1), nrow=2) # observation matrix
+  V <- matrix(c(1, 0, 0, 1), nrow=2) # obs uncertainty
+  JV <- matrix(c(2, 0, 0, 3), nrow=2) # time varying obs uncertainty: in cols 2 (landsat) and 3 (modis)
+  X <- matrix(1, nrow=length(tmp_modis), ncol=3)
+  X[, 1] <- rep(tv_sd, num_years) # evolution error
+  X[, 2] <- tmp_landsat_error # landsat observation error
+  # X[, 3] <- rep(tmp_rmse, length(tmp_modis)) # modis observation error
+  X[, 3] <- tmp_modis_error # modis observation error
+  m0 <- 0 # initial state vector
+  C0 <- 1 # initial state uncertainty
+
+  # construct the dlm
+  tmp_dlm <- dlm(m0=m0, C0=C0, GG=1, JW=1, FF=FF, V=V, JV=JV, W=1, X=X)
+
+  # apply the dlm
+  if(smooth){
+    kf_result <- dlmSmooth(y, tmp_dlm)
+    kf_evi <- dropFirst(kf_result$s)
+    kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.S, kf_result$D.S))))
+    ret_value <- list(evi=kf_evi, error=kf_evi_error)
+  }else{
+    kf_result <- dlmFilter(y, tmp_dlm)
+    kf_evi <- dropFirst(kf_result$m)
+    kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.C, kf_result$D.C))))
+    ret_value <- list(evi=kf_evi, error=kf_evi_error)
+  }
+
+  if(plot){
+    PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", sigma=1, ...)
+  }
+
+  return(ret_value)
 }
 
 #-------------------------------------------------------------------------------
@@ -365,11 +489,16 @@ PlotFusionRGB <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len
 }
 
 #-------------------------------------------------------------------------------
-PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.05, ylim=NULL, ...){
+PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.05, sigma=NULL, ylim=NULL, ...){
   if(is.null(t)) t <- 1:length(filt_m)
   colmain <- "#3182BD"; colerr <- "#BDD7E7"; colsignal <- "#636363"
-  lower <- filt_m + qnorm(conf_level, sd=filt_se)
-  upper <- filt_m + qnorm(1 - conf_level, sd=filt_se)
+  if(is.null(sigma)){
+    lower <- filt_m + qnorm(conf_level, sd=filt_se)
+    upper <- filt_m + qnorm(1 - conf_level, sd=filt_se)
+  }else{
+    lower <- filt_m + (sigma * filt_se)
+    upper <- filt_m - (sigma * filt_se)
+  }
 
   if(is.null(ylim)){
     ylim <- range(c(upper, lower), na.rm=T) * c(0.9, 1.1)
