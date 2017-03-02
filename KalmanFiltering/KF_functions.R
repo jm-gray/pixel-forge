@@ -276,6 +276,8 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   tmp_landsat_years <- tmp_landsat_years[tmp_landsat_doys <= 365]
   daily_landsat_inds <- tmp_landsat_doys + 365 * (tmp_landsat_years - min(tmp_landsat_years))
   tmp_landsat[daily_landsat_inds] <- x_landsat
+  daily_landsat_sensor <- rep(NA, length(tmp_landsat))
+  daily_landsat_sensor[daily_landsat_inds] <- landsat_sensor
 
   # do modis; eliminate leap year day 366
   tmp_modis <- rep(NA, num_years * 365)
@@ -292,10 +294,9 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
 
   # specify landsat TM and ETM+ errors (7% and 5%, resp)
   tmp_landsat_error <- rep(NA, length(tmp_landsat))
-  tmp_landsat_error[landsat_sensor == "LE7"] <- tmp_landsat * 0.05
-  tmp_landsat_error[landsat_sensor == "LT5"] <- tmp_landsat * 0.07
+  tmp_landsat_error[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] * 0.05
+  tmp_landsat_error[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] * 0.07
 
-  # NOTE: why do observation errors where there are no obersvations affect results?!
   # # replace all missing landsat error values with closest not-NA value
   # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
   # tmp_landsat_error[which(is.na(tmp_landsat_error))] <- tmp_landsat_error[trash]
@@ -319,7 +320,7 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   C0 <- 1 # initial state uncertainty
 
   # construct the dlm
-  tmp_dlm <- dlm(m0=m0, C0=C0, GG=1, JW=1, FF=FF, V=V, JV=JV, W=1, X=X)
+  tmp_dlm <- dlm(m0=m0, C0=C0, GG=GG, JW=JW, FF=FF, V=V, JV=JV, W=W, X=X)
 
   # apply the dlm
   if(smooth){
