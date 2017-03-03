@@ -336,7 +336,8 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   }
 
   if(plot){
-    PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", sigma=1, ...)
+    # PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", sigma=1, ...)
+    PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", ...)
   }
 
   return(ret_value)
@@ -429,6 +430,71 @@ ApplyGetError <- function(ind, Y, kf){
   return(GetAllDayKFError(x, kf))
 }
 
+#-------------------------------------------------------------------------------
+# Quantify prediction/interpolation error for any number of consecutive missing Landsat values
+# Note: they are not consecutive, but consecutive not missing. That is, for a series: 1, NA, NA, NA, 2, NA, 5
+# if we wanted two "consecutive" not missing values, the series would be: NA, NA, NA, NA, NA, NA, 5 with error
+# quantified for indices 1 and 5
+GetErrorLandsatMODISFusion <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, smooth=T, consecutive_missing=1, missing_fraction=NULL, missing_iterations=10){
+    not_na_landsat_indices <- which(!is.na(x[3:(2 + length(landsat_dates))])) + 2
+    max_landsat_index <- 2 + length(landsat_dates)
+    output_errors <- NULL
+    kf_dates <- sort(as.Date(paste(rep(unique(strftime(c(landsat_dates, modis_dates), format="%Y")), 365), 1:365, sep="-"), format="%Y-%j"))
+    if(!is.null(missing_fraction)){
+      for(i in 1:missing_iterations){
+        tmp_errors <- rep(NA, length(landsat_dates))
+        missing_indices <- sort(sample(not_na_landsat_indices, round(length(not_na_landsat_indices) * missing_fraction)))
+        missing_dates <- landsat_dates[missing_indices - 2]
+        tmp_x <- x
+        # tmp_x[2:length(tmp_x)] <- tmp_x[2:length(tmp_x)] / scale_factor
+        og_evi <- tmp_x[missing_indices] / scale_factor
+        tmp_x[missing_indices] <- NA
+        kf_result <- FuseLandsatModisEVI(tmp_x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, smooth=T, plot=F)
+        kf_evi <- kf_result$evi[sapply(kf_dates, function(x) any(x==missing_dates))]
+        tmp_error <- og_evi - kf_evi
+        tmp_errors[missing_indices - 2] <- tmp_error
+        # append the cdl flag
+        tmp_errors <- c(x[1], tmp_errors)
+        if(is.null(output_errors)){
+          output_errors <- tmp_errors
+        }else{
+          output_errors <- rbind(output_errors, tmp_errors)
+        }
+      }
+      return(output_errors)
+    }
+
+    # doing consecutive missing instead
+    for(start_miss_index in not_na_landsat_indices){
+      # print(start_miss_index) # debug
+      tmp_errors <- rep(NA, length(landsat_dates))
+      missing_indices <- sort(not_na_landsat_indices[which(not_na_landsat_indices == start_miss_index):(which(not_na_landsat_indices == start_miss_index) + consecutive_missing - 1)])
+      missing_dates <- landsat_dates[missing_indices - 2]
+      # check that we're not over the maximum landsat index, if so break the loop b/c we're done
+      if(any(is.na(missing_indices))) break
+      # if(any(is.na(missing_indices))) next
+      # if(max(missing_indices) > max_landsat_index) next # this probably never happens...
+      tmp_x <- x
+      # tmp_x[2:length(tmp_x)] <- tmp_x[2:length(tmp_x)] / scale_factor
+      og_evi <- tmp_x[missing_indices] / scale_factor
+      tmp_x[missing_indices] <- NA
+      kf_result <- FuseLandsatModisEVI(tmp_x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, smooth=T, plot=F)
+      # kf_dates <- sort(as.Date(paste(rep(unique(strftime(c(landsat_dates, modis_dates), format="%Y")), 365), 1:365, sep="-"), format="%Y-%j"))
+      kf_evi <- kf_result$evi[sapply(kf_dates, function(x) any(x==missing_dates))]
+      tmp_error <- og_evi - kf_evi
+      tmp_errors[missing_indices - 2] <- tmp_error
+      # append the cdl flag
+      tmp_errors <- c(x[1], tmp_errors)
+      if(is.null(output_errors)){
+        output_errors <- tmp_errors
+      }else{
+        output_errors <- rbind(output_errors, tmp_errors)
+      }
+    }
+    return(output_errors)
+}
+
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions to simulate SVI time series w/ double-logistic functions
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -490,16 +556,13 @@ PlotFusionRGB <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len
 }
 
 #-------------------------------------------------------------------------------
-PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.05, sigma=NULL, ylim=NULL, ...){
+PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.95, sigma=NULL, ylim=NULL, pt_cex=1, ...){
   if(is.null(t)) t <- 1:length(filt_m)
   colmain <- "#3182BD"; colerr <- "#BDD7E7"; colsignal <- "#636363"
-  if(is.null(sigma)){
-    lower <- filt_m + qnorm(conf_level, sd=filt_se)
-    upper <- filt_m + qnorm(1 - conf_level, sd=filt_se)
-  }else{
-    lower <- filt_m + (sigma * filt_se)
-    upper <- filt_m - (sigma * filt_se)
-  }
+
+  if(is.null(sigma)) sigma <- qnorm(1 - (1 - conf_level) / 2)
+  lower <- filt_m + (sigma * filt_se)
+  upper <- filt_m - (sigma * filt_se)
 
   if(is.null(ylim)){
     ylim <- range(c(upper, lower), na.rm=T) * c(0.9, 1.1)
@@ -517,9 +580,9 @@ PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.05, sigma
   if(is.list(signal)){
     for(i in 1:length(signal)){
       tmp_y <- signal[[i]]
-      points(t, tmp_y, type="p", pch=i, cex=0.75, col=colsignal)
+      points(t, tmp_y, type="p", pch=i, cex=pt_cex, col=colsignal)
     }
   }else{
-    points(t, signal, type="p", pch=1, cex=0.75, col=colsignal)
+    points(t, signal, type="p", pch=1, cex=pt_cex, col=colsignal)
   }
 }
