@@ -494,6 +494,41 @@ GetErrorLandsatMODISFusion <- function(x, landsat_dates, modis_dates, landsat_se
     return(output_errors)
 }
 
+#-------------------------------------------------------------------------------
+# Loops over 10% to 90% random missing data in increments of 10% and quantifies
+# error at omitted Landsat observations. Each missing fraction is resampled miss_iter times
+ProgressiveMissingFraction <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_process_sds, cdl_types, miss_iter=10){
+  total_errors <- NULL
+  x_lo <- x
+  x_lo[(length(landsat_dates) + 3):length(x_lo)] <- NA # eliminate all MODIS measurements
+
+  for(miss_frac in seq(0.1, 0.9, by=0.1)){
+    fusion_errors <- GetErrorLandsatMODISFusion(x, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_tv_sd=cdl_process_sds, cdl_types=cdl_types, consecutive_missing=1, missing_fraction=miss_frac, missing_iterations=miss_iter)
+    fusion_errors <- data.frame(fusion_errors)
+    names(fusion_errors) <- c("cdl_code", strftime(landsat_dates, format="%j"))
+    long_fusion_errors <- melt(fusion_errors, measure.vars=2:222, variable.name="doy")
+    long_fusion_errors$type <- "fusion"
+
+    lo_errors <- GetErrorLandsatMODISFusion(x_lo, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_tv_sd=cdl_process_sds, cdl_types=cdl_types, consecutive_missing=1, missing_fraction=miss_frac, missing_iterations=miss_iter)
+    names(lo_errors)[2:222] <- strftime(landsat_dates, format="%j")
+    lo_errors <- data.frame(lo_errors)
+    names(lo_errors) <- c("cdl_code", strftime(landsat_dates, format="%j"))
+    long_lo_errors <- melt(lo_errors, measure.vars=2:222, variable.name="doy")
+    long_lo_errors$type <- "landsat"
+    tmp_total_errors <- rbind(long_lo_errors, long_fusion_errors)
+    tmp_total_errors$miss_frac <- miss_frac
+
+    if(is.null(total_errors)){
+      total_errors <- tmp_total_errors
+    }else{
+      total_errors <- rbind(total_errors, tmp_total_errors)
+    }
+  }
+  total_errors <- total_errors[!is.na(total_errors), ]
+  return(total_errors)
+}
+
+
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Functions to simulate SVI time series w/ double-logistic functions
