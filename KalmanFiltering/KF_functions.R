@@ -453,8 +453,8 @@ GetErrorLandsatMODISFusion <- function(x, landsat_dates, modis_dates, landsat_se
         kf_evi <- kf_result$evi[sapply(kf_dates, function(x) any(x==missing_dates))]
         tmp_error <- og_evi - kf_evi
         tmp_errors[missing_indices - 2] <- tmp_error
-        # append the cdl flag
-        tmp_errors <- c(x[1], tmp_errors)
+        # append the cdl flag and RMSE
+        tmp_errors <- c(x[1:2], tmp_errors)
         if(is.null(output_errors)){
           output_errors <- tmp_errors
         }else{
@@ -505,16 +505,16 @@ ProgressiveMissingFraction <- function(x, landsat_dates, modis_dates, landsat_se
   for(miss_frac in seq(0.1, 0.9, by=0.1)){
     fusion_errors <- GetErrorLandsatMODISFusion(x, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_tv_sd=cdl_process_sds, cdl_types=cdl_types, consecutive_missing=1, missing_fraction=miss_frac, missing_iterations=miss_iter)
     fusion_errors <- data.frame(fusion_errors)
-    names(fusion_errors) <- c("cdl_code", strftime(landsat_dates, format="%j"))
-    long_fusion_errors <- melt(fusion_errors, measure.vars=2:222, variable.name="doy")
+    names(fusion_errors) <- c("cdl_code", "rmse", strftime(landsat_dates, format="%j"))
+    long_fusion_errors <- melt(fusion_errors, measure.vars=3:223, variable.name="doy")
     long_fusion_errors$type <- "fusion"
 
     lo_errors <- GetErrorLandsatMODISFusion(x_lo, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_tv_sd=cdl_process_sds, cdl_types=cdl_types, consecutive_missing=1, missing_fraction=miss_frac, missing_iterations=miss_iter)
-    names(lo_errors)[2:222] <- strftime(landsat_dates, format="%j")
     lo_errors <- data.frame(lo_errors)
-    names(lo_errors) <- c("cdl_code", strftime(landsat_dates, format="%j"))
-    long_lo_errors <- melt(lo_errors, measure.vars=2:222, variable.name="doy")
+    names(lo_errors) <- c("cdl_code", "rmse", strftime(landsat_dates, format="%j"))
+    long_lo_errors <- melt(lo_errors, measure.vars=3:223, variable.name="doy")
     long_lo_errors$type <- "landsat"
+
     tmp_total_errors <- rbind(long_lo_errors, long_fusion_errors)
     tmp_total_errors$miss_frac <- miss_frac
 
@@ -524,10 +524,9 @@ ProgressiveMissingFraction <- function(x, landsat_dates, modis_dates, landsat_se
       total_errors <- rbind(total_errors, tmp_total_errors)
     }
   }
-  total_errors <- total_errors[!is.na(total_errors), ]
+  total_errors <- total_errors[!is.na(total_errors$value), ]
   return(total_errors)
 }
-
 
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
