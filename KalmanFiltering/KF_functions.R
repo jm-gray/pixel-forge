@@ -252,7 +252,7 @@ MakeMultiDLM <- function(num_states=1, sensors=1, time_varying=FALSE){
 }
 
 #-------------------------------------------------------------------------------
-FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, smooth=T, plot=F, ...){
+FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, modis_landsat_slope=0.9594, modis_landsat_bias=-5.203e-3, smooth=T, plot=F, ...){
   # extract components of x
   tmp_cdl <- x[1]
   tmp_rmse <- x[2] / scale_factor
@@ -288,6 +288,7 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
   daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
   tmp_modis[daily_modis_inds] <- x_modis
+  tmp_modis <- tmp_modis - modis_landsat_bias
 
   # create obs matrix
   y <- cbind(tmp_landsat, tmp_modis)
@@ -308,7 +309,8 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   GG <- matrix(1) # process transition
   W <- matrix(1) # evolution error covariance
   JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
-  FF <- matrix(c(1, 1), nrow=2) # observation matrix
+  # FF <- matrix(c(1, 1), nrow=2) # observation matrix
+  FF <- matrix(c(1, modis_landsat_slope), nrow=2) # observation matrix
   V <- matrix(c(1, 0, 0, 1), nrow=2) # obs uncertainty
   JV <- matrix(c(2, 0, 0, 3), nrow=2) # time varying obs uncertainty: in cols 2 (landsat) and 3 (modis)
   X <- matrix(1, nrow=length(tmp_modis), ncol=3)
