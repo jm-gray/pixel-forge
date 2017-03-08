@@ -590,9 +590,12 @@ PlotFusionRGB <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len
 }
 
 #-------------------------------------------------------------------------------
-PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.95, sigma=NULL, ylim=NULL, pt_cex=1, ...){
+PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.95, sigma=NULL, ylim=NULL, pt_cex=1, colmain=rgb(0.42, 0.68, 0.84), colerr=rgb(0.42, 0.68, 0.84, 0.5), colsignal="#636363", ...){
   if(is.null(t)) t <- 1:length(filt_m)
-  colmain <- "#3182BD"; colerr <- "#BDD7E7"; colsignal <- "#636363"
+  # colmain <- "#3182BD"; colerr <- "#BDD7E7"; colsignal <- "#636363"
+  #6BAED6 = rgb(0.42, 0.68, 0.84)
+  # rgb(0.42, 0.68, 0.84, 0.5)
+
 
   if(is.null(sigma)) sigma <- qnorm(1 - (1 - conf_level) / 2)
   lower <- filt_m + (sigma * filt_se)
