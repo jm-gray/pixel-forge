@@ -94,6 +94,17 @@ GetMatchRMSE <- function(x, x_dates, y_dates, num_cdl_years=4){
 }
 
 #-------------------------------------------------------------------------------
+EVI2_error <- function(ref_red, ref_nir, u_red, u_nir){
+  # uses the law of prop of uncertainty to calculate the EVI2 error
+  # assumes independent errors in red and nir reflectance
+  # Markham and Helder 2012 give TM and ETM absolute calibration errors as 7 and 5%, rep (one sigma)
+  G <- 2.5; L <- 1; C <- 2.4
+  del_EVI2_red <- ((-1 * G) * (L + (ref_nir * (1 + C)))) / ((L + ref_nir + (C * ref_red))^2)
+  del_EVI2_nir <- (G * (L + (ref_red * (1 + C)))) / ((L + ref_nir + (C * ref_red))^2)
+  return(sqrt(((del_EVI2_nir^2) * ((u_nir * ref_nir)^2)) + ((del_EVI2_red^2) * ((u_red * ref_red)^2))))
+}
+
+#-------------------------------------------------------------------------------
 GetLandsatMODISError <- function(x, x_dates, y_dates, num_cdl_years=4){
 	# calculates RMSE of matching dates in x/y
   return_NA <- list(intercept=NA,slope=NA,rmse=NA)
@@ -251,14 +262,109 @@ MakeMultiDLM <- function(num_states=1, sensors=1, time_varying=FALSE){
   }
 }
 
+# #-------------------------------------------------------------------------------
+# FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, modis_landsat_slope=1, modis_landsat_bias=0, smooth=T, plot=F, ...){
+#   # extract components of x
+#   tmp_cdl <- x[1]
+#   tmp_rmse <- x[2] / scale_factor
+#   x <- x[c(-1, -2)] / scale_factor
+#   x_landsat <- x[1:length(landsat_dates)]
+#   x_modis <- x[(length(landsat_dates) + 1):length(x)]
+#
+#   # retrieve the proper time varying process error for this land cover type
+#   tv_sd <- cdl_tv_sd[[which(cdl_types == tmp_cdl)]]$splined / scale_factor
+#   tv_sd <- c(tv_sd[1], tv_sd) # append the head value b/c sd is 364 long
+#
+#   # munge to daily series
+#   num_years <- length(as.integer(sort(unique(c(strftime(landsat_dates, format="%Y"), strftime(modis_dates, format="%Y"))))))
+#
+#   # do landsat; eliminate leap year day 366
+#   tmp_landsat <- rep(NA, num_years * 365)
+#   tmp_landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
+#   tmp_landsat_years <- as.integer(strftime(landsat_dates, format="%Y"))
+#   x_landsat <- x_landsat[tmp_landsat_doys <= 365]
+#   tmp_landsat_doys <- tmp_landsat_doys[tmp_landsat_doys <= 365]
+#   tmp_landsat_years <- tmp_landsat_years[tmp_landsat_doys <= 365]
+#   daily_landsat_inds <- tmp_landsat_doys + 365 * (tmp_landsat_years - min(tmp_landsat_years))
+#   tmp_landsat[daily_landsat_inds] <- x_landsat
+#   daily_landsat_sensor <- rep(NA, length(tmp_landsat))
+#   daily_landsat_sensor[daily_landsat_inds] <- landsat_sensor
+#
+#   # do modis; eliminate leap year day 366
+#   tmp_modis <- rep(NA, num_years * 365)
+#   tmp_modis_doys <- as.integer(strftime(modis_dates, format="%j"))
+#   tmp_modis_years <- as.integer(strftime(modis_dates, format="%Y"))
+#   x_modis <- x_modis[tmp_modis_doys <= 365]
+#   tmp_modis_doys <- tmp_modis_doys[tmp_modis_doys <= 365]
+#   tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
+#   daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
+#   tmp_modis[daily_modis_inds] <- x_modis
+#   tmp_modis <- tmp_modis - modis_landsat_bias # remove any bias in the MODIS sensor
+#
+#   # create obs matrix
+#   y <- cbind(tmp_landsat, tmp_modis)
+#
+#   # specify landsat TM and ETM+ errors (7% and 5%, resp)
+#   tmp_landsat_error <- rep(NA, length(tmp_landsat))
+#   tmp_landsat_error[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] * 0.05
+#   tmp_landsat_error[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] * 0.07
+#
+#   # # replace all missing landsat error values with closest not-NA value
+#   # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
+#   # tmp_landsat_error[which(is.na(tmp_landsat_error))] <- tmp_landsat_error[trash]
+#
+#   tmp_modis_error <- rep(NA, length(tmp_modis))
+#   tmp_modis_error[!is.na(tmp_modis)] <- tmp_rmse
+#
+#   # define dlm components
+#   GG <- matrix(1) # process transition
+#   W <- matrix(1) # evolution error covariance
+#   JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
+#   # FF <- matrix(c(1, 1), nrow=2) # observation matrix
+#   FF <- matrix(c(1, modis_landsat_slope), nrow=2) # observation matrix
+#   V <- matrix(c(1, 0, 0, 1), nrow=2) # obs uncertainty
+#   JV <- matrix(c(2, 0, 0, 3), nrow=2) # time varying obs uncertainty: in cols 2 (landsat) and 3 (modis)
+#   X <- matrix(1, nrow=length(tmp_modis), ncol=3)
+#   X[, 1] <- rep(tv_sd, num_years) # evolution error
+#   X[, 2] <- tmp_landsat_error # landsat observation error
+#   # X[, 3] <- rep(tmp_rmse, length(tmp_modis)) # modis observation error
+#   X[, 3] <- tmp_modis_error # modis observation error
+#   m0 <- 0 # initial state vector
+#   C0 <- 1 # initial state uncertainty
+#
+#   # construct the dlm
+#   tmp_dlm <- dlm(m0=m0, C0=C0, GG=GG, JW=JW, FF=FF, V=V, JV=JV, W=W, X=X)
+#
+#   # apply the dlm
+#   if(smooth){
+#     kf_result <- dlmSmooth(y, tmp_dlm)
+#     kf_evi <- dropFirst(kf_result$s)
+#     kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.S, kf_result$D.S))))
+#     ret_value <- list(evi=kf_evi, error=kf_evi_error)
+#   }else{
+#     kf_result <- dlmFilter(y, tmp_dlm)
+#     kf_evi <- dropFirst(kf_result$m)
+#     kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.C, kf_result$D.C))))
+#     ret_value <- list(evi=kf_evi, error=kf_evi_error)
+#   }
+#
+#   if(plot){
+#     # PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", sigma=1, ...)
+#     PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", ...)
+#   }
+#
+#   return(ret_value)
+# }
+
 #-------------------------------------------------------------------------------
-FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, modis_landsat_slope=0.9594, modis_landsat_bias=-5.203e-3, smooth=T, plot=F, ...){
+FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, modis_landsat_slope=1, modis_landsat_bias=0, smooth=T, plot=F, ...){
   # extract components of x
   tmp_cdl <- x[1]
   tmp_rmse <- x[2] / scale_factor
-  x <- x[c(-1, -2)] / scale_factor
-  x_landsat <- x[1:length(landsat_dates)]
-  x_modis <- x[(length(landsat_dates) + 1):length(x)]
+  x <- x[c(-1, -2)]
+  x_landsat <- x[1:length(landsat_dates)] / scale_factor
+  x_modis <- x[(length(landsat_dates) + 1):(length(landsat_dates) + length(modis_dates))] / scale_factor
+  x_landsat_error <- x[(length(landsat_dates) + length(modis_dates) + 1):length(x)]
 
   # retrieve the proper time varying process error for this land cover type
   tv_sd <- cdl_tv_sd[[which(cdl_types == tmp_cdl)]]$splined / scale_factor
@@ -269,13 +375,16 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
 
   # do landsat; eliminate leap year day 366
   tmp_landsat <- rep(NA, num_years * 365)
+  tmp_landsat_error <- rep(NA, num_years * 365)
   tmp_landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
   tmp_landsat_years <- as.integer(strftime(landsat_dates, format="%Y"))
   x_landsat <- x_landsat[tmp_landsat_doys <= 365]
+  x_landsat_error <- x_landsat_error[tmp_landsat_doys <= 365]
   tmp_landsat_doys <- tmp_landsat_doys[tmp_landsat_doys <= 365]
   tmp_landsat_years <- tmp_landsat_years[tmp_landsat_doys <= 365]
   daily_landsat_inds <- tmp_landsat_doys + 365 * (tmp_landsat_years - min(tmp_landsat_years))
   tmp_landsat[daily_landsat_inds] <- x_landsat
+  tmp_landsat_error[daily_landsat_inds] <- x_landsat_error
   daily_landsat_sensor <- rep(NA, length(tmp_landsat))
   daily_landsat_sensor[daily_landsat_inds] <- landsat_sensor
 
@@ -288,15 +397,10 @@ FuseLandsatModisEVI <- function(x, landsat_dates, modis_dates, landsat_sensor, c
   tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
   daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
   tmp_modis[daily_modis_inds] <- x_modis
-  tmp_modis <- tmp_modis - modis_landsat_bias
+  tmp_modis <- tmp_modis - modis_landsat_bias # remove any bias in the MODIS sensor
 
   # create obs matrix
   y <- cbind(tmp_landsat, tmp_modis)
-
-  # specify landsat TM and ETM+ errors (7% and 5%, resp)
-  tmp_landsat_error <- rep(NA, length(tmp_landsat))
-  tmp_landsat_error[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LE7" & !is.na(daily_landsat_sensor)] * 0.05
-  tmp_landsat_error[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] <- tmp_landsat[daily_landsat_sensor == "LT5" & !is.na(daily_landsat_sensor)] * 0.07
 
   # # replace all missing landsat error values with closest not-NA value
   # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
