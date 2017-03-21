@@ -631,6 +631,7 @@ ProgressiveMissingFraction <- function(x, landsat_dates, modis_dates, landsat_se
     }
   }
   total_errors <- total_errors[!is.na(total_errors$value), ]
+  total_errors$doy <- as.numeric(as.character(total_errors$doy)) # convert DOY to numeric
   return(total_errors)
 }
 
