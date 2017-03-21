@@ -202,6 +202,44 @@ TukeyRestrictedSD <- function(x, k=1.5){
 }
 
 #-------------------------------------------------------------------------------
+TukeyRestrictedCOV <- function(a, b, c, d, k=1.5, retCOV=T){
+  # returns cov(a, b, c, d), with Tukey outliers screened
+  # cov(cbind(cdl_process_diff_blue[1,], cdl_process_diff_green[1,], cdl_process_diff_red[1,], cdl_process_diff_nir[1,]))/1e4
+  qs_a <- quantile(a, na.rm=T)
+  tukey_range_a <- c(qs_a[2] - k * (qs_a[4] - qs_a[2]), qs_a[4] + k * (qs_a[4] - qs_a[2]))
+  a_good_inds <- a >= tukey_range_a[1] & a <= tukey_range_a[2]
+
+  qs_b <- quantile(b, na.rm=T)
+  tukey_range_b <- c(qs_b[2] - k * (qs_b[4] - qs_b[2]), qs_b[4] + k * (qs_b[4] - qs_b[2]))
+  b_good_inds <- b >= tukey_range_b[1] & b <= tukey_range_b[2]
+
+  qs_c <- quantile(c, na.rm=T)
+  tukey_range_c <- c(qs_c[2] - k * (qs_c[4] - qs_c[2]), qs_c[4] + k * (qs_c[4] - qs_c[2]))
+  c_good_inds <- c >= tukey_range_c[1] & c <= tukey_range_c[2]
+
+  qs_d <- quantile(d, na.rm=T)
+  tukey_range_d <- c(qs_d[2] - k * (qs_d[4] - qs_d[2]), qs_d[4] + k * (qs_d[4] - qs_d[2]))
+  d_good_inds <- d >= tukey_range_d[1] & d <= tukey_range_d[2]
+
+  all_good_inds <- a_good_inds & b_good_inds & c_good_inds & d_good_inds
+  if(retCOV){
+    return(cov(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds])))
+  }else{
+    return(cor(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds])))
+  }
+  # i <- 34
+  # a <- cdl_process_diff_blue[,i]
+  # b <- cdl_process_diff_green[,i]
+  # c <- cdl_process_diff_red[,i]
+  # d <- cdl_process_diff_nir[,i]
+  # cov(cbind(a, b, c, d))
+  # TukeyRestrictedCOV(a,b,c,d)
+  # cor(cbind(a, b, c, d))
+  # TukeyRestrictedCOV(a,b,c,d, retCOV=F)
+}
+
+
+#-------------------------------------------------------------------------------
 QuantileMinReplacement <- function(x, qval=0.05){
   replacement_value <- quantile(x[x >= 0], qval, na.rm=T)
   x[x < 0] <- replacement_value
