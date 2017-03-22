@@ -194,6 +194,38 @@ GetLandsatProcessSD <- function(x, dates){
 }
 
 #-------------------------------------------------------------------------------
+GetLandsatMultispecProcessDiff <- function(x, dates, k=1.5){
+  # fits a spline to each year's worth of daily Landsat data, returns a matrix of the diffs
+  # with as many rows as there are years
+  tmp_years <- as.integer(strftime(dates, format="%Y"))
+  unique_years <- unique(tmp_years)
+  for(i in 1:length(unique_years)){
+    tmp_x <- x[tmp_years == unique_years[i]]
+    tmp_dates <- dates[tmp_years == unique_years[i]]
+    tmp_doys <- as.integer(strftime(tmp_dates, format="%j"))
+    # eliminate outliers
+    qs <- quantile(tmp_x, na.rm=T)
+    tukey_range <- c(qs[2] - k * (qs[4] - qs[2]), qs[4] + k * (qs[4] - qs[2]))
+    tmp_x[tmp_x < tukey_range[1] | tmp_x > tukey_range[2]] <- NA
+
+    if(length(tmp_x[!is.na(tmp_x)]) < 4){
+      # if there's not enough data to fit the spline we just use NA
+      tmp_spline <- rep(NA, 365)
+    }else{
+      tmp_sp <- smooth.spline(tmp_doys[!is.na(tmp_x)], tmp_x[!is.na(tmp_x)], spar=NULL)
+      tmp_spline <- predict(tmp_sp, 1:365)$y
+    }
+    # tmp_spline <- GetDOYSpline(x[tmp_years == unique_years[i]], dates[tmp_years == unique_years[i]])
+    if(i == 1){
+      out_val <- diff(tmp_spline)
+    }else{
+      out_val <- rbind(out_val, diff(tmp_spline))
+    }
+  }
+  return(c(t(out_val)))
+}
+
+#-------------------------------------------------------------------------------
 TukeyRestrictedSD <- function(x, k=1.5){
   # returns the std dev of x, with Tukey outliers screened
   qs <- quantile(x, na.rm=T)
@@ -223,9 +255,9 @@ TukeyRestrictedCOV <- function(a, b, c, d, k=1.5, retCOV=T){
 
   all_good_inds <- a_good_inds & b_good_inds & c_good_inds & d_good_inds
   if(retCOV){
-    return(cov(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds])))
+    return(cov(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds]), use="complete"))
   }else{
-    return(cor(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds])))
+    return(cor(cbind(a[all_good_inds], b[all_good_inds], c[all_good_inds], d[all_good_inds]), use="complete"))
   }
   # i <- 34
   # a <- cdl_process_diff_blue[,i]
