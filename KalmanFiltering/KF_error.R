@@ -1,5 +1,5 @@
 # to submit:
-# bsub -q cnr -W 8:00 -n 20 -R "span[ptile=20]" -o /share/jmgray2/KF_output/kf_error.out.%J -e /share/jmgray2/KF_output/kf_error.err.%J R CMD BATCH --vanilla /share/jmgray2/KF_output/KF_error.R
+# bsub -q cnr -W 12:00 -n 20 -R "span[ptile=20]" -o /share/jmgray2/KF_output/kf_error.out.%J -e /share/jmgray2/KF_output/kf_error.err.%J R CMD BATCH --vanilla /share/jmgray2/KF_output/KF_error.R
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
@@ -36,25 +36,26 @@ miss_iter <- 10
 system.time(tmp <- parApply(cl, Y[error_sample, ], 1, ProgressiveMissingFraction, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_process_sds=cdl_process_sds, cdl_types=cdl_types, miss_iter=miss_iter))
 
 # this is the 2nd level of hell, need to preallocate...
-# total_errors <- do.call(rbind, total_errors)
+total_errors <- do.call(rbind, total_errors)
 
-# this is much faster, but not very clean
-errors_dims <- unlist(lapply(tmp, function(x) dim(x)[1]))
-total_errors <- data.frame(matrix(NA, nrow=sum(errors_dims), ncol=dim(tmp[[1]])[2]))
-names(total_errors) <- names(tmp[[1]])
-last_index <- 1
-i <- 1
-for(N in errors_dims){
-  print(paste(last_index,":",(last_index + N - 1)))
-  total_errors[last_index:(last_index + N - 1), ] <- tmp[[i]]
-  i <- i + 1
-  last_index <- last_index + N
-}
+# this should be faster, but not very clean
+# in practice, running on a cluster with clean memory, it's not faster at all
+# errors_dims <- unlist(lapply(tmp, function(x) dim(x)[1]))
+# total_errors <- data.frame(matrix(NA, nrow=sum(errors_dims), ncol=dim(tmp[[1]])[2]))
+# names(total_errors) <- names(tmp[[1]])
+# last_index <- 1
+# i <- 1
+# for(N in errors_dims){
+#   print(paste(last_index,":",(last_index + N - 1)))
+#   total_errors[last_index:(last_index + N - 1), ] <- tmp[[i]]
+#   i <- i + 1
+#   last_index <- last_index + N
+# }
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 # save output
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 output_directory <- "/share/jmgray2/KF_output"
-output_file <- file.path(output_directory, "kf_error_output_faster.Rdata")
+output_file <- file.path(output_directory, "kf_error_output.Rdata")
 save(total_errors, file=output_file)

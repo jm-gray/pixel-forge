@@ -88,6 +88,13 @@ for(cdl_id in cdl_types){
       this_cov[,,i] <- TukeyRestrictedCOV(cdl_process_diff_blue[,i], cdl_process_diff_green[,i], cdl_process_diff_red[,i], cdl_process_diff_nir[,i])
     }
 
+    i <- 1
+    for(z in sub_sample){
+      print(i)
+      tmp <- GetLandsatProcessSD(Y_landsat_red[cdl_v == cdl_id, ][z,], dates=landsat_dates)
+      i <- i + 1
+    }
+
     # mycols <- brewer.pal(10, "Set3")
     # plot(this_cov[1,1,], type="l", col=mycols[1], ylim=c(-0.5e3, 15e3))
     # points(this_cov[2,1,], type="l", col=mycols[2])
