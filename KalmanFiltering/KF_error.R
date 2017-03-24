@@ -36,7 +36,7 @@ miss_iter <- 10
 system.time(tmp <- parApply(cl, Y[error_sample, ], 1, ProgressiveMissingFraction, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_process_sds=cdl_process_sds, cdl_types=cdl_types, miss_iter=miss_iter))
 
 # this is the 2nd level of hell, need to preallocate...
-total_errors <- do.call(rbind, total_errors)
+total_errors <- do.call(rbind, tmp)
 
 # this should be faster, but not very clean
 # in practice, running on a cluster with clean memory, it's not faster at all
