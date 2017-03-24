@@ -685,7 +685,8 @@ GetErrorLandsatMODISFusion <- function(x, landsat_dates, modis_dates, landsat_se
 ProgressiveMissingFraction <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_process_sds, cdl_types, miss_iter=10){
   total_errors <- NULL
   x_lo <- x
-  x_lo[(length(landsat_dates) + 3):length(x_lo)] <- NA # eliminate all MODIS measurements
+  # x_lo[(length(landsat_dates) + 3):length(x_lo)] <- NA # eliminate all MODIS measurements
+  x_lo[(length(landsat_dates) + 3):(length(landsat_dates) + 2 + length(modis_dates))] <- NA # eliminate all MODIS measurements
 
   for(miss_frac in seq(0.1, 0.9, by=0.1)){
     fusion_errors <- GetErrorLandsatMODISFusion(x, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, cdl_tv_sd=cdl_process_sds, cdl_types=cdl_types, consecutive_missing=1, missing_fraction=miss_frac, missing_iterations=miss_iter)
