@@ -11,6 +11,91 @@ cl <- makeCluster(detectCores())
 clusterEvalQ(cl, {source("~/Documents/pixel-forge/KalmanFiltering/KF_functions.R"); library(dlm); library(reshape2)})
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+# Calculate the RMSE between Landsat-MODIS at the pixel scale
+#	This can be accomplished by only considering matching dates, or from splines
+#
+# data may be too large to keep in memory, read and process blocks of lines instead
+rows_to_read <- 1e3
+tmp_r <- raster(landsat_blue_files[1])
+is <- 1:(ceiling(nrow(tmp_r) / rows_to_read))
+for(i in is){
+	print(paste("Working on block", i))
+	# get the data
+	start_row <- ((i - 1) * rows_to_read) + 1
+	nrows <- min(rows_to_read, (nrow(tmp_r) - ((i - 1) * rows_to_read))) # last block may have less rows
+	# cdl_v <- GetValuesGDAL(cdl_files, start_row, nrows)
+	landsat_v <- GetValuesGDAL(landsat_blue_files, start_row, nrows)
+  landsat_v[landsat_v > 1e4] <- NA
+	modis_v <- GetValuesGDAL(modis_blue_files, start_row, nrows)
+	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+	modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	# V <- cbind(landsat_v, modis_v, modis_snow_v)
+	V <- cbind(landsat_v, modis_v)
+	# calculate MODIS-Landsat RMSE:
+	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates, num_cdl_years=0)
+	if(i == 1){
+		out_rmse_blue <- tmp
+	}else{
+		out_rmse_blue <- c(out_rmse_blue, tmp)
+	}
+
+  landsat_v <- GetValuesGDAL(landsat_green_files, start_row, nrows)
+  landsat_v[landsat_v > 1e4] <- NA
+	modis_v <- GetValuesGDAL(modis_green_files, start_row, nrows)
+	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+	modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	# V <- cbind(landsat_v, modis_v, modis_snow_v)
+	V <- cbind(landsat_v, modis_v)
+	# calculate MODIS-Landsat RMSE:
+	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates, num_cdl_years=0)
+	if(i == 1){
+		out_rmse_green <- tmp
+	}else{
+		out_rmse_green <- c(out_rmse_green, tmp)
+	}
+
+  landsat_v <- GetValuesGDAL(landsat_red_files, start_row, nrows)
+  landsat_v[landsat_v > 1e4] <- NA
+	modis_v <- GetValuesGDAL(modis_red_files, start_row, nrows)
+	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+	modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	# V <- cbind(landsat_v, modis_v, modis_snow_v)
+	V <- cbind(landsat_v, modis_v)
+	# calculate MODIS-Landsat RMSE:
+	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates, num_cdl_years=0)
+	if(i == 1){
+		out_rmse_red <- tmp
+	}else{
+		out_rmse_red <- c(out_rmse_red, tmp)
+	}
+
+  landsat_v <- GetValuesGDAL(landsat_nir_files, start_row, nrows)
+  landsat_v[landsat_v > 1e4] <- NA
+	modis_v <- GetValuesGDAL(modis_nir_files, start_row, nrows)
+	modis_snow_v <- GetValuesGDAL(modis_snow_files, start_row, nrows)
+	modis_v[modis_snow_v == 1] <- NA # screen out all snow
+	# V <- cbind(landsat_v, modis_v, modis_snow_v)
+	V <- cbind(landsat_v, modis_v)
+	# calculate MODIS-Landsat RMSE:
+	# tmp <- parApply(cl, V, 1, GetSplineRMSE, x_dates=landsat_dates, y_dates=modis_dates)
+	tmp <- parApply(cl, V, 1, GetMatchRMSE, x_dates=landsat_dates, y_dates=modis_dates, num_cdl_years=0)
+	if(i == 1){
+		out_rmse_nir <- tmp
+	}else{
+		out_rmse_nir <- c(out_rmse_nir, tmp)
+	}
+}
+rmse_blue <- rmse_green <- rmse_red <- rmse_nir <- tmp_r
+values(rmse_blue) <- out_rmse_blue
+values(rmse_green) <- out_rmse_green
+values(rmse_red) <- out_rmse_red
+values(rmse_nir) <- out_rmse_nir
+save(rmse_blue, rmse_green, rmse_red, rmse_nir, file="~/Desktop/KF_fusion_data_new/multispectral_rmse.Rdata")
+
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 # gather the multispectral data
 landsat_data_dir <- "~/Desktop/KF_fusion_data_new/landsat_new"
 landsat_blue_files <- dir(landsat_data_dir, pattern=".*band1.*.tif$", full=T)
@@ -81,10 +166,12 @@ Y_modis_red[Y_modis_snow != 0] <- NA
 Y_modis_nir <- GetValuesGDAL(modis_nir_files, start_row=1, n=nrow(tmp_r))
 Y_modis_nir[Y_modis_snow != 0] <- NA
 
-
 # get the RMSE data
-rmse_sub <- raster("~/Desktop/KF_fusion_data_new/rmse_sub.tif")
-rmse_v <- values(rmse_sub)
+load("~/Desktop/KF_fusion_data_new/multispectral_rmse.Rdata")
+rmse_blue_v <- values(rmse_blue)
+rmse_green_v <- values(rmse_green)
+rmse_red_v <- values(rmse_red)
+rmse_nir_v <- values(rmse_nir)
 
 # get the CDL data
 year_of_interest <- 2008
@@ -96,8 +183,9 @@ cdl_v <- values(cdl_r)
 cdl_types <- unique(cdl_v)
 cdl_names <- list("1"="corn", "4"="sorghum", "5"="soybeans", "13"="pop/orn corn", "24"="winter wheat", "27"="rye", "28"="oats", "36"="alfalfa", "37"="other hay", "61"="fallow", "69"="grapes", "111"="open water", "121"="dev open", "122"="dev low", "123"="dev med", "124"="dev high", "131"="barren", "141"="deciduous forest", "142"="evergreen forest", "143"="mixed forest", "152"="shrubland", "171"="grasslands/herb", "190"="woody wetlands", "195"="herb wetlands", "229"="pumpkins")
 
-Y <- cbind(cdl_v, rmse_v, Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir)
-rm(Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir)
+# Y <- cbind(cdl_v, rmse_v, Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir)
+Y <- cbind(cdl_v, rmse_blue_v, rmse_green_v, rmse_red_v, rmse_nir_v, Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir)
+rm(Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir, rmse_blue_v, rmse_green_v, rmse_red_v, rmse_nir_v)
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
@@ -162,6 +250,7 @@ save(multispectral_cdl_process_cov, cdl_types, file="~/Desktop/KF_fusion_data_ne
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+# playing around with EVI2 error and reflectance
 tmp_error_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), function(x,y) EVI2_error(x,y,u_red=0.05,u_nir=0.05))
 tmp_evi2_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), CalcEVI2)
 image(tmp_error_mat)
@@ -234,14 +323,15 @@ for(i in 1:length(multispectral_cdl_process_cov)){
   }
 }
 
-
-
 #-------------------------------------------------------------------------------
-FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sensor, cdl_tv_sd, cdl_types, scale_factor=1e4, modis_landsat_slope=1, modis_landsat_bias=0, smooth=T, plot=F, ...){
+FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sensor, multispectral_cdl_process_cov, cdl_types, scale_factor=1e4, modis_landsat_slope=1, modis_landsat_bias=0, smooth=T, plot=F, ...){
   # extract components of x
   tmp_cdl <- x[1]
-  tmp_rmse <- x[2] / scale_factor
-  x <- x[c(-1, -2)]
+  tmp_rmse_blue <- x[2] / scale_factor
+  tmp_rmse_green <- x[3] / scale_factor
+  tmp_rmse_red <- x[4] / scale_factor
+  tmp_rmse_nir <- x[5] / scale_factor
+  x <- x[c(-1, -2, -3, -4, -5)]
 
   # extract individual landsat bands
   landsat_inds <- seq(1, (length(landsat_dates) * 4) + 1, by=length(landsat_dates))
@@ -250,50 +340,86 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   x_landsat_red <- x[landsat_inds[3]:(landsat_inds[4] - 1)] / scale_factor
   x_landsat_nir <- x[landsat_inds[4]:(landsat_inds[5] - 1)] / scale_factor
 
+  x_error_landsat_blue <- rep(NA, length(x_landsat_blue))
+  x_error_landsat_blue[landsat_sensor == "LT5"] <- x_landsat_blue[landsat_sensor == "LT5"] * 0.07
+  x_error_landsat_blue[landsat_sensor == "LE7"] <- x_landsat_blue[landsat_sensor == "LE7"] * 0.05
+  x_error_landsat_green <- rep(NA, length(x_landsat_green))
+  x_error_landsat_green[landsat_sensor == "LT5"] <- x_landsat_green[landsat_sensor == "LT5"] * 0.07
+  x_error_landsat_green[landsat_sensor == "LE7"] <- x_landsat_green[landsat_sensor == "LE7"] * 0.05
+  x_error_landsat_red <- rep(NA, length(x_landsat_red))
+  x_error_landsat_red[landsat_sensor == "LT5"] <- x_landsat_red[landsat_sensor == "LT5"] * 0.07
+  x_error_landsat_red[landsat_sensor == "LE7"] <- x_landsat_red[landsat_sensor == "LE7"] * 0.05
+  x_error_landsat_nir <- rep(NA, length(x_landsat_nir))
+  x_error_landsat_nir[landsat_sensor == "LT5"] <- x_landsat_nir[landsat_sensor == "LT5"] * 0.07
+  x_error_landsat_nir[landsat_sensor == "LE7"] <- x_landsat_nir[landsat_sensor == "LE7"] * 0.05
+
   modis_inds <- seq(landsat_inds[5], landsat_inds[5] + length(modis_dates) * 4, by=length(modis_dates))
   x_modis_blue <- x[modis_inds[1]:(modis_inds[2] - 1)] / scale_factor
   x_modis_green <- x[modis_inds[2]:(modis_inds[3] - 1)] / scale_factor
   x_modis_red <- x[modis_inds[3]:(modis_inds[4] - 1)] / scale_factor
   x_modis_nir <- x[modis_inds[4]:(modis_inds[5] - 1)] / scale_factor
 
-  x_modis <- x[(length(landsat_dates) + 1):(length(landsat_dates) + length(modis_dates))] / scale_factor
-  x_landsat_error <- x[(length(landsat_dates) + length(modis_dates) + 1):length(x)]
-
   # retrieve the proper time varying process error for this land cover type
-  tv_sd <- cdl_tv_sd[[which(cdl_types == tmp_cdl)]]$splined / scale_factor
-  tv_sd <- c(tv_sd[1], tv_sd) # append the head value b/c sd is 364 long
+  tmp_cov <- multispectral_cdl_process_cov[[which(cdl_types == tmp_cdl)]] / scale_factor
+  this_cov <- array(NA, dim=c(4, 4, 365))
+  this_cov[,,2:365] <- tmp_cov
+  this_cov[,,1] <- tmp_cov[,,1]
 
   # munge to daily series
   num_years <- length(as.integer(sort(unique(c(strftime(landsat_dates, format="%Y"), strftime(modis_dates, format="%Y"))))))
-
-  # do landsat; eliminate leap year day 366
-  tmp_landsat <- rep(NA, num_years * 365)
-  tmp_landsat_error <- rep(NA, num_years * 365)
   tmp_landsat_doys <- as.integer(strftime(landsat_dates, format="%j"))
   tmp_landsat_years <- as.integer(strftime(landsat_dates, format="%Y"))
-  x_landsat <- x_landsat[tmp_landsat_doys <= 365]
-  x_landsat_error <- x_landsat_error[tmp_landsat_doys <= 365]
+
+  # do landsat; eliminate leap year day 366
+  tmp_landsat_blue <- tmp_landsat_green <- tmp_landsat_red <- tmp_landsat_nir <- tmp_error_landsat_blue <- tmp_error_landsat_green <- tmp_error_landsat_red <- tmp_error_landsat_nir <- rep(NA, num_years * 365)
+  x_landsat_blue <- x_landsat_blue[tmp_landsat_doys <= 365]
+  x_error_landsat_blue <- x_error_landsat_blue[tmp_landsat_doys <= 365]
+  x_landsat_green <- x_landsat_green[tmp_landsat_doys <= 365]
+  x_error_landsat_green <- x_error_landsat_green[tmp_landsat_doys <= 365]
+  x_landsat_red <- x_landsat_red[tmp_landsat_doys <= 365]
+  x_error_landsat_red <- x_error_landsat_red[tmp_landsat_doys <= 365]
+  x_landsat_nir <- x_landsat_nir[tmp_landsat_doys <= 365]
+  x_error_landsat_nir <- x_error_landsat_nir[tmp_landsat_doys <= 365]
   tmp_landsat_doys <- tmp_landsat_doys[tmp_landsat_doys <= 365]
   tmp_landsat_years <- tmp_landsat_years[tmp_landsat_doys <= 365]
+
+  # make into daily, gappy time series
   daily_landsat_inds <- tmp_landsat_doys + 365 * (tmp_landsat_years - min(tmp_landsat_years))
-  tmp_landsat[daily_landsat_inds] <- x_landsat
-  tmp_landsat_error[daily_landsat_inds] <- x_landsat_error
-  daily_landsat_sensor <- rep(NA, length(tmp_landsat))
+  tmp_landsat_blue[daily_landsat_inds] <- x_landsat_blue
+  tmp_error_landsat_blue[daily_landsat_inds] <- x_error_landsat_blue
+  tmp_landsat_green[daily_landsat_inds] <- x_landsat_green
+  tmp_error_landsat_green[daily_landsat_inds] <- x_error_landsat_green
+  tmp_landsat_red[daily_landsat_inds] <- x_landsat_red
+  tmp_error_landsat_red[daily_landsat_inds] <- x_error_landsat_red
+  tmp_landsat_nir[daily_landsat_inds] <- x_landsat_nir
+  tmp_error_landsat_nir[daily_landsat_inds] <- x_error_landsat_nir
+
+  daily_landsat_sensor <- rep(NA, length(tmp_landsat_blue))
   daily_landsat_sensor[daily_landsat_inds] <- landsat_sensor
 
   # do modis; eliminate leap year day 366
-  tmp_modis <- rep(NA, num_years * 365)
+  tmp_modis_blue <- tmp_modis_green <- tmp_modis_red <- tmp_modis_nir <- rep(NA, num_years * 365)
   tmp_modis_doys <- as.integer(strftime(modis_dates, format="%j"))
   tmp_modis_years <- as.integer(strftime(modis_dates, format="%Y"))
-  x_modis <- x_modis[tmp_modis_doys <= 365]
+
+  x_modis_blue <- x_modis_blue[tmp_modis_doys <= 365]
+  x_modis_green <- x_modis_green[tmp_modis_doys <= 365]
+  x_modis_red <- x_modis_red[tmp_modis_doys <= 365]
+  x_modis_nir <- x_modis_nir[tmp_modis_doys <= 365]
   tmp_modis_doys <- tmp_modis_doys[tmp_modis_doys <= 365]
   tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
+
   daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
-  tmp_modis[daily_modis_inds] <- x_modis
-  tmp_modis <- tmp_modis - modis_landsat_bias # remove any bias in the MODIS sensor
+
+  tmp_modis_blue[daily_modis_inds] <- x_modis_blue
+  tmp_modis_green[daily_modis_inds] <- x_modis_green
+  tmp_modis_red[daily_modis_inds] <- x_modis_red
+  tmp_modis_nir[daily_modis_inds] <- x_modis_nir
+  # tmp_modis_blue <- tmp_modis_blue - modis_landsat_bias # remove any bias in the MODIS sensor
 
   # create obs matrix
-  y <- cbind(tmp_landsat, tmp_modis)
+  # y <- cbind(tmp_landsat, tmp_modis)
+  y <- cbind(tmp_landsat_blue, tmp_landsat_green, tmp_landsat_green, tmp_landsat_nir, tmp_modis_blue, tmp_modis_green, tmp_modis_red, tmp_modis_nir)
 
   # # replace all missing landsat error values with closest not-NA value
   # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
