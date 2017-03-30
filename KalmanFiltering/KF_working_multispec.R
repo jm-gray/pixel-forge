@@ -251,10 +251,10 @@ save(multispectral_cdl_process_cov, cdl_types, file="~/Desktop/KF_fusion_data_ne
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 # playing around with EVI2 error and reflectance
-tmp_error_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), function(x,y) EVI2_error(x,y,u_red=0.05,u_nir=0.05))
-tmp_evi2_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), CalcEVI2)
-image(tmp_error_mat)
-contour(seq(0,1,by=0.01), seq(0,1,by=0.01), tmp_evi2_mat, add=T)
+# tmp_error_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), function(x,y) EVI2_error(x,y,u_red=0.05,u_nir=0.05))
+# tmp_evi2_mat <- outer(seq(0,1,by=0.01), seq(0,1,by=0.01), CalcEVI2)
+# image(tmp_error_mat)
+# contour(seq(0,1,by=0.01), seq(0,1,by=0.01), tmp_evi2_mat, add=T)
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
@@ -360,10 +360,12 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   x_modis_nir <- x[modis_inds[4]:(modis_inds[5] - 1)] / scale_factor
 
   # retrieve the proper time varying process error for this land cover type
-  tmp_cov <- multispectral_cdl_process_cov[[which(cdl_types == tmp_cdl)]] / scale_factor
+  # tmp_cov <- multispectral_cdl_process_cov[[which(cdl_types == tmp_cdl)]] / scale_factor
   this_cov <- array(NA, dim=c(4, 4, 365))
-  this_cov[,,2:365] <- tmp_cov
-  this_cov[,,1] <- tmp_cov[,,1]
+  # this_cov[,,2:365] <- tmp_cov
+	this_cov[,,2:365] <- multispectral_cdl_process_cov[[which(cdl_types == tmp_cdl)]] / scale_factor
+  this_cov[,,1] <- this_cov[,,2]
+
 
   # munge to daily series
   num_years <- length(as.integer(sort(unique(c(strftime(landsat_dates, format="%Y"), strftime(modis_dates, format="%Y"))))))
@@ -431,7 +433,23 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   # define dlm components
   GG <- matrix(1) # process transition
   W <- matrix(1) # evolution error covariance
-  JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
+  # JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
+	JW <- matrix(c(1, 2, 3, 4, 2, 5, 6, 7, 3, 6, 8, 9, 4, 7, 9, 10), nrow=4, byrow=T)
+	X[, 1] <- tmp_cov[1,1,]
+	X[, 2] <- tmp_cov[2,1,]
+	X[, 3] <- tmp_cov[3,1,]
+	X[, 4] <- tmp_cov[4,1,]
+	X[, 5] <- tmp_cov[2,2,]
+	X[, 6] <- tmp_cov[2,3,]
+	X[, 7] <- tmp_cov[2,4,]
+	X[, 8] <- tmp_cov[3,3,]
+	X[, 9] <- tmp_cov[3,4,]
+	X[, 10] <- tmp_cov[4,4,]
+	# rep(tv_sd, num_years) # evolution error
+	# 1    2    3    4
+	# 2    5    6    7
+	# 3    6    8    9
+	# 4    7    9   10
   # FF <- matrix(c(1, 1), nrow=2) # observation matrix
   FF <- matrix(c(1, modis_landsat_slope), nrow=2) # observation matrix
   V <- matrix(c(1, 0, 0, 1), nrow=2) # obs uncertainty
