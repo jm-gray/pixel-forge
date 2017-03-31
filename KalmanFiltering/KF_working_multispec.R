@@ -411,13 +411,20 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   tmp_modis_doys <- tmp_modis_doys[tmp_modis_doys <= 365]
   tmp_modis_years <- tmp_modis_years[tmp_modis_doys <= 365]
 
+	# munge daily MODIS reflectance and error vectors
   daily_modis_inds <- tmp_modis_doys + 365 * (tmp_modis_years - min(tmp_modis_years))
-
   tmp_modis_blue[daily_modis_inds] <- x_modis_blue
   tmp_modis_green[daily_modis_inds] <- x_modis_green
   tmp_modis_red[daily_modis_inds] <- x_modis_red
   tmp_modis_nir[daily_modis_inds] <- x_modis_nir
-  # tmp_modis_blue <- tmp_modis_blue - modis_landsat_bias # remove any bias in the MODIS sensor
+	tmp_error_modis_blue <- rep(NA, length(tmp_modis_blue))
+	tmp_error_modis_green <- rep(NA, length(tmp_modis_green))
+	tmp_error_modis_red <- rep(NA, length(tmp_modis_red))
+	tmp_error_modis_nir <- rep(NA, length(tmp_modis_nir))
+	tmp_error_modis_blue[daily_modis_inds] <- tmp_rmse_blue
+	tmp_error_modis_green[daily_modis_inds] <- tmp_rmse_green
+	tmp_error_modis_red[daily_modis_inds] <- tmp_rmse_red
+	tmp_error_modis_nir[daily_modis_inds] <- tmp_rmse_nir
 
   # create obs matrix
   # y <- cbind(tmp_landsat, tmp_modis)
@@ -427,40 +434,44 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   # trash <- sapply(which(is.na(tmp_landsat_error)), function(a, x) x[which.min(abs(x-a))], x=which(!is.na(tmp_landsat_error)))
   # tmp_landsat_error[which(is.na(tmp_landsat_error))] <- tmp_landsat_error[trash]
 
-  tmp_modis_error <- rep(NA, length(tmp_modis))
-  tmp_modis_error[!is.na(tmp_modis)] <- tmp_rmse
-
   # define dlm components
-  GG <- matrix(1) # process transition
-  W <- matrix(1) # evolution error covariance
-  # JW <- matrix(1) # time varying evolution error covariance: in col 1 of X
-	JW <- matrix(c(1, 2, 3, 4, 2, 5, 6, 7, 3, 6, 8, 9, 4, 7, 9, 10), nrow=4, byrow=T)
-	X[, 1] <- tmp_cov[1,1,]
-	X[, 2] <- tmp_cov[2,1,]
-	X[, 3] <- tmp_cov[3,1,]
-	X[, 4] <- tmp_cov[4,1,]
-	X[, 5] <- tmp_cov[2,2,]
-	X[, 6] <- tmp_cov[2,3,]
-	X[, 7] <- tmp_cov[2,4,]
-	X[, 8] <- tmp_cov[3,3,]
-	X[, 9] <- tmp_cov[3,4,]
-	X[, 10] <- tmp_cov[4,4,]
-	# rep(tv_sd, num_years) # evolution error
+  GG <- diag(4) # process transition
+  W <- diag(4) # evolution error covariance
+	JW <- diag(4) # time varying evolution error covariance: in cols 1:10 of X
+	JW[lower.tri(JW, diag=T)] <- 1:10
+	JW[upper.tri(JW)] <- t(JW)[upper.tri(JW)]
+
+	# NOTE: fix X dims here!
+	X <- matrix(1, nrow=length(tmp_modis_blue), ncol=18)
+	X[, 1] <- rep(this_cov[1,1,], num_years)
+	X[, 2] <- rep(this_cov[2,1,], num_years)
+	X[, 3] <- rep(this_cov[3,1,], num_years)
+	X[, 4] <- rep(this_cov[4,1,], num_years)
+	X[, 5] <- rep(this_cov[2,2,], num_years)
+	X[, 6] <- rep(this_cov[2,3,], num_years)
+	X[, 7] <- rep(this_cov[2,4,], num_years)
+	X[, 8] <- rep(this_cov[3,3,], num_years)
+	X[, 9] <- rep(this_cov[3,4,], num_years)
+	X[, 10] <- rep(this_cov[4,4,], num_years)
 	# 1    2    3    4
 	# 2    5    6    7
 	# 3    6    8    9
 	# 4    7    9   10
-  # FF <- matrix(c(1, 1), nrow=2) # observation matrix
-  FF <- matrix(c(1, modis_landsat_slope), nrow=2) # observation matrix
+	FF <- rbind(diag(4), diag(4))
   V <- matrix(c(1, 0, 0, 1), nrow=2) # obs uncertainty
-  JV <- matrix(c(2, 0, 0, 3), nrow=2) # time varying obs uncertainty: in cols 2 (landsat) and 3 (modis)
-  X <- matrix(1, nrow=length(tmp_modis), ncol=3)
-  X[, 1] <- rep(tv_sd, num_years) # evolution error
-  X[, 2] <- tmp_landsat_error # landsat observation error
-  # X[, 3] <- rep(tmp_rmse, length(tmp_modis)) # modis observation error
-  X[, 3] <- tmp_modis_error # modis observation error
-  m0 <- 0 # initial state vector
-  C0 <- 1 # initial state uncertainty
+	V <- diag(8)
+	JV <- diag(8) * 11:18 # time varying obs uncertainty: in cols 11 through 18
+	X[, 11] <- tmp_error_landsat_blue # landsat blue error
+	X[, 12] <- tmp_error_landsat_green # landsat green error
+	X[, 13] <- tmp_error_landsat_red # landsat red error
+	X[, 14] <- tmp_error_landsat_nir # landsat nir error
+	X[, 15] <- tmp_error_modis_blue # modis blue error
+	X[, 16] <- tmp_error_modis_green # modis green error
+	X[, 17] <- tmp_error_modis_red # modis red error
+	X[, 18] <- tmp_error_modis_nir # modis nir error
+
+  m0 <- matrix(rep(0, 4), nrow=4) # initial state vector
+  C0 <- diag(4) * 0.1 # initial state uncertainty
 
   # construct the dlm
   tmp_dlm <- dlm(m0=m0, C0=C0, GG=GG, JW=JW, FF=FF, V=V, JV=JV, W=W, X=X)
@@ -468,19 +479,20 @@ FuseLandsatModisMultispec <- function(x, landsat_dates, modis_dates, landsat_sen
   # apply the dlm
   if(smooth){
     kf_result <- dlmSmooth(y, tmp_dlm)
-    kf_evi <- dropFirst(kf_result$s)
-    kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.S, kf_result$D.S))))
-    ret_value <- list(evi=kf_evi, error=kf_evi_error)
+    kf_surf_ref <- dropFirst(kf_result$s)
+    # kf_surf_ref_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.S, kf_result$D.S))))
+		kf_surf_ref_error <- dropFirst(dlmSvd2var(kf_result$U.S, kf_result$D.S))
+    ret_value <- list(evi=kf_surf_ref, error=kf_surf_ref_error)
   }else{
     kf_result <- dlmFilter(y, tmp_dlm)
-    kf_evi <- dropFirst(kf_result$m)
-    kf_evi_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.C, kf_result$D.C))))
-    ret_value <- list(evi=kf_evi, error=kf_evi_error)
+    kf_surf_ref <- dropFirst(kf_result$m)
+    kf_surf_ref_error <- sqrt(unlist(dropFirst(dlmSvd2var(kf_result$U.C, kf_result$D.C))))
+    ret_value <- list(evi=kf_surf_ref, error=kf_surf_ref_error)
   }
 
   if(plot){
     # PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", sigma=1, ...)
-    PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", ...)
+    # PlotForecast(kf_evi, kf_evi_error, split(y, col(y)), ylab="EVI2", xlab="", ...)
   }
 
   return(ret_value)
