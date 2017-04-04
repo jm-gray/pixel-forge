@@ -187,6 +187,7 @@ cdl_names <- list("1"="corn", "4"="sorghum", "5"="soybeans", "13"="pop/orn corn"
 Y <- cbind(cdl_v, rmse_blue_v, rmse_green_v, rmse_red_v, rmse_nir_v, Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir)
 rm(Y_landsat_blue, Y_landsat_green, Y_landsat_red, Y_landsat_nir, Y_modis_blue, Y_modis_green, Y_modis_red, Y_modis_nir, rmse_blue_v, rmse_green_v, rmse_red_v, rmse_nir_v)
 
+# save(Y, tmp_r, cdl_types, multispectral_cdl_process_cov, landsat_sensor, landsat_dates, modis_dates, file="~/Desktop/KF_fusion_data_new/nebraska_multispec_workspace.Rdata")
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 # Get the time-varying process model std dev by CDL land cover type
@@ -325,5 +326,58 @@ for(i in 1:length(multispectral_cdl_process_cov)){
 
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-# Maybe too big to store in memory all at once
-system.time(trash <- parApply(cl, Y[1:1e4,], 1, FuseLandsatModisMultispec, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, multispectral_cdl_process_cov=multispectral_cdl_process_cov, cdl_types=cdl_types))
+# Maybe too big to store in memory all at once, so we do in chunks
+# system.time(trash <- parApply(cl, Y[1:1e4,], 1, FuseLandsatModisMultispec, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, multispectral_cdl_process_cov=multispectral_cdl_process_cov, cdl_types=cdl_types))
+library(tools)
+library(raster)
+library(rgdal)
+library(parallel)
+library(RColorBrewer)
+library(dlm)
+library(reshape2)
+
+fig_out_dir <- "~/Desktop"
+
+source("~/Documents/pixel-forge/KalmanFiltering/KF_functions.R")
+cl <- makeCluster(detectCores())
+clusterEvalQ(cl, {source("~/Documents/pixel-forge/KalmanFiltering/KF_functions.R"); library(dlm); library(reshape2)})
+
+load("nebraska_multispec_workspace.Rdata")
+
+blank_r <- tmp_r; values(blank_r) <- NA
+out_s_blue <- do.call(stack, replicate(length(unique(c(landsat_years, modis_years)))*365, blank_r))
+out_s_green <- do.call(stack, replicate(length(unique(c(landsat_years, modis_years)))*365, blank_r))
+out_s_red <- do.call(stack, replicate(length(unique(c(landsat_years, modis_years)))*365, blank_r))
+out_s_nir <- do.call(stack, replicate(length(unique(c(landsat_years, modis_years)))*365, blank_r))
+
+blue_inds <- 1:1460
+green_inds <- 1461:2920
+red_inds <- 2921:4380
+nir_inds <- 4381:5480
+
+rows_to_do <- 1e3
+row_seq <- seq(1, nrow(Y), by=rows_to_do)
+# out_dir <- "~/Desktop/KF_fusion_data_new/multispec_output_new"
+out_file_blue <- file.path(out_dir, "kf_multispec_nebraska_blue.tif")
+out_file_green <- file.path(out_dir, "kf_multispec_nebraska_green.tif")
+out_file_red <- file.path(out_dir, "kf_multispec_nebraska_red.tif")
+out_file_nir <- file.path(out_dir, "kf_multispec_nebraska_nir.tif")
+for(i in row_seq){
+	i_end <- min(i + rows_to_do - 1, nrow(Y))
+	tmp <- parApply(cl, Y[i:i_end,], 1, FuseLandsatModisMultispec, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, multispectral_cdl_process_cov=multispectral_cdl_process_cov, cdl_types=cdl_types)
+	out_s_blue[i:i_end] <- c(t(tmp[blue_inds,]))
+	out_s_green[i:i_end] <- c(t(tmp[green_inds,]))
+	out_s_red[i:i_end] <- c(t(tmp[red_inds,]))
+	out_s_nir[i:i_end] <- c(t(tmp[nir_inds,]))
+}
+
+num_years <- length(unique(c(landsat_years, modis_years)))
+plot_dates <- sort(as.Date(paste(rep(sort(unique(c(landsat_years, modis_years))), each=365), rep(1:365, num_years), sep="-"), format="%Y-%j"))
+for(i in 1:nlayers(out_s_blue)){
+	out_file <- file.path(fig_out_dir, paste(as.character(strftime(plot_dates[i], format="%Y%j")), "_kf_multispec.jpg", sep=""))
+	# jpeg(file=out_file, width=1625, height=round(581+(581/2)), quality=75)
+	jpeg(file=out_file, width=1214, height=772, quality=75)
+	plot_s <- stack(raster(out_s_nir, i), raster(out_s_red, i), raster(out_s_green, i))
+	plotRGB(plot_s, stretch="lin")
+	dev.off()
+}
