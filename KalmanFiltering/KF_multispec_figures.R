@@ -35,19 +35,20 @@ nir_inds <- 4381:5840
 
 output_data <- matrix(NA, nrow=ncell(tmp_r), ncol=5840)
 
-rows_to_do <- 1e3
+rows_to_do <- 1e4
 row_seq <- seq(1, nrow(Y), by=rows_to_do)
 
 for(i in row_seq){
 	print(i)
 	i_end <- min(i + rows_to_do - 1, nrow(Y))
 	tmp <- parApply(cl, Y[i:i_end,], 1, FuseLandsatModisMultispec, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, multispectral_cdl_process_cov=multispectral_cdl_process_cov, cdl_types=cdl_types)
+	# tmp <- apply(Y[i:i_end,], 1, FuseLandsatModisMultispec, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, multispectral_cdl_process_cov=multispectral_cdl_process_cov, cdl_types=cdl_types)
 	# print(dim(tmp))
 	# out_s_blue[i:i_end] <- c(t(tmp[blue_inds,]))
 	# out_s_green[i:i_end] <- c(t(tmp[green_inds,]))
 	# out_s_red[i:i_end] <- c(t(tmp[red_inds,]))
 	# out_s_nir[i:i_end] <- c(t(tmp[nir_inds,]))
-	output_data[1:i_end,] <- t(tmp)
+	output_data[i:i_end,] <- t(tmp)
 }
 
 # plot_dates <- sort(as.Date(paste(rep(sort(unique(c(landsat_years, modis_years))), each=365), rep(1:365, num_years), sep="-"), format="%Y-%j"))
