@@ -15,7 +15,7 @@ PhenoNormals <- function(x, years=NULL){
   if(is.null(years)) years <- 1:length(x) # if no years are given, assume they are in the right order and have no gaps
   med <- median(x, na.rm=T)
   MAD <- mad(x, na.rm=T)
-  
+
   # calculate annual median anomalies: raw and as multiples of MAD
   ann.median.anoms <- round(x - med)
   ann.median.anoms.mad <- (x - med) / MAD
@@ -104,7 +104,9 @@ for(metric in doy_metrics){
   values(mad_r) <- t(pheno_output[2,])
 
   # layout(matrix(1:2, nrow=1))
-  par(mfrow=c(1, 2), mar=c(1, 1, 1, 3))
+  # par(mfrow=c(1, 2), mar=c(1, 1, 1, 3))
+  layout(matrix(1:3, nrow=1))
+  par(mar=c(1, 1, 1, 3), oma=rep(1, 4))
 
   # plot the median raster
   qs <- quantile(median_r, c(0.02, 0.98))
