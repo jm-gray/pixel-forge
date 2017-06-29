@@ -44,7 +44,7 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
     plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text=legend_title, side=3, font=2, line=0.5, cex=LEGENDMAINCEX), smallplot=c(0.2,0.5,0.2,0.9))
     # plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=5, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=2), legend.args=list(text="", side=3, font=2, line=0.5, cex=2),  smallplot=c(0.1,0.5,0.2,0.9))
   }else{
-    plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE, maxpixels=MAXPIXELS)
+    plot(lwmask, breaks=c(-1, 0.5, 1.5, 1e6), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE, maxpixels=MAXPIXELS)
     plot(r, breaks=breaks, col=pal(length(breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T, ...)
     if(plot_legend){
       legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
@@ -256,5 +256,8 @@ PlotTileAllMetrics(tile=args$tile, cl=cl, doy_metrics=doy_metrics)
 # R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/MCD12Q2C6_Diagnostics.R --args -tile $1
 
 # to submit all tiles:
-# tiles <- scan("/projectnb/modislc/users/joshgray/MCD12Q2C6/gltiles.txt", what=character(), quiet=T)
-# for(tile in tiles) sys_cmd <- paste("qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh", tile)
+tiles <- scan("/projectnb/modislc/users/joshgray/MCD12Q2C6/gltiles.txt", what=character(), quiet=T)
+for(tile in tiles){
+  sys_cmd <- paste("qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh", tile)
+  system(sys_cmd)
+}
