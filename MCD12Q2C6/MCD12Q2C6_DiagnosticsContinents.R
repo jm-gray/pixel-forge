@@ -1,6 +1,16 @@
 library(raster)
 library(RColorBrewer)
 library(tools)
+library(argparse)
+#---------------------------------------------------------------------
+# run all continents:
+# qsub ./run_continent_diagnostics.sh namerica
+# qsub ./run_continent_diagnostics.sh asia
+# qsub ./run_continent_diagnostics.sh europe
+# qsub ./run_continent_diagnostics.sh samerica
+# qsub ./run_continent_diagnostics.sh africa
+# qsub ./run_continent_diagnostics.sh oceania
+# qsub ./run_continent_diagnostics.sh australia
 
 #---------------------------------------------------------------------
 BuildVRT <- function(file_list, out_file, band=NULL, vrtnodata=0){
@@ -81,7 +91,7 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
     }
     title(title)
   }
-}
+}[]
 
 #------------------------------------------------
 # First create proper headers for all LW mask tiles
@@ -104,37 +114,59 @@ australia_tiles <- c('h27v11', 'h27v12', 'h27v14', 'h28v11', 'h28v12', 'h28v13',
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Create mosaics and plot
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-continent_lists <- list(asia_tiles, namerica_tiles, europe_tiles, africa_tiles, samerica_tiles, oceania_tiles, australia_tiles)
-continent_names <- c("Asia", "N America", "Europe", "Africa", "S America", "Oceania", "Australia")
+arg_parser <- ArgumentParser()
+arg_parser$add_argument("-continent", type="character") # tile to process
+args <- arg_parser$parse_args()
+
+if(tolower(args$continent) == "asia"){
+  continent_list <- asia_tiles
+}else if(tolower(args$continent) == "namerica"){
+  continent_list <- namerica_tiles
+}else if(tolower(args$continent) == "europe"){
+  continent_list <- europe_tiles
+}else if(tolower(args$continent) == "africa"){
+  continent_list <- africa_tiles
+}else if(tolower(args$continent) == "samerica"){
+  continent_list <- samerica_tiles
+}else if(tolower(args$continent) == "oceania"){
+  continent_list <- oceania_tiles
+}else if(tolower(args$continent) == "australia"){
+  continent_list <- australia_tiles
+}else{
+  print("not a recognized continent")
+  quit()
+}
+
+print(paste("Doing:", tolower(args$continent)))
+
+# continent_lists <- list(asia_tiles, namerica_tiles, europe_tiles, africa_tiles, samerica_tiles, oceania_tiles, australia_tiles)
+# continent_names <- c("Asia", "N America", "Europe", "Africa", "S America", "Oceania", "Australia")
 doy_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
 data_dir <- "/projectnb/modislc/data/mcd12_out/phen_out/c6"
 out_dir <- "/projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics"
 band_to_mosaic <- 1
 years <- 2001:2014
 i <- 1
-for(continent_list in continent_lists){
-  tiles_to_mosaic <- continent_list
-  out_prefix <- continent_names[i]
-  pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
-  for(metric_name in doy_metrics){
-    for(year in years){
-      doy_offset <- as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")
-      out_file <- file.path(out_dir, paste(paste(out_prefix, metric_name, year, sep="_"), ".vrt", sep=""))
-      mosaic_files <- unlist(lapply(tiles_to_mosaic, GetTile, metric=metric_name, year=year, data_dir=data_dir))
-      BuildVRT(mosaic_files, out_file=out_file, band=band_to_mosaic, vrtnodata=32767)
-      out_lwmask_file <- file.path(out_dir, paste(paste(out_prefix, "LWMASK", sep="_"), ".vrt", sep=""))
-      if(!file.exists(out_lwmask_file)){
-        lwmask_mosaic_files <- unlist(lapply(tiles_to_mosaic, GetLWTile))
-        BuildVRT(lwmask_mosaic_files, out_file=out_lwmask_file, band=1, vrtnodata=32767)
-      }
-      # make the plot
-      r <- raster(out_file) - as.integer(doy_offset)
-      lw_mask <- raster(out_lwmask_file)
-      qs <- quantile(r, c(0.02, 0.98), na.rm=T)
-      plot_title <- paste(out_prefix, metric_name, year)
-      PlotTile(r, lw_mask, cutoffs=c(qs[1], qs[2]), MAXPIXELS=5e6, title=plot_title)
+tiles_to_mosaic <- continent_list
+out_prefix <- tolower(args$continent)
+pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
+for(metric_name in doy_metrics){
+  for(year in years){
+    doy_offset <- as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")
+    out_file <- file.path(out_dir, paste(paste(out_prefix, metric_name, year, sep="_"), ".vrt", sep=""))
+    mosaic_files <- unlist(lapply(tiles_to_mosaic, GetTile, metric=metric_name, year=year, data_dir=data_dir))
+    BuildVRT(mosaic_files, out_file=out_file, band=band_to_mosaic, vrtnodata=32767)
+    out_lwmask_file <- file.path(out_dir, paste(paste(out_prefix, "LWMASK", sep="_"), ".vrt", sep=""))
+    if(!file.exists(out_lwmask_file)){
+      lwmask_mosaic_files <- unlist(lapply(tiles_to_mosaic, GetLWTile))
+      BuildVRT(lwmask_mosaic_files, out_file=out_lwmask_file, band=1, vrtnodata=32767)
     }
+    # make the plot
+    r <- raster(out_file) - as.integer(doy_offset)
+    lw_mask <- raster(out_lwmask_file)
+    qs <- quantile(r, c(0.02, 0.98), na.rm=T)
+    plot_title <- paste(out_prefix, metric_name, year)
+    PlotTile(r, lw_mask, cutoffs=c(qs[1], qs[2]), MAXPIXELS=5e6, title=plot_title)
   }
-  dev.off() # close the continent file
-  i <- i + 1
 }
+dev.off() # close the continent file
