@@ -4,13 +4,14 @@ library(tools)
 library(argparse)
 #---------------------------------------------------------------------
 # run all continents:
-# qsub ./run_continent_diagnostics.sh namerica
-# qsub ./run_continent_diagnostics.sh asia
-# qsub ./run_continent_diagnostics.sh europe
-# qsub ./run_continent_diagnostics.sh samerica
-# qsub ./run_continent_diagnostics.sh africa
-# qsub ./run_continent_diagnostics.sh oceania
-# qsub ./run_continent_diagnostics.sh australia
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh asia
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh europe
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh samerica
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh africa
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh oceania
+# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh australia
+ # R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics/MCD12Q2C6_DiagnosticsContinents.R --args -continent $1 -metrics greenup -years 2005
 
 #---------------------------------------------------------------------
 BuildVRT <- function(file_list, out_file, band=NULL, vrtnodata=0){
@@ -103,7 +104,9 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
 
 #------------------------------------------------
 # tile lists
-asia_tiles <- c('h10v02', 'h11v02', 'h12v01', 'h19v00', 'h19v01', 'h19v04', 'h20v01', 'h20v02', 'h20v03', 'h20v04', 'h20v05', 'h21v01', 'h21v02', 'h21v03', 'h21v04', 'h21v05', 'h21v06', 'h21v07', 'h22v01', 'h22v02', 'h22v03', 'h22v04', 'h22v05', 'h22v06', 'h22v07', 'h23v01', 'h23v02', 'h23v03', 'h23v04', 'h23v05', 'h23v06', 'h23v07', 'h24v02', 'h24v03', 'h24v04', 'h24v05', 'h24v06', 'h24v07', 'h25v02', 'h25v03', 'h25v04', 'h25v05', 'h25v06', 'h25v07', 'h25v08', 'h25v09', 'h26v02', 'h26v03', 'h26v04', 'h26v05', 'h26v06', 'h26v07', 'h26v08', 'h27v03', 'h27v04', 'h27v05', 'h27v06', 'h27v07', 'h27v08', 'h27v09', 'h28v10', 'h28v04', 'h28v05', 'h28v06', 'h28v07', 'h28v08', 'h28v09', 'h29v10', 'h29v05', 'h29v06', 'h29v07', 'h29v08', 'h29v09', 'h30v10', 'h30v07', 'h30v08', 'h30v09', 'h31v09', 'h32v10', 'h32v09')
+# asia_tiles <- c('h10v02', 'h11v02', 'h12v01', 'h19v00', 'h19v01', 'h19v04', 'h20v01', 'h20v02', 'h20v03', 'h20v04', 'h20v05', 'h21v01', 'h21v02', 'h21v03', 'h21v04', 'h21v05', 'h21v06', 'h21v07', 'h22v01', 'h22v02', 'h22v03', 'h22v04', 'h22v05', 'h22v06', 'h22v07', 'h23v01', 'h23v02', 'h23v03', 'h23v04', 'h23v05', 'h23v06', 'h23v07', 'h24v02', 'h24v03', 'h24v04', 'h24v05', 'h24v06', 'h24v07', 'h25v02', 'h25v03', 'h25v04', 'h25v05', 'h25v06', 'h25v07', 'h25v08', 'h25v09', 'h26v02', 'h26v03', 'h26v04', 'h26v05', 'h26v06', 'h26v07', 'h26v08', 'h27v03', 'h27v04', 'h27v05', 'h27v06', 'h27v07', 'h27v08', 'h27v09', 'h28v10', 'h28v04', 'h28v05', 'h28v06', 'h28v07', 'h28v08', 'h28v09', 'h29v10', 'h29v05', 'h29v06', 'h29v07', 'h29v08', 'h29v09', 'h30v10', 'h30v07', 'h30v08', 'h30v09', 'h31v09', 'h32v10', 'h32v09')
+# this asia tile leaves out ones that cross the meridian for plotting purposes
+asia_tiles <- c('h19v00', 'h19v01', 'h19v04', 'h20v01', 'h20v02', 'h20v03', 'h20v04', 'h20v05', 'h21v01', 'h21v02', 'h21v03', 'h21v04', 'h21v05', 'h21v06', 'h21v07', 'h22v01', 'h22v02', 'h22v03', 'h22v04', 'h22v05', 'h22v06', 'h22v07', 'h23v01', 'h23v02', 'h23v03', 'h23v04', 'h23v05', 'h23v06', 'h23v07', 'h24v02', 'h24v03', 'h24v04', 'h24v05', 'h24v06', 'h24v07', 'h25v02', 'h25v03', 'h25v04', 'h25v05', 'h25v06', 'h25v07', 'h25v08', 'h25v09', 'h26v02', 'h26v03', 'h26v04', 'h26v05', 'h26v06', 'h26v07', 'h26v08', 'h27v03', 'h27v04', 'h27v05', 'h27v06', 'h27v07', 'h27v08', 'h27v09', 'h28v10', 'h28v04', 'h28v05', 'h28v06', 'h28v07', 'h28v08', 'h28v09', 'h29v10', 'h29v05', 'h29v06', 'h29v07', 'h29v08', 'h29v09', 'h30v10', 'h30v07', 'h30v08', 'h30v09', 'h31v09', 'h32v10', 'h32v09')
 namerica_tiles <- c('h10v02', 'h10v03', 'h10v04', 'h10v05', 'h10v06', 'h10v07', 'h10v08', 'h11v02', 'h11v03', 'h11v04', 'h11v05', 'h11v06', 'h11v07', 'h12v01', 'h12v02', 'h12v03', 'h12v04', 'h12v05', 'h12v07', 'h13v01', 'h13v02', 'h13v03', 'h13v04', 'h14v01', 'h14v02', 'h14v03', 'h14v04', 'h15v01', 'h15v02', 'h15v03', 'h16v00', 'h16v01', 'h16v02', 'h17v00', 'h17v01', 'h17v02', 'h28v03', 'h29v03', 'h06v03', 'h07v03', 'h07v05', 'h07v06', 'h07v07', 'h08v03', 'h08v04', 'h08v05', 'h08v06', 'h08v07', 'h09v02', 'h09v03', 'h09v04', 'h09v05', 'h09v06', 'h09v07', 'h09v08')
 europe_tiles <- c('h15v05', 'h16v02', 'h16v05', 'h17v01', 'h17v02', 'h17v03', 'h17v04', 'h17v05', 'h18v00', 'h18v01', 'h18v02', 'h18v03', 'h18v04', 'h18v05', 'h19v00', 'h19v01', 'h19v02', 'h19v03', 'h19v04', 'h19v05', 'h20v01', 'h20v02', 'h20v03', 'h20v04', 'h20v05', 'h21v03', 'h21v04')
 africa_tiles <- c('h15v07', 'h16v05', 'h16v06', 'h16v07', 'h16v08', 'h17v10', 'h17v05', 'h17v06', 'h17v07', 'h17v08', 'h18v05', 'h18v06', 'h18v07', 'h18v08', 'h18v09', 'h19v10', 'h19v11', 'h19v12', 'h19v05', 'h19v06', 'h19v07', 'h19v08', 'h19v09', 'h20v10', 'h20v11', 'h20v12', 'h20v05', 'h20v06', 'h20v07', 'h20v08', 'h20v09', 'h21v10', 'h21v11', 'h21v05', 'h21v06', 'h21v07', 'h21v08', 'h21v09', 'h22v10', 'h22v11', 'h22v07', 'h22v08', 'h22v09', 'h23v10', 'h23v11', 'h23v07', 'h23v08', 'h23v09')
@@ -114,9 +117,28 @@ australia_tiles <- c('h27v11', 'h27v12', 'h27v14', 'h28v11', 'h28v12', 'h28v13',
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Create mosaics and plot
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 arg_parser <- ArgumentParser()
 arg_parser$add_argument("-continent", type="character") # tile to process
+arg_parser$add_argument("-metrics", type="character", nargs="*", default="all") # tile to process
+arg_parser$add_argument("-years", type="integer", nargs="*", default=0) # tile to process
 args <- arg_parser$parse_args()
+# args <- arg_parser$parse_args(c("-continent","europe", "-metrics","greenup", "midgreenup", "dormancy","-years","2011", "2014"))
+all_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
+
+# check for special value of years "0" which means "all years"
+if(args$years == 0){
+  years <- 2001:2014
+}else{
+  years <- args$years
+}
+
+# check for special value of metrics "all" which means "all metrics"
+if(tolower(args$metrics) == "all"){
+  metrics <- all_metrics
+}else{
+  metrics <- args$metrics
+}
 
 if(tolower(args$continent) == "asia"){
   continent_list <- asia_tiles
@@ -141,16 +163,16 @@ print(paste("Doing:", tolower(args$continent)))
 
 # continent_lists <- list(asia_tiles, namerica_tiles, europe_tiles, africa_tiles, samerica_tiles, oceania_tiles, australia_tiles)
 # continent_names <- c("Asia", "N America", "Europe", "Africa", "S America", "Oceania", "Australia")
-doy_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
+# doy_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
 data_dir <- "/projectnb/modislc/data/mcd12_out/phen_out/c6"
 out_dir <- "/projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics"
 band_to_mosaic <- 1
-years <- 2001:2014
+# years <- 2001:2014
 i <- 1
 tiles_to_mosaic <- continent_list
 out_prefix <- tolower(args$continent)
 pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
-for(metric_name in doy_metrics){
+for(metric_name in metrics){
   for(year in years){
     doy_offset <- as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")
     out_file <- file.path(out_dir, paste(paste(out_prefix, metric_name, year, sep="_"), ".vrt", sep=""))

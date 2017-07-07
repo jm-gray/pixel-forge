@@ -21,8 +21,8 @@ DefaultPhenoParameters <- function(){
 		max_increase_length=250,
 		min_decrease_length=30,
 		max_decrease_length=250,
-		rel_amp_frac= 0.35, # segment amplitude must be >= rel_amp_frac * global_amp (max - min)
-		rel_peak_frac=0.7, # EVI value at peak must be >= rel_peak_frac * global max
+		rel_amp_frac=NA, # segment amplitude must be >= rel_amp_frac * global_amp (max - min)
+		rel_peak_frac=NA, # EVI value at peak must be >= rel_peak_frac * global max
 
 		# min_peak_to_peak_distance=120, # not used
 		# agg_amp_frac=0.15, # not used
