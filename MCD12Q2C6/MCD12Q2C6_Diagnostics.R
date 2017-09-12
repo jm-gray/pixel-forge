@@ -57,11 +57,15 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
 }
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/modislc/data/mcd12_out/phen_out/c6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
+# /projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6
+PlotTileAllMetrics <- function(tile, cl, years=2001:2008, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
   # 2=land, 1=water
+  print(paste("Doing", tile))
   tile_lwmask <- raster(dir(lwmask_dir, pattern=paste("map.*", tile, "$", sep=""), full=T))
-  overall_qa_files <- Sys.glob(file.path(data_dir, "*", "001", "QA_Overall", paste("QA_Overall", "*", tile, "*[0-9]", sep="")))
-  example_geom_r <- raster(Sys.glob(file.path(data_dir, "2001", "001", "Greenup", paste("Greenup", "*", tile, "*[0-9]", sep=""))))
+  # overall_qa_files <- Sys.glob(file.path(data_dir, "*", "001", "QA_Overall", paste("QA_Overall", "*", tile, "*[0-9]", sep="")))
+  # example_geom_r <- raster(Sys.glob(file.path(data_dir, "2001", "001", "Greenup", paste("Greenup", "*", tile, "*[0-9]", sep=""))))
+  overall_qa_files <- Sys.glob(file.path(data_dir, "QA_Overall", paste("QA_Overall", "*", tile, "*[0-9]", sep="")))
+  example_geom_r <- raster(Sys.glob(file.path(data_dir, "Greenup", paste("Greenup", "*", tile, "*[0-9]", sep="")))[1])
   projection(tile_lwmask) <- projection(example_geom_r)
   extent(tile_lwmask) <- extent(example_geom_r)
 
@@ -86,7 +90,8 @@ PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup
   # Make a plots of NumCycles
   layout(matrix(1:15, nrow=3, byrow=T))
   par(mar=rep(1,4))
-  num_cycles_files <- Sys.glob(file.path(data_dir, "*", "001", "NumCycles", paste("NumCycles", "*", tile, "*[0-9]", sep="")))
+  # num_cycles_files <- Sys.glob(file.path(data_dir, "*", "001", "NumCycles", paste("NumCycles", "*", tile, "*[0-9]", sep="")))
+  num_cycles_files <- Sys.glob(file.path(data_dir, "NumCycles", paste("NumCycles", "*", tile, "*[0-9]", sep="")))
   i <- 1
   for(num_cycles_file in num_cycles_files){
     r <- raster(num_cycles_file)
@@ -102,7 +107,8 @@ PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup
   # Make a plots of EVI_Amplitude
   layout(matrix(1:15, nrow=3, byrow=T))
   par(mar=rep(1,4))
-  evi_amp_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Amplitude", paste("EVI_Amplitude", "*", tile, "*[0-9]", sep="")))
+  # evi_amp_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Amplitude", paste("EVI_Amplitude", "*", tile, "*[0-9]", sep="")))
+  evi_amp_files <- Sys.glob(file.path(data_dir, "EVI_Amplitude", paste("EVI_Amplitude", "*", tile, "*[0-9]", sep="")))
   evi_amp_s <- stack(evi_amp_files)
   evi_amp_s <- subset(evi_amp_s, seq(1, nlayers(evi_amp_s), by=2))
   evi_amp_s[tile_lwmask == 1] <- NA
@@ -120,7 +126,8 @@ PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup
   # Make a plots of EVI_Area
   layout(matrix(1:15, nrow=3, byrow=T))
   par(mar=rep(1,4))
-  evi_area_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Area", paste("EVI_Area", "*", tile, "*[0-9]", sep="")))
+  # evi_area_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Area", paste("EVI_Area", "*", tile, "*[0-9]", sep="")))
+  evi_area_files <- Sys.glob(file.path(data_dir, "EVI_Area", paste("EVI_Area", "*", tile, "*[0-9]", sep="")))
   evi_area_s <- stack(evi_area_files)
   evi_area_s <- subset(evi_area_s, seq(1, nlayers(evi_area_s), by=2))
   evi_area_s[tile_lwmask == 1] <- NA
@@ -138,7 +145,8 @@ PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup
   # Make a plots of EVI_Minimum
   layout(matrix(1:15, nrow=3, byrow=T))
   par(mar=rep(1,4))
-  evi_min_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Minimum", paste("EVI_Minimum", "*", tile, "*[0-9]", sep="")))
+  # evi_min_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Minimum", paste("EVI_Minimum", "*", tile, "*[0-9]", sep="")))
+  evi_min_files <- Sys.glob(file.path(data_dir, "EVI_Minimum", paste("EVI_Minimum", "*", tile, "*[0-9]", sep="")))
   evi_min_s <- stack(evi_min_files)
   evi_min_s <- subset(evi_min_s, seq(1, nlayers(evi_min_s), by=2))
   evi_min_s[tile_lwmask == 1] <- NA
@@ -155,7 +163,8 @@ PlotTileAllMetrics <- function(tile, cl, years=2001:2014, doy_metrics=c("Greenup
 
   # loop through each DOY metrics and plot: violin plot of each year's values, missing fraction for each year, median raster, MAD raster,
   for(metric in doy_metrics){
-    in_files <- Sys.glob(file.path(data_dir, "*", "001", metric, paste(metric, "*", tile, "*[0-9]", sep="")))
+    # in_files <- Sys.glob(file.path(data_dir, "*", "001", metric, paste(metric, "*", tile, "*[0-9]", sep="")))
+    in_files <- Sys.glob(file.path(data_dir, metric, paste(metric, "*", tile, "*[0-9]", sep="")))
     pheno_s <- stack(in_files)
     pheno_s <- subset(pheno_s, seq(1, nlayers(pheno_s), by=2))
     pheno_s[(pheno_s == 32767) | (pheno_s == -32768)] <- NA
