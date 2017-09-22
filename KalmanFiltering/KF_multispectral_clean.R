@@ -61,7 +61,8 @@ mydlm <- MakeMultiDLM(4, 2)
 mydlm$m0 <- Y_tmp[1:4, min(which(!is.na(Y_tmp[1, ])))] # set initial condition to first non-missing Landsat observation (fragile: perhaps not all Landsat band obs are non-missing!)
 diag(mydlm$V) <- c(rep(landsat_obs_error, 4), x[2:5]) # modis-landsat long-term RMSE is in columns 2:5 of Y
 mydlm$JV <- diag(c(1:nbands, rep(0, nbands))) # allow the Landsat observation error to be time-varying, use long-term MODIS-landsat RMSE for MODIS obs error
-X <- matrix(NA, nrow=ncol(Y_tmp), ncol=nbands) # prototype the X matrix which holds time-varying values
+# prototype the X matrix which holds time-varying values. First nbands will hold Landsat time-varying error
+X <- matrix(NA, nrow=ncol(Y_tmp), ncol=nbands)
 # create a landsat error multiplier vector
 etm_mult_error <- 0.05 # multiplicative error for ETM+ (Landsat 7) obs
 tm_mult_error <- 0.07 # multiplicative error for TM (Landsat 5) obs
@@ -70,10 +71,17 @@ landsat_error[pred_dates %in% landsat_dates][landsat_sensor == "LE7"] <- etm_mul
 landsat_error[pred_dates %in% landsat_dates][landsat_sensor == "LT5"] <- tm_mult_error
 # populated the time-varying error values for each band
 for(i in 1:nbands) X[, i] <- Y_tmp[i, ] * landsat_error
+mydlm$X <- X
 
 # and the process error matrix
-process_error <- 10 # assume arbitrary constant process error
+process_error <- 50 # assume arbitrary constant process error
 diag(mydlm$W) <- rep(process_error, 4)
+
+m_smooth <- dlmSmooth(t(Y_tmp), mydlm) # smoothing
+layout(matrix(1:4, nrow=2, byrow=T))
+par(mar=rep(1, 4))
+for(i in 1:4) plotdlmresults(Y_tmp, dropFirst(m_smooth$s), pred_dates=pred_dates, plot_band=i) # for smoothing distributions
+
 
 
 #-------------------------------------------------------------------------
