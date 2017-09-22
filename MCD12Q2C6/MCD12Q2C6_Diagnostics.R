@@ -292,8 +292,8 @@ PlotTileAllMetrics(tile=args$tile, cl=cl, doy_metrics=doy_metrics)
 # R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/MCD12Q2C6_Diagnostics.R --args -tile $1
 
 # to submit all tiles:
-tiles <- scan("/projectnb/modislc/users/joshgray/MCD12Q2C6/gltiles.txt", what=character(), quiet=T)
-for(tile in tiles){
-  sys_cmd <- paste("qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh", tile)
-  system(sys_cmd)
-}
+# tiles <- scan("/projectnb/modislc/users/joshgray/MCD12Q2C6/gltiles.txt", what=character(), quiet=T)
+# for(tile in tiles){
+#   sys_cmd <- paste("qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh", tile)
+#   system(sys_cmd)
+# }
