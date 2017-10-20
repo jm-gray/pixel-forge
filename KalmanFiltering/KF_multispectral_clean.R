@@ -39,12 +39,15 @@ modis_band_end <- modis_band_start + length(modis_dates) - 1
 #-------------------------------------------------------------------------
 # create the data matrix for all unique landsat and modis dates (no interpolation)
 pred_dates <- sort(unique(c(landsat_dates, modis_dates)))
+pixel_number <- 1
 Y_tmp <- expand_x(Y[pixel_number,], landsat_dates, modis_dates, pred_dates, nbands=4, landsat_band_start, landsat_band_end, modis_band_start, modis_band_end)
 
 #-------------------------------------------------------------------------
 # simple KF with arbitrary errors
+mydlm <- MakeMultiDLM(4, 2)
+mydlm$m0 <- Y_tmp[1:4, min(which(!is.na(Y_tmp[1, ])))] # set initial condition to first non-missing Landsat observation (fragile: perhaps not all Landsat band obs are non-missing!)
 landsat_obs_error <- 100 # assume arbitrary constant landsat observation error
-diag(mydlm$V) <- c(rep(landsat_obs_error, 4), x[2:5]) # modis-landsat long-term RMSE is in columns 2:5 of Y
+diag(mydlm$V) <- c(rep(landsat_obs_error, 4), Y[pixel_number, 2:5]) # modis-landsat long-term RMSE is in columns 2:5 of Y
 # and the process error matrix
 process_error <- 10 # assume arbitrary constant process error
 diag(mydlm$W) <- rep(process_error, 4)
