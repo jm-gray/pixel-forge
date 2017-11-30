@@ -89,13 +89,14 @@ for(i in 1:4) plotdlmresults(Y_tmp, dropFirst(m_smooth$s), pred_dates=pred_dates
 
 #-------------------------------------------------------------------------
 # recreate Landsat data for a particular date
+all_dates <- unique(c(landsat_dates, modis_dates))
 blue_r <- raster(tmp_r)
 green_r <- raster(tmp_r)
 red_r <- raster(tmp_r)
 nir_r <- raster(tmp_r)
-match_date <- all_dates[96]
+match_date <- all_dates[139]
 landsat_ind <- which(landsat_dates == match_date)
-# which(landsat_date == all_dates[310])
+
 values(blue_r) <- Y[, c(landsat_band_start[1]:landsat_band_end[1])[landsat_ind]]
 values(green_r) <- Y[, c(landsat_band_start[2]:landsat_band_end[2])[landsat_ind]]
 values(red_r) <- Y[, c(landsat_band_start[3]:landsat_band_end[3])[landsat_ind]]

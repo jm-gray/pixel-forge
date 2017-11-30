@@ -124,3 +124,15 @@ for(i in 1:length(a4_files)){
 
 plot(dates, evi2, pch=qas + 1, col=qas + 1, cex=0.5)
 legend("bottomleft", legend=0:3, pch=1:4, col=1:4, title="MCD43A32 QA")
+
+# download new daily C6 NBARS for EK
+cl <- makeCluster(detectCores() - 1)
+min_date <- as.Date("2000-1-1")
+max_date <- as.Date("2016-12-31")
+download_dates <- seq.Date(min_date, max_date, by=1)
+download_df <- data.frame(tile="h29v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
+
+mcd43a4_dir <- "/Users/jmgray2/Desktop/MCD43A4"
+mcd43a2_dir <- "/Users/jmgray2/Desktop/MCD43A2"
+# trash <- parApply(cl, download_df, 1, DownloadFile, mcd43a4_dir=mcd43a4_dir, mcd43a2_dir=mcd43a2_dir)
+trash <- apply(download_df, 1, DownloadFile, mcd43a4_dir=mcd43a4_dir, mcd43a2_dir=mcd43a2_dir)

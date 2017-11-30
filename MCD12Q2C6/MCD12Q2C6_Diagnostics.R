@@ -65,7 +65,7 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 # /projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6
-PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
+PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/modislc/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
   # 2=land, 1=water
   print(paste("Doing", tile)) # allow for grepping .sh.* files
 
@@ -297,3 +297,6 @@ for(tile in tiles){
   sys_cmd <- paste("qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh", tile)
   system(sys_cmd)
 }
+
+
+# qsub -V -l h_rt=02:00:00 -pe omp 8 /projectnb/modislc/users/joshgray/C6_Diagnostics/run_diagnostics.sh h08v06
