@@ -4,14 +4,19 @@ library(tools)
 library(argparse)
 #---------------------------------------------------------------------
 # run all continents:
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh asia
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh europe
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh samerica
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh africa
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh oceania
-# qsub -l h_rt=24:00:00 ./run_continent_diagnostics.sh australia
- # R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics/MCD12Q2C6_DiagnosticsContinents.R --args -continent $1 -metrics greenup -years 2005
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh asia
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh europe
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh samerica
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh africa
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh oceania
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh australia
+# R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics/MCD12Q2C6_DiagnosticsContinents.R --args -continent $1
+
+# #!/bin/bash
+#
+# echo Submitting continent $1
+# R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics/MCD12Q2C6_DiagnosticsContinents.R --args -continent $1
 
 #---------------------------------------------------------------------
 BuildVRT <- function(file_list, out_file, band=NULL, vrtnodata=0){
@@ -25,10 +30,7 @@ BuildVRT <- function(file_list, out_file, band=NULL, vrtnodata=0){
 }
 
 #---------------------------------------------------------------------
-GetTile <- function(tile, metric, year, data_dir){
-  in_file_name <- list.files(file.path(data_dir,year,"001",metric), pattern=paste(metric, "_", tile, "_", year, "$", sep=""), full=T)
-  return(in_file_name)
-}
+GetTile <- function(tile, metric, year, data_dir) list.files(file.path(data_dir, metric), pattern=paste(metric, "_", tile, "_", year, "$", sep=""), full=T)
 
 #---------------------------------------------------------------------
 GetLWTile <- function(tile) list.files("/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m", pattern=paste("LW.map.", tile, "$", sep=""), full=T)
@@ -123,12 +125,12 @@ arg_parser$add_argument("-continent", type="character") # tile to process
 arg_parser$add_argument("-metrics", type="character", nargs="*", default="all") # tile to process
 arg_parser$add_argument("-years", type="integer", nargs="*", default=0) # tile to process
 args <- arg_parser$parse_args()
-# args <- arg_parser$parse_args(c("-continent","europe", "-metrics","greenup", "midgreenup", "dormancy","-years","2011", "2014"))
+# args <- arg_parser$parse_args(c("-continent","europe", "-metrics","Greenup", "MidGreenup", "Dormancy","-years","2011", "2014"))
 all_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
 
 # check for special value of years "0" which means "all years"
 if(args$years == 0){
-  years <- 2001:2014
+  years <- 2001:2015
 }else{
   years <- args$years
 }
@@ -164,14 +166,15 @@ print(paste("Doing:", tolower(args$continent)))
 # continent_lists <- list(asia_tiles, namerica_tiles, europe_tiles, africa_tiles, samerica_tiles, oceania_tiles, australia_tiles)
 # continent_names <- c("Asia", "N America", "Europe", "Africa", "S America", "Oceania", "Australia")
 # doy_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
-data_dir <- "/projectnb/modislc/data/mcd12_out/phen_out/c6"
+# data_dir <- "/projectnb/modislc/data/mcd12_out/phen_out/c6"
+data_dir="/projectnb/modislc/users/dsm/eval_modis_lc_061917/MCD12I6"
 out_dir <- "/projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics"
 band_to_mosaic <- 1
 # years <- 2001:2014
 i <- 1
 tiles_to_mosaic <- continent_list
 out_prefix <- tolower(args$continent)
-pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
+# pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
 for(metric_name in metrics){
   for(year in years){
     doy_offset <- as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")
@@ -184,11 +187,13 @@ for(metric_name in metrics){
       BuildVRT(lwmask_mosaic_files, out_file=out_lwmask_file, band=1, vrtnodata=32767)
     }
     # make the plot
+    pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, "_", metric_name, "_", year, ".pdf", sep="")), height=15, width=15)
     r <- raster(out_file) - as.integer(doy_offset)
     lw_mask <- raster(out_lwmask_file)
     qs <- quantile(r, c(0.02, 0.98), na.rm=T)
     plot_title <- paste(out_prefix, metric_name, year)
     PlotTile(r, lw_mask, cutoffs=c(qs[1], qs[2]), MAXPIXELS=5e6, title=plot_title)
+    dev.off()
   }
 }
-dev.off() # close the continent file
+# dev.off() # close the continent file
