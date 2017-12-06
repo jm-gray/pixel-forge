@@ -130,7 +130,8 @@ cl <- makeCluster(detectCores() - 1)
 min_date <- as.Date("2000-1-1")
 max_date <- as.Date("2016-12-31")
 download_dates <- seq.Date(min_date, max_date, by=1)
-download_df <- data.frame(tile="h29v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
+# download_df <- data.frame(tile="h29v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
+download_df <- data.frame(tile="h29v09", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
 
 mcd43a4_dir <- "/Users/jmgray2/Desktop/MCD43A4"
 mcd43a2_dir <- "/Users/jmgray2/Desktop/MCD43A2"

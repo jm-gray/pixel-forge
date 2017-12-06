@@ -4,13 +4,14 @@ library(tools)
 library(argparse)
 #---------------------------------------------------------------------
 # run all continents:
-# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
-# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh asia
+# qsub -V -l mem_total=24G -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
+# qsub -V -l mem_total=24G -l h_rt=24:00:00 ./run_continent_diagnostics.sh asia
 # qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh europe
 # qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh samerica
 # qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh africa
-# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh oceania
 # qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh australia
+# qsub -V -l h_rt=24:00:00 ./run_continent_diagnostics.sh oceania
+
 # R --vanilla < /projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics/MCD12Q2C6_DiagnosticsContinents.R --args -continent $1
 
 # #!/bin/bash
