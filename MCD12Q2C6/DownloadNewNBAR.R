@@ -131,12 +131,12 @@ legend("bottomleft", legend=0:3, pch=1:4, col=1:4, title="MCD43A32 QA")
 
 # download new daily C6 NBARS for EK
 cl <- makeCluster(detectCores() - 1)
-min_date <- as.Date("2000-1-1")
-# min_date <- as.Date("2010-10-20")
+# min_date <- as.Date("2000-1-1")
+min_date <- as.Date("2004-07-27")
 max_date <- as.Date("2016-12-31")
 download_dates <- seq.Date(min_date, max_date, by=1)
 # download_df <- data.frame(tile="h29v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
-download_df <- data.frame(tile="h30v09", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
+download_df <- data.frame(tile="h30v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
 
 mcd43a4_dir <- "/Users/jmgray2/Desktop/MCD43A4"
 mcd43a2_dir <- "/Users/jmgray2/Desktop/MCD43A2"
