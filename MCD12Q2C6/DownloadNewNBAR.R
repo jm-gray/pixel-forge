@@ -21,14 +21,18 @@ DownloadFile <- function(x, mcd43a4_dir="/projectnb/modislc/data/mcd12_in/c6/new
   # create the new directory, only happens if it doesn't exist
   out_dir <- file.path(mcd43a4_dir, year, doy)
   created_dir <- dir.create(out_dir, recursive=T)
-  wget_cmd <- paste("wget -N --user=landtest --password=STlads -P ", out_dir, " ftp://ladssci.nascom.nasa.gov/allData/6/MCD43A4/", year, "/", doy, "/*", tile, "*", sep="")
-  system(wget_cmd)
+  if(!CheckFile(x, a4=T, mcd43a4_dir, mcd43a2_dir)){
+    wget_cmd <- paste("wget -N --user=landtest --password=STlads -P ", out_dir, " ftp://ladssci.nascom.nasa.gov/allData/6/MCD43A4/", year, "/", doy, "/*", tile, "*", sep="")
+    system(wget_cmd)
+  }
 
   # create the new directory, only happens if it doesn't exist
   out_dir <- file.path(mcd43a2_dir, year, doy)
   created_dir <- dir.create(out_dir, recursive=T)
-  wget_cmd <- paste("wget -N --user=landtest --password=STlads -P ", out_dir, " ftp://ladssci.nascom.nasa.gov/allData/6/MCD43A2/", year, "/", doy, "/*", tile, "*", sep="")
-  system(wget_cmd)
+  if(!CheckFile(x, a4=F, mcd43a4_dir, mcd43a2_dir)){
+    wget_cmd <- paste("wget -N --user=landtest --password=STlads -P ", out_dir, " ftp://ladssci.nascom.nasa.gov/allData/6/MCD43A2/", year, "/", doy, "/*", tile, "*", sep="")
+    system(wget_cmd)
+  }
 }
 
 CheckFile <- function(x, a4=T, mcd43a4_dir="/projectnb/modislc/data/mcd12_in/c6/new_nbar/mcd43a4", mcd43a2_dir="/projectnb/modislc/data/mcd12_in/c6/new_nbar/mcd43a2"){
@@ -128,10 +132,11 @@ legend("bottomleft", legend=0:3, pch=1:4, col=1:4, title="MCD43A32 QA")
 # download new daily C6 NBARS for EK
 cl <- makeCluster(detectCores() - 1)
 min_date <- as.Date("2000-1-1")
+# min_date <- as.Date("2010-10-20")
 max_date <- as.Date("2016-12-31")
 download_dates <- seq.Date(min_date, max_date, by=1)
 # download_df <- data.frame(tile="h29v08", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
-download_df <- data.frame(tile="h29v09", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
+download_df <- data.frame(tile="h30v09", year=as.integer(strftime(download_dates, format="%Y")), day=as.integer(strftime(download_dates, format="%j")))
 
 mcd43a4_dir <- "/Users/jmgray2/Desktop/MCD43A4"
 mcd43a2_dir <- "/Users/jmgray2/Desktop/MCD43A2"
