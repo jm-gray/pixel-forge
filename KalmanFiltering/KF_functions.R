@@ -1035,6 +1035,18 @@ GetSDSName <- function(mcd43a4_file_path, band){
 }
 
 #--------------------------------------------------------------------------------
+GetSDSName_SnowBRDF <- function(mcd43a2_file_path){
+  # returns the SDS name for the Snow BRDF Albedo layer of an MCD43A2 file
+  return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":MOD_Grid_BRDF:Snow_BRDF_Albedo", sep = ""))
+}
+
+#--------------------------------------------------------------------------------
+GetSDSName_AlbedoBandQA <- function(mcd43a2_file_path, band){
+  # returns the SDS name for the BRDF Albedo Band Quality for a particular band of an MCD43A2 file
+  return(paste("HDF4_EOS:EOS_GRID:\"", mcd43a2_file_path, "\":", paste("MOD_Grid_BRDF:BRDF_Albedo_Band_Quality_Band", band, sep=""), sep = ""))
+}
+
+#--------------------------------------------------------------------------------
 CellNumRaster <- function(modis_file_path){
   # creates and returns a RasterLayer containing the cell numbers associated
   # with the raster given by modis_file_path
