@@ -62,6 +62,43 @@ GetValuesGDAL <- function(dsets, start_row, n, max_open_datasets=2.75e3) {
 }
 
 #-------------------------------------------------------------------------------
+GetValuesGDAL_multiband <- function(dsets, start_row, n, max_open_datasets=2.75e3) {
+	# extracts n rows from all dsets starting at start_row
+
+	# determine how many blocks of datasets to open simultaneously and dataset size
+	num_blocks <- ceiling(length(dsets) / max_open_datasets)
+  tmp_r <- stack(dsets[1])
+	nrows <- nrow(tmp_r)
+	ncols <- ncol(tmp_r)
+  nbands <- nlayers(tmp_r)
+
+	# initialize output matrix
+  out_vals <- array(NA, dim=c(ncols * n, length(dsets), nbands))
+
+	# loop through all datasets in a block and extract data
+	for(dset_block in 1:num_blocks){
+		# determine which dataset to start and end on
+		dset_start <- ((dset_block - 1) * max_open_datasets) + 1
+		dset_end <- min((dset_block * max_open_datasets), length(dsets))
+		gds <- list()
+
+		# open all datasets
+		for (i in dset_start:dset_end) { gds <- c(gds, GDAL.open(dsets[i])) }
+
+		# loop through each dataset and extract rows
+		for (j in 1:length(gds)) {
+      val <- getRasterData(gds[[j]], offset = c((start_row - 1), 0), region.dim = c(n, ncols), as.is = TRUE)
+      val <- matrix(val, nrow=ncols * n, ncol=nbands)
+      out_vals[, (dset_start + j - 1), ] <- c(val)
+		}
+		# close all files
+		for (i in 1:length(gds)) { GDAL.close(gds[[i]]) }
+	}
+	return(out_vals)
+}
+
+
+#-------------------------------------------------------------------------------
 GetSplineRMSE <- function(x, x_dates, y_dates, pred_dates=NULL, num_cdl_years=4){
 	# fits a daily smoothing spline to time series x and y (landsat and modis)
 	# and then calculates the RMSE
