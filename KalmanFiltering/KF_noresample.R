@@ -62,16 +62,19 @@ landsat_in_files <- dir(file.path(landsat_data_dir, path_row_to_process), patter
 landsat_dates <- as.Date(gsub(".*([0-9]{8}).*", "\\1", basename(landsat_in_files)), format="%Y%m%d")
 landsat_in_files <- landsat_in_files[landsat_dates <= end_date & landsat_dates >= start_date]
 landsat_dates <- landsat_dates[landsat_dates <= end_date & landsat_dates >= start_date]
-
-# NOTE: next line will be in the row-chunk loop
-landsat_data <- GetValuesGDAL_multiband(landsat_in_files, start_row, rows_to_do)
+landsat_sensor <- gsub(pattern="(L[E|T|C]0[7|5|8]).*", "\\1", basename(landsat_in_files))
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Get the MODIS cell and tile maps, determine MODIS files, and grab the data
 cell_num_map <- dir(modis_cell_maps_output_dir, pattern=paste(".*cell_num.*", path_row_to_process, sep=""), full=T)
 tile_index_map <- dir(modis_cell_maps_output_dir, pattern=paste(".*tile_index.*", path_row_to_process, sep=""), full=T)
 
-# NOTE: next lines will be in the row-chunk loop
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# NOTE: next lines will all be in the row-chunk loop iterating over start_row
+# get the landsat data
+landsat_data <- GetValuesGDAL_multiband(landsat_in_files, start_row, rows_to_do)
+
+# get the MODIS cell numbers and tile indices
 modis_cell_nums <- GetValuesGDAL(cell_num_map, start_row, rows_to_do)
 modis_tile_indices <- GetValuesGDAL(tile_index_map, start_row, rows_to_do)
 
@@ -80,7 +83,6 @@ modis_tiles <- sapply(unique(modis_tile_indices), function(x) paste("h", substr(
 mcd43a4_in_files <- lapply(modis_tiles, function(tile) list.files(mcd43a4_data_dir, pattern=tile, rec=T, full=T))
 mcd43a2_in_files <- lapply(modis_tiles, function(tile) list.files(mcd43a2_data_dir, pattern=tile, rec=T, full=T))
 modis_dates <- lapply(mcd43a4_in_files, function(x) as.Date(gsub(".*A([0-9]{7})", "\\1", basename(x)), format="%Y%j"))
-# subset to date range; NOTE: these might be a list!
 mcd43a4_in_files <- lapply(1:length(mcd43a4_in_files), function(x) return(mcd43a4_in_files[[x]][modis_dates[[x]] <= end_date & modis_dates[[x]] >= start_date]))
 mcd43a2_in_files <- lapply(1:length(mcd43a2_in_files), function(x) return(mcd43a2_in_files[[x]][modis_dates[[x]] <= end_date & modis_dates[[x]] >= start_date]))
 modis_dates <- lapply(1:length(modis_dates), function(x) return(modis_dates[[x]][modis_dates[[x]] <= end_date & modis_dates[[x]] >= start_date]))
@@ -89,37 +91,12 @@ modis_dates <- lapply(1:length(modis_dates), function(x) return(modis_dates[[x]]
 modis_cell_num_ranges <- lapply(unique(modis_tile_indices), function(x) range(modis_cell_nums[modis_tile_indices == x]))
 modis_line_ranges <- lapply(1:length(mcd43a4_in_files), function(x){ tmp_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)); return(range(rowFromCell(tmp_r, modis_cell_num_ranges[[x]])))})
 
-function <- GetMODISLines(x){
-  # for use in an lapply expression only, the only argument is the index into
-  # mcd43a4_in_files, mcd43a2_in_files, and modis_line_ranges which MUST exists
-  # within the current scope
-  # get the MODIS data for the specified lines
-  tmp_modis_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)) # read in a temporary MODIS file for geometry
-  modis_data <- array(NA, dim=c(ncol(tmp_modis_r) * (diff(modis_line_ranges[[x]]) + 1), length(mcd43a4_in_files[[x]]), length(landsat_to_modis_bands) + 1))
-  i <- 1
-  for(modis_band in landsat_to_modis_bands){
-    if(!is.na(modis_band)){
-      mcd43a4_tmp_names <- GetSDSName(mcd43a4_in_files[[x]], modis_band)
-      mcd43a4_tmp_data <- GetValuesGDAL(mcd43a4_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
-      modis_data[, , i] <- mcd43a4_tmp_data
-      rm(mcd43a4_tmp_data)
-    }else{
-      # no MODIS data for this band (thermal) so we input a fill matrix instead
-      modis_data[, , i] <- matrix(NA, nrow=dim(modis_data)[1], ncol=dim(modis_data)[2])
-    }
-    i <- i + 1
-  }
-  # get A2 data; we assume that all band Albedo Band QA are the same and use only band 1; we fill with NA where Snow BRDF Albedo is 1
-  mcd43a2_snow_tmp_names <- GetSDSName_SnowBRDF(mcd43a2_in_files[[x]])
-  mcd43a4_snow_tmp_data <- GetValuesGDAL(mcd43a2_snow_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
-  mcd43a2_albedo_qa_tmp_names <- GetSDSName_AlbedoBandQA(mcd43a2_in_files[[x]], 1)
-  mcd43a4_albedo_qa_tmp_data <- GetValuesGDAL(mcd43a2_albedo_qa_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+# get the MODIS data
+modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines)
 
-  # make Albedo Band QA "4" where it was a snow retrieval
-  # NOTE: should this be made "NA" instead?
-  mcd43a4_albedo_qa_tmp_data[mcd43a4_snow_tmp_data == 1] <- 4
-  modis_data[, , i + 1] <- mcd43a4_albedo_qa_tmp_data
+# get the modis cell number offsets
+modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset)
 
-  # finally, return the data
-  return(modis_data)
-}
+# extract a single pixel's time series
+# NOTE: this function will most likely be used within the KF function itself, applying to all pixels within the given lines chunk
+tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)

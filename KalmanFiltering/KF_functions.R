@@ -1127,7 +1127,7 @@ CreateModisMaps <- function(path_row, landsat_path_row_shp, modis_tile_shp, land
 }
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# Make MODIS cell number and tile index maps at Landsat resolution for all path-rows
+# Make MODIS cell number and tile index maps at Landsat resolution for all path-rows:
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Paths and constants
 # modis_cell_maps_output_dir <- "/Users/jmgray2/Desktop/MODIS_cell_maps"
@@ -1147,3 +1147,81 @@ CreateModisMaps <- function(path_row, landsat_path_row_shp, modis_tile_shp, land
 #   print(paste("Making maps for:", path_row))
 #   CreateModisMaps(path_row=path_row, landsat_path_row_shp=path_rows_shp, modis_tile_shp=modis_grid_shp, landsat_data_dir=landsat_data_dir, modis_data_dir=mcd43a4_data_dir, modis_map_out_dir=modis_cell_maps_output_dir, landsat_suffix=landsat_suffix)
 # }
+
+#--------------------------------------------------------------------------------
+GetMODISLines <- function(x, cast_as_int=T, scale_factor=1e4){
+  # for use in an lapply expression only, argument "x" is the index into
+  # mcd43a4_in_files, mcd43a2_in_files, and modis_line_ranges which MUST exist
+  # within the current scope. It is a list index used to get the proper MCD43A4/A2
+  # file names and MODIS line ranges
+
+  # get the MODIS data for the specified lines
+  tmp_modis_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)) # read in a temporary MODIS file for geometry
+  modis_tmp_data <- array(NA, dim=c(ncol(tmp_modis_r) * (diff(modis_line_ranges[[x]]) + 1), length(mcd43a4_in_files[[x]]), length(landsat_to_modis_bands) + 1))
+  modis_tmp_data_dim <- dim(modis_tmp_data)
+  i <- 1
+  for(modis_band in landsat_to_modis_bands){
+    if(!is.na(modis_band)){
+      mcd43a4_tmp_names <- GetSDSName(mcd43a4_in_files[[x]], modis_band)
+      mcd43a4_tmp_data <- GetValuesGDAL(mcd43a4_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+      modis_tmp_data[, , i] <- mcd43a4_tmp_data
+      rm(mcd43a4_tmp_data)
+    }else{
+      # no MODIS data for this band (thermal) so we input a fill matrix instead
+      modis_tmp_data[, , i] <- matrix(NA, nrow=dim(modis_tmp_data)[1], ncol=dim(modis_tmp_data)[2])
+    }
+    i <- i + 1
+  }
+  # get A2 data; we assume that all band Albedo Band QA are the same and use only band 1; we fill with NA where Snow BRDF Albedo is 1
+  mcd43a2_snow_tmp_names <- GetSDSName_SnowBRDF(mcd43a2_in_files[[x]])
+  mcd43a4_snow_tmp_data <- GetValuesGDAL(mcd43a2_snow_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+  mcd43a2_albedo_qa_tmp_names <- GetSDSName_AlbedoBandQA(mcd43a2_in_files[[x]], 1)
+  mcd43a4_albedo_qa_tmp_data <- GetValuesGDAL(mcd43a2_albedo_qa_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+
+  # make Albedo Band QA "4" where it was a snow retrieval
+  # NOTE: should this be made "NA" instead?
+  mcd43a4_albedo_qa_tmp_data[mcd43a4_snow_tmp_data == 1] <- 4
+  modis_tmp_data[, , i] <- mcd43a4_albedo_qa_tmp_data
+
+  # scale and cast as integer if requested
+  if(cast_as_int){
+    # only multiply bands 1:7, leave the QA band as-is
+    modis_tmp_data[,, 1:7] <- modis_tmp_data[,,1:7] * scale_factor
+    modis_tmp_data <- as.integer(modis_tmp_data) # cast as integer
+    modis_tmp_data <- array(modis_tmp_data, dim=modis_tmp_data_dim)
+  }
+
+  return(modis_tmp_data)
+}
+
+#--------------------------------------------------------------------------------
+GetModisCellOffset <- function(x){
+  # gets the appropriate offset number to adjust original MODIS cell numbers to the extracted lines
+  # original numbers are adjusted by subtracting the minimum cell number of the minimum extracted line number
+  # verified to work:
+  # get the MODIS cell coordinate for a particular landsat_cell_number
+  # tmp_modis_cell_num <- cellFromXY(tmp_modis_r, spTransform(SpatialPoints(xyFromCell(tmp_r, landsat_cell_num), CRS(projection(tmp_r))), CRS(projection(tmp_modis_r))))
+  tmp_modis_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)) # read in a temporary MODIS file for geometry
+  tmp_offset <- (modis_line_ranges[[x]][1] - 1) * ncol(tmp_modis_r)
+  return(tmp_offset)
+}
+
+#--------------------------------------------------------------------------------
+AssembleSinglePixelTimeSeries <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, modis_tile_indices, modis_cell_offsets, landsat_dates, modis_dates, landsat_sensor){
+  # returns a list object containing the multispectral landsat and modis time series,
+  # their associated dates, and the landsat sensor identifier for the landsat pixel number provided
+  # as the first argument. The appropriate modis_cell_nums, modis_tile_indices, and modis_cell_offsets
+  # must be created and provided, in addition to the landsat_data and modis_data for the give lines chunk
+  tmp_landsat_data <- landsat_data[landsat_cell_num,,]
+  modis_cell_num <- modis_cell_nums[landsat_cell_num]
+  modis_tile_index <- modis_tile_indices[landsat_cell_num]
+
+  # find the appropriate MODIS data set
+  the_modis_dataset <- which(unique(modis_tile_indices) == modis_tile_indices[landsat_cell_num])
+
+  # get the appropriate MODIS cell number
+  modis_cell_num <- modis_cell_num - modis_cell_offsets[[the_modis_dataset]]
+  tmp_modis_data <- modis_data[[the_modis_dataset]][modis_cell_num,,]
+  ret_object <- list(landsat_data=tmp_landsat_data, modis_data=tmp_modis_data, landsat_dates=landsat_dates, modis_dates=modis_dates[[x]], landsat_sensor=landsat_sensor)
+  return(ret_object)
+}
