@@ -26,6 +26,7 @@ library(raster)
 library(rgdal)
 library(tools)
 library(parallel)
+library(dlm)
 source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -100,3 +101,38 @@ modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset
 # extract a single pixel's time series
 # NOTE: this function will most likely be used within the KF function itself, applying to all pixels within the given lines chunk
 tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)
+
+# plot(tmp$landsat_dates, tmp$landsat_data[, 4])
+# points(tmp$modis_dates, tmp$modis_data[, 4], col=2)
+# points(tmp$landsat_dates[tmp$landsat_data[, 8] == 0], tmp$landsat_data[, 4][tmp$landsat_data[, 8] == 0], pch=4, col=4)
+
+#############################################
+# test writing out lines
+s <- do.call(stack, replicate(5, raster(matrix(NA, nrow=3, ncol=3))))
+values(s) <- array(as.integer(paste(rep(1:5, each=9), 1:9, sep="")), dim=c(3,3,5))
+tmp_v <- array(as.integer(paste(rep(1:5, each=9), 1:9, sep="")), dim=c(3,3,5))
+s <- writeStart(s, file="~/Desktop/test_out.tif")
+s <- writeValues(s, tmp_v[1,,], start=1)
+s <- writeValues(s, tmp_v[2,,], start=2)
+writeStop(s)
+
+
+
+###############
+# Test the timing
+
+# for 100 rows, the overhead in parLapply is much greater
+par_times <- rep(NA, 10)
+for(i in 1:10){
+  par_times[i] <- system.time(trash <- parLapply(cl, 1:100, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
+}
+
+lapply_times <- rep(NA, 10){
+  lapply_times[i] <- system.time(trash <- lapply(1:100, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
+}
+mean(par_times)
+mean(lapply_times)
+
+how_many <- 1e5
+system.time(trash <- parLapply(cl, 1:how_many, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
+system.time(trash <- lapply(1:how_many, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
