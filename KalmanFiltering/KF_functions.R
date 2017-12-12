@@ -1207,17 +1207,23 @@ GetModisCellOffset <- function(x){
 }
 
 #--------------------------------------------------------------------------------
-AssembleSinglePixelTimeSeries <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, modis_tile_indices, modis_cell_offsets, landsat_dates, modis_dates, landsat_sensor, qa_band_index=8, default_rmse=1e6){
+AssembleSinglePixelTimeSeries <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, modis_tile_indices, modis_cell_offsets, landsat_dates, modis_dates, landsat_sensor, lwmask_data, qa_band_index=8, default_rmse=1e6){
   # returns a list object containing the multispectral landsat and modis time series,
   # their associated dates, and the landsat sensor identifier for the landsat pixel number provided
   # as the first argument. The appropriate modis_cell_nums, modis_tile_indices, and modis_cell_offsets
   # must be created and provided, in addition to the landsat_data and modis_data for the give lines chunk
-  tmp_landsat_data <- landsat_data[landsat_cell_num,,]
-  modis_cell_num <- modis_cell_nums[landsat_cell_num]
-  modis_tile_index <- modis_tile_indices[landsat_cell_num]
 
   # find the appropriate MODIS data set
   the_modis_dataset <- which(unique(modis_tile_indices) == modis_tile_indices[landsat_cell_num])
+
+  # check if this is a land pixel, if not don't bother doing anything else
+  if(lwmask_data[landsat_cell_num,] != 0){
+    return(list(land_pixel=F, nbands=dim(landsat_data)[3] - 1, landsat_data=NA, modis_data=NA, landsat_dates=landsat_dates, modis_dates=modis_dates[[the_modis_dataset]], landsat_sensor=NA, landsat_modis_rmse=NA))
+  }
+
+  tmp_landsat_data <- landsat_data[landsat_cell_num,,]
+  modis_cell_num <- modis_cell_nums[landsat_cell_num]
+  modis_tile_index <- modis_tile_indices[landsat_cell_num]
 
   # get the appropriate MODIS cell number
   modis_cell_num <- modis_cell_num - modis_cell_offsets[[the_modis_dataset]]
@@ -1225,12 +1231,17 @@ AssembleSinglePixelTimeSeries <- function(landsat_cell_num, landsat_data, modis_
 
   # calculate the band-by-band RMSE for matched dates
   good_landsat_obs <- tmp_landsat_data[, qa_band_index] == 0 & !is.na(tmp_landsat_data[, qa_band_index])
-  matched_modis_dates <- match(landsat_dates[good_landsat_obs], modis_dates[[the_modis_dataset]])
-  matched_rmse <- apply((tmp_landsat_data[good_landsat_obs,] - tmp_modis_data[matched_modis_dates,])^2, 2, function(x) sqrt(mean(x, na.rm=T)))[-qa_band_index]
-  matched_rmse[is.nan(matched_rmse) | is.na(matched_rmse)] <- default_rmse
+  # if there are 1 or less good_landsat_obs, we can't find RMSE, so use default
+  if(length(sum(good_landsat_obs)) <= 1){
+    matched_rmse <- rep(default_rmse, dim(tmp_landsat_data)[2] - 1)
+  }else{
+    matched_modis_dates <- match(landsat_dates[good_landsat_obs], modis_dates[[the_modis_dataset]])
+    matched_rmse <- apply((tmp_landsat_data[good_landsat_obs,] - tmp_modis_data[matched_modis_dates,])^2, 2, function(x) sqrt(mean(x, na.rm=T)))[-qa_band_index]
+    matched_rmse[is.nan(matched_rmse) | is.na(matched_rmse)] <- default_rmse
+  }
 
   # construct and return the single-pixel data object
-  ret_object <- list(landsat_data=tmp_landsat_data, modis_data=tmp_modis_data, landsat_dates=landsat_dates, modis_dates=modis_dates[[the_modis_dataset]], landsat_sensor=landsat_sensor, landsat_modis_rmse=matched_rmse)
+  ret_object <- list(land_pixel=T, nbands=dim(landsat_data)[3] - 1, landsat_data=tmp_landsat_data, modis_data=tmp_modis_data, landsat_dates=landsat_dates, modis_dates=modis_dates[[the_modis_dataset]], landsat_sensor=landsat_sensor, landsat_modis_rmse=matched_rmse)
   return(ret_object)
 }
 
@@ -1240,6 +1251,7 @@ MakeLandsatMODISKFData <- function(data_object, temp_res="daily", agg_func="medi
   # it does QA/QC screening (just removes snow values from MODIS, and anyting where FMASK != 0 from landsat)
   # returns the data matrix suitable for KF filtering, a vector of the matched date MODIS-Landsat RMSE,
   # and the Landsat time-varying uncertainty matrix
+
   min_date <- as.Date(paste(strftime(min(c(data_object$landsat_dates, data_object$modis_dates)), format="%Y"), "-1-1", sep=""))
   max_date <- as.Date(paste(strftime(max(c(data_object$landsat_dates, data_object$modis_dates)), format="%Y"), "-12-31", sep=""))
   if(temp_res == "daily"){
@@ -1248,6 +1260,11 @@ MakeLandsatMODISKFData <- function(data_object, temp_res="daily", agg_func="medi
   }else{
     # do weekly
     pred_dates <- seq.Date(min_date, max_date, by="week")
+  }
+
+  # check if this is a land pixel, if not don't bother doing anything else
+  if(!data_object$land_pixel){
+    return(list(land_pixel=F, nbands=data_object$nbands, Y=NA, P_landsat_tv=NA, dates=pred_dates, landsat_modis_rmse=NA))
   }
 
   # determine if we are aggregating using "mean" or "median"
@@ -1276,9 +1293,9 @@ MakeLandsatMODISKFData <- function(data_object, temp_res="daily", agg_func="medi
 
   # get the time-varying Landsat errors
   landsat_error_multiplier <- rep(NA, nrow(tmp_landsat_data))
-  landsat_error_multiplier[landsat_sensor[order(unique(landsat_by_indices))] == "LC08"] <- oli_mult_error
-  landsat_error_multiplier[landsat_sensor[order(unique(landsat_by_indices))] == "LE07"] <- etm_mult_error
-  landsat_error_multiplier[landsat_sensor[order(unique(landsat_by_indices))] == "LT05"] <- tm_mult_error
+  landsat_error_multiplier[data_object$landsat_sensor[order(unique(landsat_by_indices))] == "LC08"] <- oli_mult_error
+  landsat_error_multiplier[data_object$landsat_sensor[order(unique(landsat_by_indices))] == "LE07"] <- etm_mult_error
+  landsat_error_multiplier[data_object$landsat_sensor[order(unique(landsat_by_indices))] == "LT05"] <- tm_mult_error
   landsat_error <- t(t(tmp_landsat_data) * landsat_error_multiplier)
 
   # prototype the output matrix for KF
@@ -1291,34 +1308,43 @@ MakeLandsatMODISKFData <- function(data_object, temp_res="daily", agg_func="medi
   trash <- lapply(unique_modis_by_indices, function(x) Y[(nbands + 1):(nbands * 2), x] <<- tmp_modis_data[which(unique_modis_by_indices == x), ])
   trash <- lapply(unique_landsat_by_indices, function(x) Y_landsat_p[1:nbands, x] <<- landsat_error[which(unique_landsat_by_indices == x), ])
 
-  list(Y=Y, P_landsat_tv=Y_landsat_p, dates=pred_dates, landsat_modis_rmse=data_object$landsat_modis_rmse)
+  return(list(land_pixel=T, nbands=data_object$nbands, Y=Y, P_landsat_tv=Y_landsat_p, dates=pred_dates, landsat_modis_rmse=data_object$landsat_modis_rmse))
 }
 
 #--------------------------------------------------------------------------------
-DoKF <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, modis_tile_indices, modis_cell_offsets, landsat_dates, modis_dates, landsat_sensor, qa_band_index=8){
-  data_object <- AssembleSinglePixelTimeSeries(landsat_cell_num, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)
+DoKF <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, modis_tile_indices, modis_cell_offsets, landsat_dates, modis_dates, landsat_sensor, lwmask_data, qa_band_index=8){
+  data_object <- AssembleSinglePixelTimeSeries(landsat_cell_num, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_data)
   KF_data_object <- MakeLandsatMODISKFData(data_object, temp_res="weekly")
 
+  if(!KF_data_object$land_pixel){
+    # if this is not a land pixel, then return a matrix of NAs
+    return(matrix(NA, nrow=length(KF_data_object$dates), ncol=KF_data_object$nbands))
+  }
+
   # assemble the dlm
-  nbands <- length(KF_data_object$landsat_modis_rmse)
-  mydlm <- MakeMultiDLM(nbands, 2)
-  mydlm$m0 <- KF_data_object$Y[1:nbands, min(which(!is.na(KF_data_object$Y[1, ])))] # set initial condition to first non-missing Landsat observation (fragile: perhaps not all Landsat band obs are non-missing!)
-  diag(mydlm$V) <- c(rep(1e6, nbands), KF_data_object$landsat_modis_rmse) # modis-landsat long-term RMSE is in columns 2:5 of Y
-  mydlm$JV <- diag(c(1:nbands, rep(0, nbands))) # allow the Landsat observation error to be time-varying, use long-term MODIS-landsat RMSE for MODIS obs error
+  mydlm <- MakeMultiDLM(KF_data_object$nbands, 2)
+  # mydlm$m0 <- KF_data_object$Y[1:nbands, min(which(!is.na(KF_data_object$Y[1, ])))] # set initial condition to first non-missing Landsat observation (fragile: perhaps not all Landsat band obs are non-missing!)
+  mydlm$m0 <- apply(KF_data_object$Y[1:KF_data_object$nbands,], 1, function(x) x[min(which(!is.na(x)))])
+
+  # if there are NA m0 values we fill 0.2
+  mydlm$m0[is.na(mydlm$m0)] <- 2000
+
+  diag(mydlm$V) <- c(rep(1e6, KF_data_object$nbands), KF_data_object$landsat_modis_rmse) # modis-landsat long-term RMSE is in columns 2:5 of Y
+  mydlm$JV <- diag(c(1:KF_data_object$nbands, rep(0, KF_data_object$nbands))) # allow the Landsat observation error to be time-varying, use long-term MODIS-landsat RMSE for MODIS obs error
   X <- t(KF_data_object$P_landsat_tv)
   mydlm$X <- X
 
   # and the process error matrix
-  process_error <- 50 # assume arbitrary constant process error
-  diag(mydlm$W) <- rep(process_error, nbands)
+  process_error <- 10  # assume arbitrary constant process error
+  diag(mydlm$W) <- rep(process_error, KF_data_object$nbands)
 
+  # run the filter
   m_smooth <- dlmSmooth(t(KF_data_object$Y), mydlm) # smoothing
-  # m_smooth <- dlmSmooth(KF_data_object$Y, mydlm) # smoothing
-
+  return(dropFirst(m_smooth$s))
   # plotting
-  layout(matrix(1:8, nrow=2, byrow=T))
-  par(mar=rep(1, 4))
-  for(i in 1:nbands) plotdlmresults(Y=KF_data_object$Y, dlm_result=m_smooth, dates=KF_data_object$dates, plot_band=i)
+  # layout(matrix(1:8, nrow=2, byrow=T))
+  # par(mar=rep(1, 4))
+  # for(i in 1:KF_data_object$nbands) plotdlmresults(Y=KF_data_object$Y, dlm_result=m_smooth, dates=KF_data_object$dates, plot_band=i)
 
 }
 

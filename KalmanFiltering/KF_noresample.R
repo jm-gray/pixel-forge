@@ -33,6 +33,7 @@ source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")
 # Paths, parameters, and constants
 modis_cell_maps_output_dir <- "/Users/jmgray2/Desktop/MODIS_cell_maps"
 landsat_data_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/processedData/envi"
+lwmask_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/ClipMasks"
 landsat_suffix <- "_EK"
 mcd43a4_data_dir <- "/Users/jmgray2/Desktop/MCD43A4"
 mcd43a2_data_dir <- "/Users/jmgray2/Desktop/MCD43A2"
@@ -45,7 +46,8 @@ parallel_cores <- NULL
 landsat_to_modis_bands <- c(3, 4, 1, 2, 6, NA, 7) # maps post-EK_preprocess landsat band ordering to MCD43A4 band numbers; there is not thermal band in modis, so landsat band 6 returns NA; also QA is contained in MCD43A2 so is not included (handled separately in data acquisition)
 
 # row chunk parameters
-start_row <- 1 # will change in a loop
+# start_row <- 1 # will change in a loop
+start_row <- 3233 # for PR 116060, this crosses a MODIS tile boundary
 rows_to_do <- 100
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -55,7 +57,7 @@ if(is.null(parallel_cores)){
 }else{
   cl <- makeCluster(parallel_cores)
 }
-clusterEvalQ(cl, {library(raster); library(rgdal)})
+clusterEvalQ(cl, {library(raster); library(rgdal); library(dlm); source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")})
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Gather the Landsat files and extract the data
@@ -74,6 +76,10 @@ tile_index_map <- dir(modis_cell_maps_output_dir, pattern=paste(".*tile_index.*"
 # NOTE: next lines will all be in the row-chunk loop iterating over start_row
 # get the landsat data
 landsat_data <- GetValuesGDAL_multiband(landsat_in_files, start_row, rows_to_do)
+
+# get the LW mask
+lwmask_file <- dir(lwmask_dir, pattern=paste(path_row_to_process, ".tif$", sep=""), full=T)
+lwmask_values <- GetValuesGDAL(lwmask_file, start_row, rows_to_do) # only 0 values should be processed
 
 # get the MODIS cell numbers and tile indices
 modis_cell_nums <- GetValuesGDAL(cell_num_map, start_row, rows_to_do)
@@ -116,23 +122,26 @@ s <- writeValues(s, tmp_v[1,,], start=1)
 s <- writeValues(s, tmp_v[2,,], start=2)
 writeStop(s)
 
+WriteLines <- function(vals_to_write, row_start, example_out_s, out_file){
+  write_s <- writeStart(example_out_s, file=out_file)
+  write_s <- writeValues(write_s, )
+  writeStop(write_s)
+}
 
 
 ###############
 # Test the timing
 
-# for 100 rows, the overhead in parLapply is much greater
-par_times <- rep(NA, 10)
-for(i in 1:10){
-  par_times[i] <- system.time(trash <- parLapply(cl, 1:100, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
-}
+how_many <- 1e3
+start_cell <- 1e3
+system.time(trash <- parLapply(cl, start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_data))
+system.time(trash <- lapply(start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_data))
+# 716 vs 809 seconds for parLapply vs lapply at 1e5 pixels
 
-lapply_times <- rep(NA, 10){
-  lapply_times[i] <- system.time(trash <- lapply(1:100, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
-}
-mean(par_times)
-mean(lapply_times)
+# this is how to turn the output list obect into an array that we can write to output
+trash_mat <- array(unlist(trash), dim=c(dim(trash[[1]])[1], dim(trash[[1]])[2], length(trash)))
 
-how_many <- 1e5
-system.time(trash <- parLapply(cl, 1:how_many, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
-system.time(trash <- lapply(1:how_many, AssembleSinglePixelTimeSeries, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor))
+ms <- list()
+for(i in 1:6){
+  ms[[i]] <- matrix(as.integer(paste(rep(i, 12), 1:12, sep="")), nrow=3, ncol=4, byrow=T)
+}
