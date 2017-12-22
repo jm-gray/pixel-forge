@@ -1349,6 +1349,56 @@ DoKF <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, mo
 }
 
 #--------------------------------------------------------------------------------
+WriteKFResults <- function(data_to_write, out_files, example_r, cast_as_int=T){
+  # writes multiband KF output lists to the specified output files as BIP ENVI raster files
+  
+  # convert data_to_write into a matrix
+  data_mat <- array(unlist(data_to_write), dim=c(dim(data_to_write[[1]])[1], dim(data_to_write[[1]])[2], length(data_to_write)))
+
+  # loop through each band and write the data
+  for(i in 1:dim(data_mat)[2]){
+    out_file <- out_files[i]
+    # create or open the file for appending
+    if(!file.exists(out_file)){
+      ff <- file(out_file, 'wb') # create the file and open for writing
+    }else{
+      ff <- file(out_file, 'ab') # file exists, append to the end
+    }
+    # write the data
+    if(cast_as_int){
+      envi_data_type <- 3
+      writeBin(as.integer(round(data_mat[,i,])), ff)
+    }else{
+      envi_data_type <- 5
+      writeBin(c(data_mat[,i,]), ff)
+    }
+    # writeBin(c(data_mat[,i,]), ff)
+    close(ff)
+    # create a header if it doesn't yet exist
+    out_hdr <- paste(out_file, ".hdr", sep="")
+    if(!file.exists(out_hdr)){
+      temp_txt = paste(
+        "ENVI description = { KF Output }",
+        "\nsamples = ", ncol(example_r),
+        "\nlines =", nrow(example_r),
+        "\nbands = ", dim(data_mat)[1],
+        # "\npixel size = {", paste(res(example_r), collapse=", "), "}",
+        "\nheader offset = 0",
+        "\nfile type = ENVI Standard",
+        "\ndata type =", envi_data_type,
+        "\ninterleave = bip",
+        "\nbyte order = 0",
+        paste("\nmap info = {UTM, 1, 1", xmin(example_r), ymax(example_r), res(example_r)[1], res(example_r)[2], gsub(".*\\+zone=([0-9]*).*", "\\1", projection(example_r)), "North, WGS-84}", sep=", "),
+        "\ncoordinate system string = {}",
+        sep="")
+      sink(out_hdr)
+      cat(temp_txt)
+      sink()
+    }
+  }
+}
+
+#--------------------------------------------------------------------------------
 plotdlmresults <- function(Y, dlm_result, dates, plot_band){
   ylim <- range(c(Y[c(plot_band, plot_band + nbands), ], dropFirst(dlm_result$s)[, plot_band]), na.rm=T)
   plot(dates, Y[plot_band, ], col=1, ylim=ylim, xlab="", ylab="Surface Reflectance")

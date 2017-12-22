@@ -31,14 +31,14 @@ source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Paths, parameters, and constants
-modis_cell_maps_output_dir <- "/Users/jmgray2/Desktop/MODIS_cell_maps"
+modis_cell_maps_output_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/MODIS_cell_maps"
 landsat_data_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/processedData/envi"
 lwmask_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/ClipMasks"
 landsat_suffix <- "_EK"
-mcd43a4_data_dir <- "/Users/jmgray2/Desktop/MCD43A4"
-mcd43a2_data_dir <- "/Users/jmgray2/Desktop/MCD43A2"
-path_row_shp_file <- "/Users/jmgray2/Desktop/wrs2_descending/wrs2_descending.shp"
-modis_grid_shp_file <- "/Users/jmgray2/Desktop/modis_grid/modis_sinusoidal_grid_world.shp"
+mcd43a4_data_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/MCD43A4"
+mcd43a2_data_dir <- "/Volumes/research/fer/jmgray2/EastKalimantan/MCD43A2"
+path_row_shp_file <- "/Volumes/research/fer/jmgray2/EastKalimantan/wrs2_descending.shp"
+modis_grid_shp_file <- "/Volumes/research/fer/jmgray2/EastKalimantan/modis_grid/modis_sinusoidal_grid_world.shp"
 start_date <- as.Date("2010-1-1")
 end_date <- as.Date("2012-12-31")
 path_row_to_process <- "116060"
@@ -108,40 +108,18 @@ modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset
 # NOTE: this function will most likely be used within the KF function itself, applying to all pixels within the given lines chunk
 tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)
 
-# plot(tmp$landsat_dates, tmp$landsat_data[, 4])
-# points(tmp$modis_dates, tmp$modis_data[, 4], col=2)
-# points(tmp$landsat_dates[tmp$landsat_data[, 8] == 0], tmp$landsat_data[, 4][tmp$landsat_data[, 8] == 0], pch=4, col=4)
-
-#############################################
-# test writing out lines
-s <- do.call(stack, replicate(5, raster(matrix(NA, nrow=3, ncol=3))))
-values(s) <- array(as.integer(paste(rep(1:5, each=9), 1:9, sep="")), dim=c(3,3,5))
-tmp_v <- array(as.integer(paste(rep(1:5, each=9), 1:9, sep="")), dim=c(3,3,5))
-s <- writeStart(s, file="~/Desktop/test_out.tif")
-s <- writeValues(s, tmp_v[1,,], start=1)
-s <- writeValues(s, tmp_v[2,,], start=2)
-writeStop(s)
-
-WriteLines <- function(vals_to_write, row_start, example_out_s, out_file){
-  write_s <- writeStart(example_out_s, file=out_file)
-  write_s <- writeValues(write_s, )
-  writeStop(write_s)
-}
-
-
-###############
-# Test the timing
-
+# test the timing
 how_many <- 1e3
 start_cell <- 1e3
-system.time(trash <- parLapply(cl, start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_data))
-system.time(trash <- lapply(start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_data))
-# 716 vs 809 seconds for parLapply vs lapply at 1e5 pixels
+system.time(trash <- parLapply(cl, start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_values))
+
+#############################################
+# this is how you write output
+output_dir <- "~/Desktop"
+out_files <- file.path(output_dir, paste("KF_output", 1:7, sep=""))
+example_r <- raster(landsat_in_files[1])
+WriteKFResults(trash, out_files, example_r)
+
 
 # this is how to turn the output list obect into an array that we can write to output
 trash_mat <- array(unlist(trash), dim=c(dim(trash[[1]])[1], dim(trash[[1]])[2], length(trash)))
-
-ms <- list()
-for(i in 1:6){
-  ms[[i]] <- matrix(as.integer(paste(rep(i, 12), 1:12, sep="")), nrow=3, ncol=4, byrow=T)
-}
