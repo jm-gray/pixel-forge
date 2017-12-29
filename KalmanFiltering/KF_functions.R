@@ -1149,11 +1149,13 @@ CreateModisMaps <- function(path_row, landsat_path_row_shp, modis_tile_shp, land
 # }
 
 #--------------------------------------------------------------------------------
-GetMODISLines <- function(x, cast_as_int=T, scale_factor=1e4){
+GetMODISLines <- function(x, mcd43a4_in_files, mcd43a2_in_files, landsat_to_modis_bands, cast_as_int=T, scale_factor=1e4, max_open_datasets=2e3){
   # for use in an lapply expression only, argument "x" is the index into
   # mcd43a4_in_files, mcd43a2_in_files, and modis_line_ranges which MUST exist
   # within the current scope. It is a list index used to get the proper MCD43A4/A2
   # file names and MODIS line ranges
+
+  print(max_open_datasets) # DEBUG
 
   # get the MODIS data for the specified lines
   tmp_modis_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)) # read in a temporary MODIS file for geometry
@@ -1161,9 +1163,10 @@ GetMODISLines <- function(x, cast_as_int=T, scale_factor=1e4){
   modis_tmp_data_dim <- dim(modis_tmp_data)
   i <- 1
   for(modis_band in landsat_to_modis_bands){
+    print(paste("Doing", modis_band)) # DEBUG
     if(!is.na(modis_band)){
       mcd43a4_tmp_names <- GetSDSName(mcd43a4_in_files[[x]], modis_band)
-      mcd43a4_tmp_data <- GetValuesGDAL(mcd43a4_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+      mcd43a4_tmp_data <- GetValuesGDAL(mcd43a4_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1, max_open_datasets=max_open_datasets)
       modis_tmp_data[, , i] <- mcd43a4_tmp_data
       rm(mcd43a4_tmp_data)
     }else{
@@ -1174,9 +1177,9 @@ GetMODISLines <- function(x, cast_as_int=T, scale_factor=1e4){
   }
   # get A2 data; we assume that all band Albedo Band QA are the same and use only band 1; we fill with NA where Snow BRDF Albedo is 1
   mcd43a2_snow_tmp_names <- GetSDSName_SnowBRDF(mcd43a2_in_files[[x]])
-  mcd43a4_snow_tmp_data <- GetValuesGDAL(mcd43a2_snow_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+  mcd43a4_snow_tmp_data <- GetValuesGDAL(mcd43a2_snow_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1, max_open_datasets=max_open_datasets)
   mcd43a2_albedo_qa_tmp_names <- GetSDSName_AlbedoBandQA(mcd43a2_in_files[[x]], 1)
-  mcd43a4_albedo_qa_tmp_data <- GetValuesGDAL(mcd43a2_albedo_qa_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1)
+  mcd43a4_albedo_qa_tmp_data <- GetValuesGDAL(mcd43a2_albedo_qa_tmp_names, start_row=modis_line_ranges[[x]][1], n=diff(modis_line_ranges[[x]]) + 1, max_open_datasets=max_open_datasets)
 
   # make Albedo Band QA "4" where it was a snow retrieval
   # NOTE: should this be made "NA" instead?
@@ -1351,7 +1354,7 @@ DoKF <- function(landsat_cell_num, landsat_data, modis_data, modis_cell_nums, mo
 #--------------------------------------------------------------------------------
 WriteKFResults <- function(data_to_write, out_files, example_r, cast_as_int=T){
   # writes multiband KF output lists to the specified output files as BIP ENVI raster files
-  
+
   # convert data_to_write into a matrix
   data_mat <- array(unlist(data_to_write), dim=c(dim(data_to_write[[1]])[1], dim(data_to_write[[1]])[2], length(data_to_write)))
 

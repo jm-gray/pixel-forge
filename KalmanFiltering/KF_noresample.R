@@ -44,6 +44,7 @@ end_date <- as.Date("2012-12-31")
 path_row_to_process <- "116060"
 parallel_cores <- NULL
 landsat_to_modis_bands <- c(3, 4, 1, 2, 6, NA, 7) # maps post-EK_preprocess landsat band ordering to MCD43A4 band numbers; there is not thermal band in modis, so landsat band 6 returns NA; also QA is contained in MCD43A2 so is not included (handled separately in data acquisition)
+MAX_OPEN_FILES <- 256
 
 # row chunk parameters
 # start_row <- 1 # will change in a loop
@@ -75,15 +76,15 @@ tile_index_map <- dir(modis_cell_maps_output_dir, pattern=paste(".*tile_index.*"
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # NOTE: next lines will all be in the row-chunk loop iterating over start_row
 # get the landsat data
-landsat_data <- GetValuesGDAL_multiband(landsat_in_files, start_row, rows_to_do)
+landsat_data <- GetValuesGDAL_multiband(landsat_in_files, start_row, rows_to_do, max_open_datasets=MAX_OPEN_FILES)
 
 # get the LW mask
 lwmask_file <- dir(lwmask_dir, pattern=paste(path_row_to_process, ".tif$", sep=""), full=T)
-lwmask_values <- GetValuesGDAL(lwmask_file, start_row, rows_to_do) # only 0 values should be processed
+lwmask_values <- GetValuesGDAL(lwmask_file, start_row, rows_to_do, max_open_datasets=MAX_OPEN_FILES) # only 0 values should be processed
 
 # get the MODIS cell numbers and tile indices
-modis_cell_nums <- GetValuesGDAL(cell_num_map, start_row, rows_to_do)
-modis_tile_indices <- GetValuesGDAL(tile_index_map, start_row, rows_to_do)
+modis_cell_nums <- GetValuesGDAL(cell_num_map, start_row, rows_to_do, max_open_datasets=MAX_OPEN_FILES)
+modis_tile_indices <- GetValuesGDAL(tile_index_map, start_row, rows_to_do, max_open_datasets=MAX_OPEN_FILES)
 
 # get a vector of all the tile indices, then get the MCD43A4/A2 files, and subset to date range
 modis_tiles <- sapply(unique(modis_tile_indices), function(x) paste("h", substr(x, 2, 3), "v", substr(x, 4, 5), sep=""))
@@ -99,7 +100,8 @@ modis_cell_num_ranges <- lapply(unique(modis_tile_indices), function(x) range(mo
 modis_line_ranges <- lapply(1:length(mcd43a4_in_files), function(x){ tmp_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)); return(range(rowFromCell(tmp_r, modis_cell_num_ranges[[x]])))})
 
 # get the MODIS data
-modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines)
+# modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=MAX_OPEN_FILES)
+modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=100)
 
 # get the modis cell number offsets
 modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset)
