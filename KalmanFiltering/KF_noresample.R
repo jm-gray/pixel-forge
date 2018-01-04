@@ -44,7 +44,7 @@ end_date <- as.Date("2012-12-31")
 path_row_to_process <- "116060"
 parallel_cores <- NULL
 landsat_to_modis_bands <- c(3, 4, 1, 2, 6, NA, 7) # maps post-EK_preprocess landsat band ordering to MCD43A4 band numbers; there is not thermal band in modis, so landsat band 6 returns NA; also QA is contained in MCD43A2 so is not included (handled separately in data acquisition)
-MAX_OPEN_FILES <- 256
+MAX_OPEN_FILES <- 225
 
 # row chunk parameters
 # start_row <- 1 # will change in a loop
@@ -100,8 +100,8 @@ modis_cell_num_ranges <- lapply(unique(modis_tile_indices), function(x) range(mo
 modis_line_ranges <- lapply(1:length(mcd43a4_in_files), function(x){ tmp_r <- raster(GetSDSName(mcd43a4_in_files[[x]][1], 1)); return(range(rowFromCell(tmp_r, modis_cell_num_ranges[[x]])))})
 
 # get the MODIS data
-# modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=MAX_OPEN_FILES)
-modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=100)
+modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, modis_line_ranges=modis_line_ranges, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=MAX_OPEN_FILES)
+# modis_data <- lapply(1:length(mcd43a4_in_files), GetMODISLines, mcd43a4_in_files=mcd43a4_in_files, mcd43a2_in_files=mcd43a2_in_files, landsat_to_modis_bands=landsat_to_modis_bands, max_open_datasets=100)
 
 # get the modis cell number offsets
 modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset)
