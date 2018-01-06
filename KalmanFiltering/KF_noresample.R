@@ -41,14 +41,15 @@ path_row_shp_file <- "/Volumes/research/fer/jmgray2/EastKalimantan/wrs2_descendi
 modis_grid_shp_file <- "/Volumes/research/fer/jmgray2/EastKalimantan/modis_grid/modis_sinusoidal_grid_world.shp"
 start_date <- as.Date("2010-1-1")
 end_date <- as.Date("2012-12-31")
-path_row_to_process <- "116060"
+# path_row_to_process <- "116060"
+path_row_to_process <- "116059"
 parallel_cores <- NULL
 landsat_to_modis_bands <- c(3, 4, 1, 2, 6, NA, 7) # maps post-EK_preprocess landsat band ordering to MCD43A4 band numbers; there is not thermal band in modis, so landsat band 6 returns NA; also QA is contained in MCD43A2 so is not included (handled separately in data acquisition)
 MAX_OPEN_FILES <- 225
 
 # row chunk parameters
-# start_row <- 1 # will change in a loop
-start_row <- 3233 # for PR 116060, this crosses a MODIS tile boundary
+start_row <- 1 # will change in a loop
+# start_row <- 3233 # for PR 116060, this crosses a MODIS tile boundary
 rows_to_do <- 100
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -108,11 +109,13 @@ modis_cell_offsets <- lapply(1:length(modis_cell_num_ranges), GetModisCellOffset
 
 # extract a single pixel's time series
 # NOTE: this function will most likely be used within the KF function itself, applying to all pixels within the given lines chunk
-tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)
+# tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor)
+tmp <- AssembleSinglePixelTimeSeries(1, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_values, qa_band_index=8, default_rmse=1e6)
+tmp_df_do <- MakeLandsatMODISKFData(tmp, temp_res="weekly")
 
 # test the timing
-how_many <- 1e3
-start_cell <- 1e3
+how_many <- ncol(tmp_r) * 2
+start_cell <- ncol(tmp_r) * 50 + 1
 system.time(trash <- parLapply(cl, start_cell:(start_cell + how_many - 1), DoKF, landsat_data=landsat_data, modis_data=modis_data, modis_cell_nums=modis_cell_nums, modis_tile_indices=modis_tile_indices, modis_cell_offsets=modis_cell_offsets, landsat_dates=landsat_dates, modis_dates=modis_dates, landsat_sensor=landsat_sensor, lwmask_data=lwmask_values))
 
 #############################################

@@ -20,7 +20,7 @@
 # 6/10      -       Thermal/Brightness-Temp
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # To run:
-# bsub -q cnr -W 36:00 -n 24 -R "span[ptile=24]" -o /gpfs_common/share02/jmgray2/EK/EK.out.%J -e -o /gpfs_common/share02/jmgray2/EK/EK.err.%J R CMD BATCH --vanilla /gpfs_common/share02/jmgray2/EK/KF_cluster.R
+# bsub -q cnr -W 36:00 -n 24 -R "span[ptile=24]" -o /gpfs_common/share02/jmgray2/EK/EK.out.%J -e /gpfs_common/share02/jmgray2/EK/EK.err.%J R CMD BATCH --vanilla /gpfs_common/share02/jmgray2/EK/KF_cluster.R
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -30,7 +30,7 @@ library(rgdal)
 library(tools)
 library(parallel)
 library(dlm)
-source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")
+source("/gpfs_common/share02/jmgray2/EK/KF_functions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Paths, parameters, and constants
@@ -58,7 +58,7 @@ if(is.null(parallel_cores)){
 }else{
   cl <- makeCluster(parallel_cores)
 }
-clusterEvalQ(cl, {library(raster); library(rgdal); library(dlm); source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")})
+clusterEvalQ(cl, {library(raster); library(rgdal); library(dlm); source("/gpfs_common/share02/jmgray2/EK/KF_functions.R")})
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Gather the Landsat files and extract the data
