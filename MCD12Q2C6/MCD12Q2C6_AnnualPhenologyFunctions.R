@@ -198,6 +198,48 @@ Get3YearDataChunk <- function(evi2_files, resid_files, snow_files, year_of_inter
 }
 
 #---------------------------------------------------------------------
+# this works for the MCD12I* data from Goddard
+Get3YearDataChunk_tmp <- function(evi2_files, resid_files, snow_files, year_of_interest, start_line, lines_to_read){
+	# retrieves 3 full years of splined C6 NBAR-EVI2 data, residuals, and snow flags as a data.frame where each row
+	# is a time series of evi, resid, and snow: evi001, ..., evi365, resid001, ..., resid365, flag001, ..., flag365
+
+	# small function to retrieve the year from the nbar file names
+	# NOTE: this is FRAGILE! A more robust solution would be better
+	year_function <- function(x) gsub(".*\\.A([0-9]{4}).*", "\\1", basename(x))
+
+	evi2_years <- as.integer(unlist(lapply(evi2_files, year_function)))
+	resid_years <- as.integer(unlist(lapply(resid_files, year_function)))
+	snow_years <- as.integer(unlist(lapply(snow_files, year_function)))
+	years_of_interest <- c(year_of_interest - 1, year_of_interest, year_of_interest + 1)
+
+	# get indices for year before, year of interest, and year after in the files
+	evi2_file_inds <- match(years_of_interest, evi2_years)
+	resid_file_inds <- match(years_of_interest, resid_years)
+	snow_file_inds <- match(years_of_interest, snow_years)
+
+	# check that all needed data is available
+	if(any(is.na(c(evi2_file_inds, resid_file_inds, snow_file_inds)))){
+		print("Some data are missing, aborting")
+		return(NA)
+	}
+
+	tmp <- cbind(
+		ReadSplinedNBAR(evi2_files[evi2_file_inds[1]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(evi2_files[evi2_file_inds[2]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(evi2_files[evi2_file_inds[3]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(resid_files[resid_file_inds[1]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(resid_files[resid_file_inds[2]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(resid_files[resid_file_inds[3]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(snow_files[snow_file_inds[1]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(snow_files[snow_file_inds[2]], lines_to_read=lines_to_read, start_line=start_line),
+		ReadSplinedNBAR(snow_files[snow_file_inds[3]], lines_to_read=lines_to_read, start_line=start_line)
+	) # end data read/cbind data
+
+	return(tmp)
+}
+
+
+#---------------------------------------------------------------------
 WritePhenologyData <- function(out_file, pheno_values_bip, tile, nbands=25){
 	# Appends a chunk of phenology data to a file, or creates and writes a chunk if the file doesn't exist.
 	# Output is BIP Int16. Thanks to DSM for ENVI header code

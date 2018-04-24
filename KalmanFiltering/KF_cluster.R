@@ -20,7 +20,7 @@
 # 6/10      -       Thermal/Brightness-Temp
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # To run:
-# bsub -q cnr -W 36:00 -n 24 -R "span[ptile=24]" -o /gpfs_common/share02/jmgray2/EK/EK.out.%J -e /gpfs_common/share02/jmgray2/EK/EK.err.%J R CMD BATCH --vanilla /gpfs_common/share02/jmgray2/EK/KF_cluster.R
+# bsub -q cnr -W 60:00 -n 24 -R "span[ptile=24]" -o /gpfs_common/share02/jmgray2/EK/EK.out.%J -e /gpfs_common/share02/jmgray2/EK/EK.err.%J R CMD BATCH --vanilla /gpfs_common/share02/jmgray2/EK/KF_cluster.R
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
