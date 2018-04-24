@@ -811,6 +811,10 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	# if(inherits(valid_peaks, 'try-error') | is.na(valid_peaks)){
 	if(inherits(valid_peaks, 'try-error') | (length(valid_peaks) == 0)){
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
+		# plot if requested
+		if(plot){
+			PlotSeries(x, dates, seg_metrics=NA)
+		}
 		return(annual_pheno_metrics)
 	}
 
@@ -818,6 +822,10 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	full_segs <- try(GetSegs(valid_peaks, evi, pheno_pars), silent=T)
 	if(inherits(full_segs, 'try-error') | is.null(full_segs)){
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
+		# plot if requested
+		if(plot){
+			PlotSeries(x, dates, seg_metrics=NA)
+		}
 		return(annual_pheno_metrics)
 	}
 
@@ -826,6 +834,10 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	if(all(!seg_overlaps)){
 		# no segs within period of interest
 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
+		# plot if requested
+		if(plot){
+			PlotSeries(x, dates, seg_metrics=NA)
+		}
 		return(annual_pheno_metrics)
 	}
 	full_segs <- full_segs[seg_overlaps]
@@ -836,6 +848,12 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	# limit to segments where the peak is in the period of interest
 	is_in_period <- unlist(lapply(seg_metrics, PeakInPeriod, start_date=pheno_period_start, end_date=pheno_period_end))
 	segs_in_period <- seg_metrics[is_in_period]
+
+	# plot if requested
+	if(plot){
+		PlotSeries(x, dates, seg_metrics=segs_in_period)
+	}
+
 
 	# assign the seg metric values to the output return value
 	num_cycles <- length(segs_in_period) # total number of valid peaks within the period of interest
@@ -961,15 +979,15 @@ PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T,
   if(!is.na(seg_metrics)){
     for(seg_metric in seg_metrics){
       # plot the segment data
-      gup_x_tmp <- as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"):as.Date(seg_metric$peak, origin="1970-1-1")
+      gup_x_tmp <- as.Date(seg_metric$ogi, origin="1970-1-1"):as.Date(seg_metric$peak, origin="1970-1-1")
       gup_x <- c(gup_x_tmp, rev(gup_x_tmp))
-      gup_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
+      gup_y_tmp <- filtered[which(dates == as.Date(seg_metric$ogi, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
       gup_y <- c(gup_y_tmp, rep(par()$usr[3], length(gup_x_tmp)))
       polygon(x=gup_x, y=gup_y, border=NA, col=rgb(0.87, 0.87, 0.87))
 
-      gdown_x_tmp <- as.Date(seg_metric$peak, origin="1970-1-1"):as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1")
+      gdown_x_tmp <- as.Date(seg_metric$peak, origin="1970-1-1"):as.Date(seg_metric$dor, origin="1970-1-1")
       gdown_x <- c(gdown_x_tmp, rev(gdown_x_tmp))
-      gdown_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
+      gdown_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$dor, origin="1970-1-1"))]
       gdown_y <- c(gdown_y_tmp, rep(par()$usr[3], length(gdown_x_tmp)))
       polygon(x=gdown_x, y=gdown_y, border=NA, col=rgb(0.82, 0.82, 0.82))
 
