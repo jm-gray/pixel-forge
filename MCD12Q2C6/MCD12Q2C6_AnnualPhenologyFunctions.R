@@ -16,7 +16,7 @@ DefaultPhenoParameters <- function(){
 
 	pheno_pars <- list(
 		## valid segment definition ##
-		min_seg_amplitude=0.15, # absolute amplitude threshold, not used if rel_amp_frac and rel_peak_frac are provided
+		min_seg_amplitude=0.15, # absolute amplitude threshold
 		min_increase_length=30,
 		max_increase_length=250,
 		min_decrease_length=30,
@@ -51,10 +51,35 @@ DefaultPhenoParameters <- function(){
 }
 
 #---------------------------------------------------------------------
-ReadPhenoParameters <- function(parameter_file, year_of_interest){
-	# NOTE: just stubbed here, but for future LC-specific version
+ScanParms <- function(x){
+	# grabs parameter=value pairs from parameter file
+	x <- gsub("(.*)#.*", "\\1", x) # strip out comments
+	param_name <- trimws(gsub("(.*)=.*", "\\1", x), "both")
+	param_value <- trimws(gsub(".*=(.*)", "\\1", x), "both")
+	if(param_value != ""){
+		if(param_value == "NA" | param_value == "na"){
+			param_value <- NA
+		}else if(param_value == "NULL" | param_value == "null"){
+			param_value <- NULL
+		}else{
+			param_value <- as.numeric(param_value)
+		}
+		return(list(name=param_name, value=param_value))
+	}
+}
 
-	return(DefaultPhenoParameters(year_of_interest))
+#---------------------------------------------------------------------
+ReadPhenoParameters <- function(parameter_file, year_of_interest){
+	# reads pheno parameters from a file (as name=value #comment) separated by a newline
+	# and assigns them to pheno_pars
+	pheno_pars <- DefaultPhenoParameters()
+	fpars <- scan(parameter_file, what=character(), sep="\n") # read parameter file
+	read_params <- lapply(fpars, ScanParms)
+	for(x in read_params){
+		param_num <- match(x$name, names(pheno_pars))
+		if(!is.na(param_num)) pheno_pars[[param_num]] <- x$value
+	}
+	return(pheno_pars)
 }
 
 #---------------------------------------------------------------------
@@ -326,14 +351,25 @@ GetSegs <- function(peaks, x, pars, peak=NA){
   next_highest_peak <- peaks[which(peaks == peak) + 1]
 
   # check if we're doing C5-style relative amplitude and peak identification
-  if(!is.na(pars$rel_amp_frac) & !is.na(pars$rel_peak_frac)){
-    global_max <- max(x, na.rm=T)
-    seg_thresh <- (global_max - min(x, na.rm=T)) * pars$rel_amp_frac
-    peak_thresh <- global_max * pars$rel_peak_frac
-  }else{
-    seg_thresh <- pars$min_seg_amplitude
-    peak_thresh <- 0
-  }
+  # if(!is.na(pars$rel_amp_frac) & !is.na(pars$rel_peak_frac)){
+  #   global_max <- max(x, na.rm=T)
+  #   seg_thresh <- (global_max - min(x, na.rm=T)) * pars$rel_amp_frac
+  #   peak_thresh <- global_max * pars$rel_peak_frac
+  # }else{
+  #   seg_thresh <- pars$min_seg_amplitude
+  #   peak_thresh <- 0
+  # }
+
+	# we could have any combinaton of rel_amp_frac, rel_peak_frac, and min_seg_amplitude specified
+	# initialize seg_thresh and peak_thresh to zero
+	# determine the "global max/min", if peak_frac is specified, set it, if amp_frac is specified, set it
+	# if min_seg_amplitude is set, choose the max of that and amp_frac
+	seg_thresh <- peak_thresh <- 0
+	global_max <- max(x, na.rm=T)
+	global_min <- min(x, na.rm=T)
+	if(!is.na(pars$rel_amp_frac)) seg_thresh <- (global_max - global_min) * pars$rel_amp_frac
+	if(!is.na(pars$rel_peak_frac)) peak_thresh <- global_max * pars$rel_peak_frac
+	if(!is.na(pars$min_seg_amplitude)) seg_thresh <- max(pars$min_seg_amplitude, seg_thresh)
 
 	# checks if the period preceding the peak covers enough amplitude
 	# search before the peak up to the maximum of: previous peak, the head of x, or the peak - max_increase_length
