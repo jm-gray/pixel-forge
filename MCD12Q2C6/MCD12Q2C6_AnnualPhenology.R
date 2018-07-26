@@ -83,7 +83,7 @@ args <- arg_parser$parse_args()
 if(is.null(args$params)){
   pheno_pars <- DefaultPhenoParameters()
 }else{
-  pheno_pars <- ReadPhenoParameters(args$params, args$year)
+  pheno_pars <- ReadPhenoParameters(args$params)
 }
 
 # if the pheno_period_start and pheno_period_end are not given as char strings (e.g. "2007-1-1")

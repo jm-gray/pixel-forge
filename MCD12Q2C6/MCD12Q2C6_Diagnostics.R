@@ -26,8 +26,10 @@ PhenoNormals <- function(x, years=NULL){
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pal=colorRampPalette(rev(brewer.pal(11, "Spectral"))), scale=1, title=NA, plot_legend=T, legend_only=F, legend_title="", pdf_out=NULL, plot_height=12, plotNEW=F, garish=F, continents=NA, MAXPIXELS=1.44e6,...){
   # MAXPIXELS <- 5.7e6
-  WATERCOLOR <- rgb(0.7, 0.7, 0.7)
-  LANDCOLOR <- rgb(0.2, 0.2, 0.2)
+  # WATERCOLOR <- rgb(0.7, 0.7, 0.7)
+  # LANDCOLOR <- rgb(0.2, 0.2, 0.2)
+  LANDCOLOR <- rgb(0.7, 0.7, 0.7)
+  WATERCOLOR <- rgb(0.2, 0.2, 0.2)
   LEGENDAXISCEX <- 1
   LEGENDMAINCEX <- 1
   LEGENDWIDTH <- 2.5
@@ -64,129 +66,97 @@ PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pa
 }
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+GetSDS <- function(file_path, sds){
+  # valid SDS: Greenup, MidGreenup, Peak, Senescence, MidGreendown, Dormancy, EVI_Minimum, EVI_Amplitude, NumCycles, QA_Detailed, QA_Overall
+  return(paste("HDF4_EOS:EOS_GRID:\"", file_path, "\":MCD12Q2:", sds, sep = ""))
+}
+
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 # /projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6
-PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/modislc/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
-  # 2=land, 1=water
+# PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/modislc/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
+PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6", output_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6", lwmask_dir="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
   print(paste("Doing", tile)) # allow for grepping .sh.* files
 
-  tile_lwmask <- raster(dir(lwmask_dir, pattern=paste("map.*", tile, "$", sep=""), full=T))
-  # overall_qa_files <- Sys.glob(file.path(data_dir, "*", "001", "QA_Overall", paste("QA_Overall", "*", tile, "*[0-9]", sep="")))
-  # example_geom_r <- raster(Sys.glob(file.path(data_dir, "2001", "001", "Greenup", paste("Greenup", "*", tile, "*[0-9]", sep=""))))
-  overall_qa_files <- Sys.glob(file.path(data_dir, "QA_Overall", paste("QA_Overall", "*", tile, "*[0-9]", sep="")))
-  years <- as.integer(gsub(paste(".*", tile, "_([0-9]{4})", sep=""), "\\1", basename(overall_qa_files)))
-  # example_geom_r <- raster(Sys.glob(file.path(data_dir, "Greenup", paste("Greenup", "*", tile, "*[0-9]", sep="")))[1])
-  # projection(tile_lwmask) <- projection(example_geom_r)
-  # extent(tile_lwmask) <- extent(example_geom_r)
+  # get phenology files and the tile mask
+  hdf_files <- dir(data_dir, pattern=tile, rec=T, full=T)
+  years <- as.integer(gsub(".*A([0-9]{4}).*", "\\1", basename(hdf_files)))
+  tile_lwmask <- raster(dir(lwmask_dir, pattern=paste(".*", tile, ".*bin$", sep=""), full=T))
 
-  # make the output PDF
-  pdf(file=file.path(output_dir, paste("C6_Diagnostic_", tile, ".pdf", sep="")), width=12, height=7) # NOTE: change this!
+  # begin plotting routines
+  pdf(file=file.path(output_dir, paste("C6_Diagnostic_", tile, ".pdf", sep="")), width=24, height=24) # NOTE: change this!
 
   # make plot of overall QA
-  # layout(matrix(1:15, nrow=3, byrow=T))
-  layout(matrix(1:length(years), nrow=3, byrow=T))
-  par(mar=rep(1,4))
-  i <- 1
-  for(overall_qa_file in overall_qa_files){
-    r <- raster(overall_qa_file)
-    r[tile_lwmask == 1] <- NA
-    r[(r == 32767) | (r == -32768)] <- NA
-    qa_pal <- colorRampPalette(brewer.pal(5, "PuRd")[2:5])
-    PlotTile(r, tile_lwmask, breaks=seq(-0.5, 3.5, by=1), pal=qa_pal, title=paste("Overall QA", years[i]), plot_legend=F)
-    i <- i + 1
-  }
-  # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
+  overall_qa_files <- GetSDS(hdf_files, "QA_Overall")
+  layout(matrix(1:length(years), nrow=4, byrow=T))
+  par(mar=rep(1, 4))
+  overall_qa_s <- stack(overall_qa_files)
+  overall_qa_s <- subset(overall_qa_s, seq(1, nlayers(overall_qa_s), by=2))
+  NAvalue(overall_qa_s) <- 32767
+  qa_pal <- colorRampPalette(brewer.pal(5, "PuRd")[2:5])
+  for(i in 1:length(years)) PlotTile(raster(overall_qa_s, i), tile_lwmask, breaks=seq(-0.5, 3.5, by=1), pal=qa_pal, title=paste("Overall QA", years[i]), plot_legend=F)
   legend("top", legend=c("0","1","2","3"), fill=qa_pal(4), bg="white", horiz=T, title="Overall QA Value (first cycle)")
 
+
   # Make a plots of NumCycles
-  # layout(matrix(1:15, nrow=3, byrow=T))
-  layout(matrix(1:length(years), nrow=3, byrow=T))
-  par(mar=rep(1,4))
-  # num_cycles_files <- Sys.glob(file.path(data_dir, "*", "001", "NumCycles", paste("NumCycles", "*", tile, "*[0-9]", sep="")))
-  num_cycles_files <- Sys.glob(file.path(data_dir, "NumCycles", paste("NumCycles", "*", tile, "*[0-9]", sep="")))
-  i <- 1
-  for(num_cycles_file in num_cycles_files){
-    r <- raster(num_cycles_file)
-    r[tile_lwmask == 1] <- NA
-    r[(r == 32767) | (r == -32768)] <- NA
-    num_cycles_pal <- colorRampPalette(brewer.pal(5, "YlGnBu"))
-    PlotTile(r, tile_lwmask, breaks=c(0.5, 1.5, 2.5, 3.5, 100), pal=num_cycles_pal, title=paste("Num Cycles", years[i]), plot_legend=F)
-    i <- i + 1
-  }
-  # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
+  numcycles_files <- GetSDS(hdf_files, "NumCycles")
+  layout(matrix(1:length(years), nrow=4, byrow=T))
+  par(mar=rep(1, 4))
+  numcycles_s <- stack(numcycles_files)
+  NAvalue(numcycles_s) <- 32767
+  num_cycles_pal <- colorRampPalette(brewer.pal(5, "YlGnBu"))
+  for(i in 1:length(years)) PlotTile(raster(numcycles_s, i), tile_lwmask, breaks=c(0.5, 1.5, 2.5, 3.5, 100), pal=num_cycles_pal, title=paste("Num Cycles", years[i]), plot_legend=F)
   legend("top", legend=c("1","2","3",">3"), fill=num_cycles_pal(4), bg="white", horiz=T, title="Num Veg Cycles")
 
   # Make a plots of EVI_Amplitude
-  layout(matrix(1:length(years), nrow=3, byrow=T))
-  # layout(matrix(1:15, nrow=3, byrow=T))
-  par(mar=rep(1,4))
-  # evi_amp_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Amplitude", paste("EVI_Amplitude", "*", tile, "*[0-9]", sep="")))
-  evi_amp_files <- Sys.glob(file.path(data_dir, "EVI_Amplitude", paste("EVI_Amplitude", "*", tile, "*[0-9]", sep="")))
-  evi_amp_s <- stack(evi_amp_files)
-  evi_amp_s <- subset(evi_amp_s, seq(1, nlayers(evi_amp_s), by=2))
-  evi_amp_s[tile_lwmask == 1] <- NA
-  evi_amp_s[(evi_amp_s == 32767) | (evi_amp_s == -32768)] <- NA
-  qs <- quantile(evi_amp_s, c(0.02, 0.98), na.rm=T)
+  eviamp_files <- GetSDS(hdf_files, "EVI_Amplitude")
+  eviamp_s <- stack(eviamp_files)
+  eviamp_s <- subset(eviamp_s, seq(1, nlayers(eviamp_s), by=2))
+  NAvalue(eviamp_s) <- 32767
+  # eviamp_s[tile_lwmask != 1] <- NA # should not be necessary since newly processed data applies the LW mask in-chain
+  qs <- quantile(eviamp_s, c(0.02, 0.98), na.rm=T)
   cutoffs <- c(min(qs[,1]), max(qs[,2]))
-  for(i in 1:nlayers(evi_amp_s)){
-    r <- raster(evi_amp_s, i)
-    evi_amp_pal <- colorRampPalette(brewer.pal(5, "Greens"))
-    PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_amp_pal, title=paste("EVI_Amplitude", years[i]), plot_legend=F)
-  }
-  # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
-  PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_amp_pal, title="", legend_only=T, round=3, scale=1e4, legend_title="EVI Amplitude")
+  evi_amp_pal <- colorRampPalette(brewer.pal(5, "Greens"))
+  layout(matrix(1:length(years), nrow=4, byrow=T))
+  par(mar=rep(1, 4))
+  for(i in 1:length(years)) PlotTile(raster(eviamp_s, i), tile_lwmask, cutoffs=cutoffs, pal=evi_amp_pal, title=paste("EVI_Amplitude", years[i]), plot_legend=T)
+  # PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_amp_pal, title="", legend_only=T, round=3, scale=1e4, legend_title="EVI Amplitude")
 
   # Make a plots of EVI_Area
-  # layout(matrix(1:15, nrow=3, byrow=T))
-  layout(matrix(1:length(years), nrow=3, byrow=T))
-  par(mar=rep(1,4))
-  # evi_area_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Area", paste("EVI_Area", "*", tile, "*[0-9]", sep="")))
-  evi_area_files <- Sys.glob(file.path(data_dir, "EVI_Area", paste("EVI_Area", "*", tile, "*[0-9]", sep="")))
-  evi_area_s <- stack(evi_area_files)
-  evi_area_s <- subset(evi_area_s, seq(1, nlayers(evi_area_s), by=2))
-  evi_area_s[tile_lwmask == 1] <- NA
-  evi_area_s[(evi_area_s == 32767) | (evi_area_s == -32768)] <- NA
-  qs <- quantile(evi_area_s, c(0.02, 0.98), na.rm=T)
-  cutoffs <- c(min(qs[,1]), max(qs[,2]))
-  for(i in 1:nlayers(evi_area_s)){
-    r <- raster(evi_area_s, i)
-    evi_area_pal <- colorRampPalette(brewer.pal(5, "Blues"))
-    PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_area_pal, title=paste("EVI_Area", years[i]), plot_legend=F)
-  }
-  # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
-  PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_area_pal, title="", legend_only=T, round=3, scale=10, legend_title="EVI Area")
+  # NOTE: not generated in latest C6!!!!
+  # eviarea_files <- GetSDS(hdf_files, "EVI_Area")
+  # eviarea_s <- stack(eviarea_files)
+  # eviarea_s <- subset(eviarea_s, seq(1, nlayers(eviarea_s), by=2))
+  # NAvalue(eviarea_s) <- 32767
+  # # eviamp_s[tile_lwmask != 1] <- NA # should not be necessary since newly processed data applies the LW mask in-chain
+  # qs <- quantile(eviarea_s, c(0.02, 0.98), na.rm=T)
+  # cutoffs <- c(min(qs[,1]), max(qs[,2]))
+  # evi_area_pal <- colorRampPalette(brewer.pal(5, "Blues"))
+  # layout(matrix(1:length(years), nrow=4, byrow=T))
+  # par(mar=rep(1, 4))
+  # for(i in 1:length(years)) PlotTile(raster(eviarea_s, i), tile_lwmask, cutoffs=cutoffs, pal=evi_area_pal, title=paste("EVI_Area", years[i]), plot_legend=T)
+
+  # PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_amp_pal, title="", legend_only=T, round=3, scale=1e4, legend_title="EVI Amplitude")
 
   # Make a plots of EVI_Minimum
-  # layout(matrix(1:15, nrow=3, byrow=T))
-  layout(matrix(1:length(years), nrow=3, byrow=T))
-  par(mar=rep(1,4))
-  # evi_min_files <- Sys.glob(file.path(data_dir, "*", "001", "EVI_Minimum", paste("EVI_Minimum", "*", tile, "*[0-9]", sep="")))
-  evi_min_files <- Sys.glob(file.path(data_dir, "EVI_Minimum", paste("EVI_Minimum", "*", tile, "*[0-9]", sep="")))
-  evi_min_s <- stack(evi_min_files)
-  evi_min_s <- subset(evi_min_s, seq(1, nlayers(evi_min_s), by=2))
-  evi_min_s[tile_lwmask == 1] <- NA
-  evi_min_s[(evi_min_s == 32767) | (evi_min_s == -32768)] <- NA
-  qs <- quantile(evi_min_s, c(0.02, 0.98), na.rm=T)
+  evimin_files <- GetSDS(hdf_files, "EVI_Minimum")
+  evimin_s <- stack(evimin_files)
+  evimin_s <- subset(evimin_s, seq(1, nlayers(evimin_s), by=2))
+  NAvalue(evimin_s) <- 32767
+  # eviamp_s[tile_lwmask != 1] <- NA # should not be necessary since newly processed data applies the LW mask in-chain
+  qs <- quantile(evimin_s, c(0.02, 0.98), na.rm=T)
   cutoffs <- c(min(qs[,1]), max(qs[,2]))
-  for(i in 1:nlayers(evi_min_s)){
-    r <- raster(evi_min_s, i)
-    evi_min_pal <- colorRampPalette(brewer.pal(5, "Reds"))
-    PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_min_pal, title=paste("EVI_Minimum", years[i]), plot_legend=F)
-  }
-  # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
-  PlotTile(r, tile_lwmask, cutoffs=cutoffs, pal=evi_min_pal, title="", legend_only=T, round=3, scale=1e4, legend_title="EVI Minimum")
+  evi_min_pal <- colorRampPalette(brewer.pal(5, "Reds"))
+  layout(matrix(1:length(years), nrow=4, byrow=T))
+  par(mar=rep(1, 4))
+  for(i in 1:length(years)) PlotTile(raster(evimin_s, i), tile_lwmask, cutoffs=cutoffs, pal=evi_min_pal, title=paste("EVI_Minimum", years[i]), plot_legend=T)
+
 
   # loop through each DOY metrics and plot: violin plot of each year's values, missing fraction for each year, median raster, MAD raster,
   for(metric in doy_metrics){
-    # in_files <- Sys.glob(file.path(data_dir, "*", "001", metric, paste(metric, "*", tile, "*[0-9]", sep="")))
-    print(paste("Doing metric:", metric)) # DEBUG
-    in_files <- Sys.glob(file.path(data_dir, metric, paste(metric, "*", tile, "*[0-9]", sep="")))
+    in_files <- GetSDS(hdf_files, metric)
     pheno_s <- stack(in_files)
     pheno_s <- subset(pheno_s, seq(1, nlayers(pheno_s), by=2))
-    pheno_s[(pheno_s == 32767) | (pheno_s == -32768)] <- NA
-    # should no longer be necessary since LW masking is part of processing chain
-    # tmp_lw <- raster(pheno_s, 1)
-    # values(tmp_lw) <- values(tile_lwmask)
-    # pheno_s[tile_lwmask == 1] <- NA
+    NAvalue(pheno_s) <- 32767
     doy_offset <- unlist(lapply(years, function(x) as.numeric(as.Date(paste(x, "-1-1", sep=""), format="%Y-%j") - as.Date("1970-1-1"))))
     pheno_s <- pheno_s - doy_offset
     pheno_stack_v <- values(pheno_s)
@@ -259,17 +229,14 @@ PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", 
     # #-------
     median_anom_breaks <- c(-1 * 365, seq(-21, 21, len=254), 365)
 
-    # layout(matrix(1:15, nrow=3, byrow=T))
-    layout(matrix(1:length(years), nrow=3, byrow=T))
+    layout(matrix(1:length(years), nrow=4, byrow=T))
     par(mar=rep(1,4))
     for(i in 1:nlayers(pheno_s)){
       values(tmp_r) <- t(pheno_output[2 + i,])
       median_anom_pal <- colorRampPalette(rev(brewer.pal(11, "RdYlBu")))
       PlotTile(tmp_r, tile_lwmask, breaks=median_anom_breaks, pal=median_anom_pal, title=paste(metric, "DOY Anomaly", years[i]), plot_legend=F)
     }
-    # plot(1:10, type="n", xaxt="n", yaxt="n", xlab="", ylab="", bty="n")
     PlotTile(r, tile_lwmask, breaks=median_anom_breaks, pal=median_anom_pal, title="", legend_only=T, legend_title="DOY Anomaly")
-
   }
   dev.off()
 }

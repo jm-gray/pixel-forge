@@ -187,13 +187,9 @@ Get3YearDataChunk <- function(evi2_files, resid_files, snow_files, year_of_inter
 	# retrieves 3 full years of splined C6 NBAR-EVI2 data, residuals, and snow flags as a data.frame where each row
 	# is a time series of evi, resid, and snow: evi001, ..., evi365, resid001, ..., resid365, flag001, ..., flag365
 
-	# small function to retrieve the year from the nbar file names
-	# NOTE: this is FRAGILE! A more robust solution would be better
-	year_function <- function(x) unlist(strsplit(basename(x), split="\\."))[3]
-
-	evi2_years <- as.integer(unlist(lapply(evi2_files, year_function)))
-	resid_years <- as.integer(unlist(lapply(resid_files, year_function)))
-	snow_years <- as.integer(unlist(lapply(snow_files, year_function)))
+	evi2_years <- as.integer(gsub(".*A([0-9]{4}).*", "\\1", basename(evi2_files)))
+	resid_years <- as.integer(gsub(".*A([0-9]{4}).*", "\\1", basename(resid_files)))
+	snow_years <- as.integer(gsub(".*A([0-9]{4}).*", "\\1", basename(snow_files)))
 	years_of_interest <- c(year_of_interest - 1, year_of_interest, year_of_interest + 1)
 
 	# get indices for year before, year of interest, and year after in the files
@@ -430,7 +426,6 @@ GetSegs <- function(peaks, x, pars, peak=NA){
     }
   }
 }
-
 
 #------------------------------------------------------------------
 # GetSegs <- function(peaks, x, pars, peak=NA){
@@ -768,8 +763,7 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	dor_qual_score <- remap_qual[dor_qual_score]
 
 	# do the bit packing here
-	# seg_metrics$detailed_qa <- QualPack(c(ogi_qual_score, midgup_qual_score, mat_qual_score, peak_qual_score, sen_qual_score, midgdown_qual_score, dor_qual_score, overall_qual_score))
-	seg_metrics$detailed_qa <- QualPack(c(ogi_qual_score, midgup_qual_score, mat_qual_score, peak_qual_score, sen_qual_score, midgdown_qual_score, dor_qual_score, 0))
+	seg_metrics$detailed_qa <- QualPack(c(ogi_qual_score, midgup_qual_score, mat_qual_score, peak_qual_score, sen_qual_score, midgdown_qual_score, dor_qual_score, overall_qual_score))
 	seg_metrics$overall_qa <- overall_qual_score
 
 	return(seg_metrics)
@@ -937,83 +931,6 @@ AnnualPhenologyC6 <- function(x, dates, pheno_pars, pheno_period_start, pheno_pe
 	}
 }
 
-# #---------------------------------------------------------------------
-# AnnualPhenologyC6_old <- function(x, dates, pheno_pars, pheno_period_start, pheno_period_end, plot=F){
-# 	# processes MCD12Q2 phenology for a single pixel's time series
-#
-# 	# get a template return value
-# 	annual_pheno_metrics <- PhenoReturnValue()
-#
-# 	# split the data up: first third are smoothed nbar-evi2, second third are residuals, and last third are snowflags
-# 	# also scale, and fill for NA
-# 	x[x==pheno_pars$nbar_NA_value] <- NA
-# 	data_length <- length(x) / 3
-# 	evi <- x[1:data_length]
-# 	evi <- evi / pheno_pars$nbar_scale_factor
-# 	resids <- x[(data_length + 1):(2 * data_length)]
-# 	resids <- resids / pheno_pars$nbar_scale_factor
-# 	snowflags <- x[(2 * data_length + 1):(3 * data_length)]
-#
-# 	# find valid peaks in the time series
-# 	valid_peaks <- try(FilterPeaks(evi, FindPotentialPeaks_minmax(evi), min_peak_to_peak_distance=pheno_pars$min_peak_to_peak_distance), silent=T)
-# 	if(inherits(valid_peaks, 'try-error') | is.na(valid_peaks)){
-# 		annual_pheno_metrics$fill_code <- 1 # no valid peaks
-# 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
-# 		return(annual_pheno_metrics)
-# 	}
-#
-# 	# find full segments
-# 	full_segs <- try(GetFullSegs(evi, valid_peaks, max_seg_length=pheno_pars$max_seg_length, min_seg_amplitude=pheno_pars$min_seg_amplitude, agg_amp_frac=pheno_pars$agg_amp_frac), silent=T)
-# 	if(inherits(full_segs, 'try-error') | is.na(full_segs)){
-# 		annual_pheno_metrics$fill_code <- 2 # no valid segments
-# 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
-# 		return(annual_pheno_metrics)
-# 	}
-#
-# 	# eliminate segs that end before, or start after the period of interest
-# 	seg_overlaps <- unlist(lapply(full_segs, SegOverlapsPeriod, dates, pheno_period_start, pheno_period_end))
-# 	if(all(!seg_overlaps)){
-# 		# no segs within period of interest
-# 		annual_pheno_metrics$fill_code <- 2 # no valid segments
-# 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
-# 		return(annual_pheno_metrics)
-# 	}
-# 	full_segs <- full_segs[seg_overlaps]
-#
-# 	# get the segment metrics
-# 	seg_metrics <- lapply(full_segs, SegMet, x=x, dates=dates, pheno_pars=pheno_pars)
-#
-# 	# limit to segments where the peak is in the period of interest
-# 	is_in_period <- unlist(lapply(seg_metrics, PeakInPeriod, start_date=pheno_period_start, end_date=pheno_period_end))
-# 	segs_in_period <- seg_metrics[is_in_period]
-#
-# 	# assign the seg metric values to the output return value
-# 	num_cycles <- length(segs_in_period) # total number of valid peaks within the period of interest
-# 	if(num_cycles == 0){
-# 		# no segments in period of interest, return default annual pheno metrics
-# 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
-# 		return(annual_pheno_metrics)
-# 	}else{
-# 		# set first cycle return metrics
-# 		cycle1_seg_met <- segs_in_period[[1]]
-# 		annual_pheno_metrics <- SetReturnValues(annual_pheno_metrics, cycle1_seg_met, cycle=1, num_cycles=num_cycles, fill_code=0)
-# 		if(num_cycles > 1){
-# 			# set the second cycle
-# 			cycle2_seg_met <- segs_in_period[[2]]
-# 			annual_pheno_metrics <- SetReturnValues(annual_pheno_metrics, cycle2_seg_met, cycle=2)
-# 		}
-# 		annual_pheno_metrics <- ScaleToIntegerAndSetNA(annual_pheno_metrics, pheno_pars$out_float_scale, pheno_pars$out_NA_value)
-# 		return(annual_pheno_metrics)
-# 	}
-# }
-
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Functions for visualizing the data
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-#---------------------------------------------------------------------
 PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T, seg_metrics=NA, ylim=NULL, grid=T){
 	# function for plotting an individual time series row w/ or w/o seg metrics
   mycols <- c("#636363", "#DE2D26", "#3182BD", "#31A354", "#756BB1", "#E6550D")
@@ -1246,153 +1163,3 @@ PlotStretch <- function(r, year, cutoffs=c(0, 1), pdf_out=NULL, plot_height=12, 
 
   if(!is.null(pdf_out)) dev.off()
 }
-
-#---------------------------------------------------------------------
-# PlotStretch <- function(r, thresh_percent=c(2, 2), thresh_q=NA, na.rm=T, legend_ticks=5, dates=T, legend_round=3, ...){
-# 	# plot with a linear % cutoff stretch and proper legend
-#
-# 	library(RColorBrewer)
-# 	if(is.na(thresh_q)){
-# 		q <- quantile(r, c(0, thresh_percent[1] / 100, 1 - (thresh_percent[2] / 100), 1), na.rm=na.rm)
-# 	}else{
-# 		if(length(thresh_q) != 4){
-# 			print("If specified, thresh_q must have length 4: (min, low_cut, high_cut, max)")
-# 			return(NA)
-# 		}else{
-# 			q <- thresh_q
-# 		}
-# 	}
-#
-# 	if(dates){
-# 		breaks <- unique(round(c(q[1], seq(q[2], q[3], len=254), q[4])))
-# 	}else{
-# 		breaks <- unique(c(q[1], seq(q[2], q[3], len=254), q[4]))
-# 	}
-#
-# 	pal <-  colorRampPalette(brewer.pal(11, "Spectral"))
-# 	plot(r, breaks=breaks, col=pal(length(breaks) - 1), legend=F, ...)
-#
-# 	# make the legend
-# 	# tmp_r <- raster(matrix(q[2]:q[3]))
-# 	tmp_r <- raster(matrix(seq(q[2], q[3], len=255)))
-# 	# legend_at <- round(seq(q[2], q[3], len=legend_ticks))
-# 	legend_at <- seq(q[2], q[3], len=legend_ticks)
-# 	# legend_at <- round(seq(q[2], q[3], len=legend_ticks), legend_round)
-#
-# 	if(dates){
-# 		legend_at <- round(legend_at)
-# 		legend_labels <- c(
-# 							paste("<", as.Date(legend_at[1], origin="1970-1-1")),
-# 							as.character(as.Date(legend_at[2:(length(legend_at) - 1)], origin="1970-1-1")),
-# 							paste("<", as.Date(legend_at[length(legend_at)], origin="1970-1-1"))
-# 						)
-# 	}else{
-# 		legend_labels_tmp <- round(legend_at, legend_round)
-# 		legend_labels <- c(paste("<", legend_labels_tmp[1]), legend_labels_tmp[2:(length(legend_labels_tmp) - 1)], paste(">", legend_labels_tmp[length(legend_labels_tmp)]))
-# 	}
-#
-# 	plot(
-# 		tmp_r,
-# 		legend.only=T,
-# 		col=pal(length(breaks) - 1),
-# 		axis.args=list(at=legend_at, labels=legend_labels)
-# 	)
-# }
-
-
-#---------------------------------------------------------------------
-# PlotPhenology <- function(x, dates, pheno_pars=DefaultPhenoParameters(), NA_value=32767, scale_value=1e4, ylim=NULL, plot_legend=T, grid=T, plot_dates=T, blackBG=F){
-# # PlotSeries <- function(x, dates, NA_value=32767, scale_value=1e4, plot_legend=T, seg_metrics=NA, ylim=NULL, grid=T){
-# 	# function for plotting an individual time series row w/ or w/o seg metrics
-#   mycols <- c("#636363", "#DE2D26", "#3182BD", "#31A354", "#756BB1", "#E6550D")
-#   # gup_poly_color <- "lightgreen"
-# 	gup_poly_color <- rgb(144,238,144,155,max=255)
-#   # gdown_poly_color <- "pink"
-# 	gdown_poly_color <- rgb(255,192,203,155,max=255)
-#   poly_density <- 25
-#   x[x==NA_value] <- NA
-#   data_length <- length(x) / 3
-#   filtered <- x[1:data_length] / scale_value
-#   resids <- x[(data_length + 1):(2 * data_length)] / scale_value
-#   snowflags <- x[(2 * data_length + 1):(3 * data_length)]
-#   cols <- mycols[snowflags + 1]
-#   pchs <- snowflags + 1
-#
-#   # # check if pheno_period_start/end are provided, if not use the whole time series
-#   # if(is.na(pheno_period_start) | is.na(pheno_period_end)){
-#   #   pheno_period_start <- min(dates, na.rm=T)
-#   #   pheno_period_end <- max(dates, na.rm=T)
-#   # }
-#
-#   # retrieve phenology
-#   # pheno_values <- AnnualPhenologyC6(x, dates, pheno_pars, pheno_period_start, pheno_period_end)
-#   valid_peaks <- try(FindPeaks(filtered), silent=T)
-#   full_segs <- try(GetSegs(valid_peaks, filtered, pheno_pars), silent=T)
-#   seg_metrics <- lapply(full_segs, SegMet, x=x, dates=dates, pheno_pars=pheno_pars)
-#
-#   # start plotting
-# 	if(!is.null(ylim)) ylim <- ylim
-# 	if(blackBG){
-# 		par(col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", bg="black", mar=c(4, 4, 2, 2), oma=rep(1, 4))
-# 	}
-#   plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2", ylim=ylim)
-# 	if(grid){
-# 		grid(nx=NA, ny=NULL) # plot horizontal grid lines at tick marks
-# 		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-1-1", sep="")), col="lightgray", lty="dotted")
-# 		abline(v=as.Date(paste(unique(as.numeric(strftime(dates, format="%Y"))), "-7-1", sep="")), col="lightgray", lty="dotted")
-# 	}
-#
-#   # more extensive plotting if seg_metrics are available
-#   if(length(seg_metrics) > 0){
-#     for(seg_metric in seg_metrics){
-#       # plot the segment data
-#       # gup_x_tmp <- as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"):as.Date(seg_metric$peak, origin="1970-1-1")
-# 			gup_x_tmp <- dates[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
-#       gup_x <- c(gup_x_tmp, rev(gup_x_tmp))
-#       gup_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak, origin="1970-1-1"))]
-#       gup_y <- c(gup_y_tmp, rep(par()$usr[3], length(gup_x_tmp)))
-#       # polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color, density=poly_density, angle=45)
-# 			polygon(x=gup_x, y=gup_y, border=NA, col=gup_poly_color)
-#
-#       # gdown_x_tmp <- as.Date(seg_metric$peak, origin="1970-1-1"):as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1")
-# 			gdown_x_tmp <- dates[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
-#       gdown_x <- c(gdown_x_tmp, rev(gdown_x_tmp))
-#       gdown_y_tmp <- filtered[which(dates == as.Date(seg_metric$peak, origin="1970-1-1")):which(dates == as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"))]
-#       gdown_y <- c(gdown_y_tmp, rep(par()$usr[3], length(gdown_x_tmp)))
-#       # polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color, density=poly_density, angle=-45)
-# 			polygon(x=gdown_x, y=gdown_y, border=NA, col=gdown_poly_color)
-#
-#       # this creates simple rectangle fills:
-#       # polygon(x=c(rep(as.Date(seg_metric$peak - seg_metric$length_gup, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.87, 0.87, 0.87))
-#       # polygon(x=c(rep(as.Date(seg_metric$peak, origin="1970-1-1"), 2), rep(as.Date(seg_metric$peak + seg_metric$length_gdown, origin="1970-1-1"), 2)), y=c(par()$usr[3], par()$usr[4], par()$usr[4], par()$usr[3]), border=NA, col=rgb(0.82, 0.82, 0.82))
-#     } # end seg loop
-#
-#     # add the data/spline with fill/miss/snow info
-#     points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
-#     points(dates, filtered, type="l", lwd=2, col="darkgrey")
-#
-# 		if(plot_dates){
-# 			for(seg_metric in seg_metrics){
-# 	      # add vertical lines for phenometrics
-# 	      abline(v=as.Date(seg_metric$ogi, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$midgup, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$mat, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$peak, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$sen, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$midgdown, origin="1970-1-1"), lty=2, col=mycols[1])
-# 	      abline(v=as.Date(seg_metric$dor, origin="1970-1-1"), lty=2, col=mycols[1])
-#
-# 	      # annotate with QA information
-# 	    } # end seg loop
-# 		}
-#
-#
-#     # create a legend
-# 		if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
-#   }else{
-#     # plot(c(dates, dates), c(filtered, filtered + resids), type="n", xlab="", ylab="EVI2")
-#     points(dates, filtered + resids, type="p", pch=pchs, cex=0.75, col=cols)
-#     points(dates, filtered, type="l", lwd=2, col="darkgrey")
-#     if(plot_legend) legend("topleft", legend=c("Spline-smoothed", "Flag=0", "Flag=1", "Flag=2", "Flag=3", "Flag=4"), pch=c(NA, 1:5), col=c("darkgrey", mycols[1:5]), lwd=c(1, rep(NA, 5)), bg="white", horiz=F)
-#   }
-# }

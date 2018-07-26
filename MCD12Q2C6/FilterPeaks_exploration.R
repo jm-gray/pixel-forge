@@ -6,20 +6,36 @@ library(RColorBrewer)
 source("~/Documents/pixel-forge/MCD12Q2C6/MCD12Q2C6_AnnualPhenologyFunctions.R")
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+DownloadMCD12Q2C6 <- function(x, out_root_dir, overwrite=F){
+  print(paste("Downloading:", as.character(x[2]), x[1]))
+  if(!dir.exists(file.path(out_root_dir, x[1]))) system(paste("mkdir", file.path(out_root_dir, x[1])))
+  wget_cmd <- paste('wget -e robots=off -m -np -nd -R -r -l1 -A "*', as.character(x[2]), '*hdf" "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/1467/MCD12Q2/', x[1], '/001/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P ', out_root_dir, "/", x[1], sep="")
+  system(wget_cmd)
+}
+
+tiles <- c("h08v05", "h08v07", "h11v04", "h11v09", "h12v04", "h12v09", "h12v12", "h13v12", "h18v02", "h19v02", "h25v03", "h25v04", "h25v06", "h26v05", "h27v05", "h31v11")
+download_df <- expand.grid(2001:2016, tiles)
+data_dir <- "/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6"
+apply(download_df, 1, DownloadMCD12Q2C6, out_root_dir=data_dir)
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 DownloadTile <- function(x, out_root_dir, overwrite=F){
   # x is c(year, tile, product)
   print(paste("Downloading:", as.character(x[2]), x[1], x[3]))
   out_file <- file.path(out_root_dir, x[3])
-  wget_cmd <- paste('wget -e robots=off -m -np -nd -R -r -l1 -A "*', as.character(x[2]), '*tar.gz " "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/', x[3], '/', x[1], '/001/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P ', out_root_dir, "/", x[3], sep="")
-  if(file.exists(out_file) & !overwrite){
-    print(paste(out_file, "exists, skipping"))
-  }else{
-    system(wget_cmd)
-  }
-  print(wget_cmd)
+  wget_cmd <- paste('wget -e robots=off -m -np -nd -R -r -l1 -A "*', as.character(x[2]), '*tar.gz" "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/', x[3], '/', x[1], '/001/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P ', out_root_dir, "/", x[3], sep="")
+  # wget -e robots=off -m -np -nd -R -r -l1 -A "*h08v05*tar.gz" "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/MCD12I4/2012/001/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P /Volumes/rsstu/users/j/jmgray2/SEAL/MCD12I4
+  # if(file.exists(out_file) & !overwrite){
+  #   print(paste(out_file, "exists, skipping"))
+  # }else{
+  #   system(wget_cmd)
+  # }
+  system(wget_cmd)
+  # print(wget_cmd)
 }
 
-download_df <- expand.grid(2008:2010, "h12v04", c("MCD12I2", "MCD12I3", "MCD12I4"))
+download_df <- expand.grid(2012:2015, "h08v05", c("MCD12I2", "MCD12I3", "MCD12I4"))
+data_dir <- "/Volumes/rsstu/users/j/jmgray2/SEAL/"
 apply(download_df, 1, DownloadTile, out_root_dir=data_dir)
 
 
