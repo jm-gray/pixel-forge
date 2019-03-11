@@ -74,7 +74,7 @@ GetSDS <- function(file_path, sds){
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 # /projectnb/landsat/users/dsm/eval_modis_lc_061917/MCD12I6
 # PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/projectnb/modislc/users/dsm/eval_modis_lc_061917/MCD12I6", output_dir="/projectnb/modislc/users/joshgray/C6_Diagnostics", lwmask_dir="/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m"){
-PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6", output_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6", lwmask_dir="/Volumes/research/fer/jmgray2/MODIS/LWMASK500"){
+PlotTileAllMetrics <- function(tile, cl, doy_metrics=c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy"), data_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6", output_dir="/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6_Diagnostic", lwmask_dir="/Volumes/users/j/jmgray2/SEAL/LWMASK500"){
   print(paste("Doing", tile)) # allow for grepping .sh.* files
 
   # get phenology files and the tile mask

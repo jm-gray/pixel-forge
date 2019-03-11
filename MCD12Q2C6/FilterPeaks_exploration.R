@@ -13,8 +13,12 @@ DownloadMCD12Q2C6 <- function(x, out_root_dir, overwrite=F){
   system(wget_cmd)
 }
 
+cl
 tiles <- c("h08v05", "h08v07", "h11v04", "h11v09", "h12v04", "h12v09", "h12v12", "h13v12", "h18v02", "h19v02", "h25v03", "h25v04", "h25v06", "h26v05", "h27v05", "h31v11")
-download_df <- expand.grid(2001:2016, tiles)
+all_tiles <- read.table("~/Google Drive/DataSets/gltiles.txt")
+new_tiles <- as.character(all_tiles$V1[!(all_tiles$V1 %in% tiles)])
+# download_df <- expand.grid(2001:2016, tiles)
+download_df <- expand.grid(2001:2016, new_tiles)
 data_dir <- "/Volumes/users/j/jmgray2/SEAL/MCD12Q2C6"
 apply(download_df, 1, DownloadMCD12Q2C6, out_root_dir=data_dir)
 

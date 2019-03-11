@@ -1399,6 +1399,54 @@ WriteKFResults <- function(data_to_write, out_files, example_r, cast_as_int=T){
 }
 
 #--------------------------------------------------------------------------------
+WriteENVIMultiband <- function(data_to_write, out_file, example_r, cast_as_int=T){
+    if(!is.matrix(data_to_write)){
+        print("Provided data is not a matrix, aborting")
+        return(NA)
+    }
+
+    # create or open the file for appending
+    if(!file.exists(out_file)){
+        ff <- file(out_file, 'wb') # create the file and open for writing
+    }else{
+        ff <- file(out_file, 'ab') # file exists, append to the end
+    }
+
+    # write the data
+    if(cast_as_int){
+        envi_data_type <- 3
+        # writeBin(as.integer(round(data_mat[,i,])), ff)
+        writeBin(as.integer(round(c(t(data_to_write)))), ff)
+    }else{
+        envi_data_type <- 5
+        # writeBin(c(data_mat[,i,]), ff)
+        writeBin(c(t(data_to_write)), ff)
+    }
+    close(ff)
+    # create a header if it doesn't yet exist
+    out_hdr <- paste(out_file, ".hdr", sep="")
+    if(!file.exists(out_hdr)){
+        temp_txt = paste(
+        "ENVI description = { KF Output }",
+        "\nsamples = ", ncol(example_r),
+        "\nlines =", nrow(example_r),
+        "\nbands = ", dim(data_to_write)[2],
+        # "\npixel size = {", paste(res(example_r), collapse=", "), "}",
+        "\nheader offset = 0",
+        "\nfile type = ENVI Standard",
+        "\ndata type =", envi_data_type,
+        "\ninterleave = bip",
+        "\nbyte order = 0",
+        paste("\nmap info = {UTM, 1, 1", xmin(example_r), ymax(example_r), res(example_r)[1], res(example_r)[2], gsub(".*\\+zone=([0-9]*).*", "\\1", projection(example_r)), "North, WGS-84}", sep=", "),
+        "\ncoordinate system string = {}",
+        sep="")
+        sink(out_hdr)
+        cat(temp_txt)
+        sink()
+    }
+}
+
+#--------------------------------------------------------------------------------
 plotdlmresults <- function(Y, dlm_result, dates, plot_band){
   ylim <- range(c(Y[c(plot_band, plot_band + nbands), ], dropFirst(dlm_result$s)[, plot_band]), na.rm=T)
   plot(dates, Y[plot_band, ], col=1, ylim=ylim, xlab="", ylab="Surface Reflectance")
