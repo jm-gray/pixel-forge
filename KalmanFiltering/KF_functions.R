@@ -131,6 +131,79 @@ GetMatchRMSE <- function(x, x_dates, y_dates, num_cdl_years=4){
 }
 
 #-------------------------------------------------------------------------------
+# GetRMSE <- function(start_row, rows_to_do, match_files, ref_files, match_dates, ref_dates, ref_to_match_cell_map_file, ref_bands, match_bands, max_doy_diff=4){
+GetRMSE <- function(start_row, rows_to_do, match_files, ref_files, match_dates, ref_dates, ref_to_match_cell_map_file, match_bands=NA, ref_bands=NA, match_qa_band=NA, ref_qa_band=NA, match_qa_good_vals=NA, ref_qa_good_vals=NA, max_doy_diff=4){
+  # calculates the band-by-band RMSE over all pixels for matching (or close) dates
+  # in ref and match files.
+  
+  # get matching or closely matching dates (max_doy_diff) parameter
+  close_match_dates <- as.Date(sapply(ref_dates, GetClosestDate, dates=match_dates, max_diff=max_doy_diff), origin="1970-1-1")
+  # check for no match/ref files
+  if(length(close_match_dates) == 0){
+    print("No matching or close dates found, try larger max_doy_diff")
+    return(NA)
+  }
+  match_files_common <- match_files[match_dates %in% close_match_dates] # the close-in-date match files
+  ref_files_common <- ref_files[which(!is.na(close_match_dates))] # the close-in-date ref files
+  
+  # get RasterStack examples of match and ref; determine bands to grab of each w/ legitimacy checks
+  example_match_s <- stack(match_files_common[1])
+  example_ref_s <- stack(ref_files_common[1])
+
+  if(is.na(match_bands)){
+    match_bands_to_get <- 1:nlayers(example_match_s)
+  }else{
+    match_bands_to_get <- match_bands
+  }
+  if(is.na(ref_bands)){
+    ref_bands_to_get <- 1:nlayers(example_ref_s)
+  }else{
+    ref_bands_to_get <- ref_bands
+  }
+  # number of bands in match/ref must match
+  if(length(match_bands_to_get) != length(ref_bands_to_get)){
+    print("match_bands and ref_bands are different lengths")
+    return(NA)
+  }
+
+  # check that QA good vals are provided with qa bands
+  if(!is.na(ref_qa_band)){
+    if(is.na(ref_qa_good_vals) | length(ref_qa_good_vals) == 0){
+      print("Provided ref_qa_band but no ref_qa_good_vals")
+      return(NA)
+    }
+  }
+  if(!is.na(match_qa_band)){
+    if(is.na(match_qa_good_vals) | length(match_qa_good_vals) == 0){
+      print("Provided match_qa_band but no match_qa_good_vals")
+      return(NA)
+    }
+  }
+
+  # get the ref data and screen w/ QA if necessary
+  num_rows <- min(rows_to_do, nrow(example_ref_s) - start_row + 1) # calc rows to grab
+  ref_data <- GetValuesGDAL_multiband(ref_files_common, start_row, num_rows)
+  if(!is.na(ref_qa_band)) ref_qa_data <- ref_data[,, rep(ref_qa_band, length(ref_bands_to_get))] # get and expand QA data
+  ref_data <- ref_data[,, ref_bands_to_get]
+  if(!is.na(ref_qa_band)) ref_data[!(ref_qa_data %in% ref_qa_good_vals)] <- NA # screen bad values
+  
+  # get the match data and screen w/ QA if necessary
+  cells_data <- GetValuesGDAL(ref_to_match_cell_map_file, start_row, num_rows)
+  match_row_range <- rowFromCell(example_match_s, range(cells_data))
+  match_data <- GetValuesGDAL_multiband(match_files_common, min(match_row_range), diff(match_row_range) + 1)
+  if(!is.na(match_qa_band)) match_qa_data <- match_data[,, rep(match_qa_band, length(match_bands_to_get))] # get and expand QA data
+  match_data <- match_data[,, match_bands]
+  if(!is.na(match_qa_band)) match_data[!(match_qa_data %in% match_qa_good_vals)] <- NA # screen bad values
+  # find the cell numbers in the match_data subset data extract
+  match_sub_cell_inds <- cells_data[,1] - (ncol(example_match_s) * (min(match_row_range) - 1))
+  exp_match_data <- match_data[match_sub_cell_inds,,] # expand match data to match dims of ref_data
+
+  # calculate RMSE
+  rmse_ref_match_v <- sqrt(apply((ref_data - exp_match_data)^2, c(1, 3), mean, na.rm=T))
+  return(rmse_ref_match_v)
+}
+
+#-------------------------------------------------------------------------------
 EVI2_error <- function(ref_red, ref_nir, u_red, u_nir){
   # uses the law of prop of uncertainty to calculate the EVI2 error
   # assumes independent errors in red and nir reflectance
@@ -1454,3 +1527,27 @@ plotdlmresults <- function(Y, dlm_result, dates, plot_band){
   points(KF_data_object$dates, dropFirst(dlm_result$s)[, plot_band], type="l", col="grey")
   title(paste("Band:", plot_band))
 }
+
+#--------------------------------------------------------------------------------
+GetClosestDate <- function(x, dates, max_diff=NA, retMin=T){
+    # returns the date in "dates" that is closest to "x" when the absolute
+    # difference (in days) between "x" and the date is less than or equal to
+    # "max_diff". If multiple "dates" are tied for distance from "x" then
+    # either the minimum ("retMin=T") or maximum ("retMin=F") of those is returned
+    diffs <- abs(x - dates)
+    # check for max exceedance
+    if(!is.na(max_diff)){
+        if(min(diffs) > max_diff) return(NA)
+    }
+    min_dates <- dates[which(diffs == min(diffs))]
+    if(length(min_dates) > 1){
+        if(retMin){
+            return(min(min_dates))
+        }else{
+            return(max(min_dates))
+        }
+    }
+    return(min_dates)
+}
+
+#--------------------------------------------------------------------------------
