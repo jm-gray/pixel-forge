@@ -144,6 +144,12 @@ GetRMSE <- function(start_row, rows_to_do, match_files, ref_files, match_dates, 
     return(NA)
   }
   match_files_common <- match_files[match_dates %in% close_match_dates] # the close-in-date match files
+  # layout(matrix(1:12, nrow=4, byrow=T))
+  # par(mar=rep(1, 4))
+  # for(i in 1:length(match_files_common)){
+  #   tmp_s <- stack(match_files_common[i])
+  #   plotRGB(tmp_s, 4, 3, 2, stretch="lin")
+  # }
   ref_files_common <- ref_files[which(!is.na(close_match_dates))] # the close-in-date ref files
   
   # get RasterStack examples of match and ref; determine bands to grab of each w/ legitimacy checks
@@ -1068,23 +1074,24 @@ PlotFusionRGB <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len
 #-------------------------------------------------------------------------------
 PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.95, sigma=NULL, ylim=NULL, pt_cex=1, colmain=rgb(0.42, 0.68, 0.84), colerr=rgb(0.42, 0.68, 0.84, 0.5), colsignal="#636363", ...){
   if(is.null(t)) t <- 1:length(filt_m)
-  # colmain <- "#3182BD"; colerr <- "#BDD7E7"; colsignal <- "#636363"
-  #6BAED6 = rgb(0.42, 0.68, 0.84)
-  # rgb(0.42, 0.68, 0.84, 0.5)
-
 
   if(is.null(sigma)) sigma <- qnorm(1 - (1 - conf_level) / 2)
   lower <- filt_m + (sigma * filt_se)
   upper <- filt_m - (sigma * filt_se)
 
+  # if(is.null(ylim)){
+  #   ylim <- range(c(upper, lower), na.rm=T) * c(0.9, 1.1)
+  #   if(diff(range(c(upper, lower), na.rm=T)) > (2 * diff(range(filt_m, na.rm=T)))){
+  #     ylim <- range(filt_m, na.rm=T) + sd(filt_m)*c(-1, 1)
+  #   }
+  # }
   if(is.null(ylim)){
-    ylim <- range(c(upper, lower), na.rm=T) * c(0.9, 1.1)
-    if(diff(range(c(upper, lower), na.rm=T)) > (2 * diff(range(filt_m, na.rm=T)))){
-      # ylim <- range(filt_m, na.rm=T) * c(0.55, 1.5)
-      # ylim <- c(quantile(lower,c(0.1)), quantile(upper,c(0.9)))
-      ylim <- range(filt_m, na.rm=T) + sd(filt_m)*c(-1, 1)
-    }
+    ylim <- range(c(upper, lower, unlist(signal)), na.rm=T) * c(0.9, 1.1)
+    # if(diff(range(c(upper, lower), na.rm=T)) > (2 * diff(range(filt_m, na.rm=T)))){
+    #   ylim <- range(filt_m, na.rm=T) + sd(filt_m)*c(-1, 1)
+    # }
   }
+
 
   # ylim <- c(min(lower, na.rm=T), max(upper, na.rm=T)) * c(0.9, 1.1)
   plot(t, filt_m, type="n", lwd=2, col=2, lty=2, ylim=ylim, ...)
@@ -1551,3 +1558,221 @@ GetClosestDate <- function(x, dates, max_diff=NA, retMin=T){
 }
 
 #--------------------------------------------------------------------------------
+# for the Bihar example fusion
+DoBiharKF <- function(x, the_dlm, state_cov=NULL, sensors, smoothing=T, default_meas_cov=100){
+    this_dlm <- the_dlm # copying this b/c I can't be sure if it's pass by ref/value...dumb, I know
+
+    Y <- x[2:dim(x)[1], ] # pop off the RMSE data and retain the measurements
+
+    # assign error/RMSE
+    meas_error <- x[1,]^2
+    meas_error[is.na(meas_error)] <- default_meas_cov^2
+    diag(V(this_dlm)) <- meas_error
+
+    # assign state covariance
+    if(!is.null(state_cov)){
+      if(is.matrix(state_cov)){
+        W(this_dlm) <- state_cov
+      }else{
+        diag(W(this_dlm)) <- state_cov
+      }
+    }
+    
+    # initialize state using the mean of the first not-NA observation across all sensors
+    m0(this_dlm) <- c(by(apply(Y, 2, myf <- function(x) x[min(which(!is.na(x)))]), unlist(sensors), mean, na.rm=T))
+    m0(this_dlm)[is.na(m0(this_dlm))] <- 0
+
+    if(smoothing){
+        Y_kf <- dlmSmooth(Y, this_dlm)
+        Y_kf_est <- dropFirst(Y_kf$s)
+        Y_kf_se <- t(do.call(cbind, lapply(dropFirst(dlmSvd2var(Y_kf$U.S, Y_kf$D.S)), function(x) sqrt(diag(x)))))
+        # Y_kf_se <- sqrt(unlist(lapply(dropFirst(dlmSvd2var(Y_kf$U.S, Y_kf$D.S)), function(x, i) return(x[i, i]), i=i)))
+    }else{
+        Y_kf <- dlmFilter(Y, this_dlm)
+        Y_kf_est <- dropFirst(Y_kf$m)[, i]
+        Y_kf_se <- t(do.call(cbind, lapply(dropFirst(dlmSvd2var(Y_kf$U.C, Y_kf$D.C)), function(x) sqrt(diag(x)))))
+        # Y_kf_se <- sqrt(unlist(lapply(dropFirst(dlmSvd2var(Y_kf$U.C, Y_kf$D.C)), function(x, i) return(x[i, i]), i=i)))
+    }
+    return(cbind(Y_kf_est, Y_kf_se))
+}
+
+#--------------------------------------------------------------------------------
+# the most flexible and generalized approach to grabbing heterogeneous data for KF work
+# takes any number of data sets, requires cell maps for all data sets except reference/output grid data set
+GetKFData <- function(start_row, num_rows, data_files, data_dates, cell_maps, rmse_maps, rmse_states, rmse_na_rep, meas_errors, qa_bands, qa_weights, measure_states, out_dates=NA){
+    # the first element of the list "data_files" should be the output resolution file list
+    # start_row, integer specifying the starting row for data acquisition (in the reference/output geometry)
+    # num_rows, integer specifying the number of rows for data acquisition (in the reference/output geometry)
+    # data_files, list of file name vectors for each dataset
+    # data_dates, list of dates associated with each element of data_files
+    # cell_maps, vector of file names for the reference-to-data cell maps, should be NA for reference/output dataset
+    # rmse_maps, vector of file names for the reference-to-data RMSE maps, should be NA for reference/output dataset
+    # qa_bands, vector of integers specifying which band, if any, supplies QA information, can be NA if not available
+    # qa_weights, list of two column matrices for each data set with a non-NA qa_band, specifies QA band values and associated weights for each data set
+    # measure_states, list of integer vectors describing the band ordering of system states in each data_set
+    # out_dates, vector of Date objects specifying the full set of output dates, if NA, then all unique dates in data_dates are used
+    # rmse_states, list of integer vectors (or NA) specifying the order of available RMSE information for each system state
+    # rmse_na_rep, vector of integers, if a state has no RMSE information, this is the band we'll copy it from 
+    # meas_errors, list of vectors providing the default measurement errors for each state and dataset
+    
+    #--------------------------------------------------------------------
+    # Checking inputs
+    # check cell maps (should be NA for the first, or reference dataset)
+    if(length(cell_maps) != length(data_files)){
+        print(paste("Incorrect number of cell_maps. Got", length(cell_maps), "expected", length(data_files)))
+        return(NA)
+    }
+    if(sum(is.na(cell_maps)) > 1){
+        print(paste("There can be only ONE NA value in cell_maps"))
+        return(NA)
+    }
+
+    # check for correct number and length of dates
+    if(length(data_dates) != length(data_files)){
+        print(paste("Incorrect number of dates vectors. Got", length(data_dates), "expected", length(data_files)))
+        return(NA)
+    }
+    for(i in 1:length(data_files)){
+        if(length(data_files[[i]]) != length(data_dates[[i]])){
+            print(paste("Incorrect number of dates for data_files set", i, "Provided", length(data_files[[i]]), "files but", length(data_dates[[i]]), "dates"))
+            return(NA)
+        }
+    }
+
+    # check for correct number of qa_bands
+    if(length(qa_bands) != length(data_files)){
+        print(paste("Incorrect number of qa_bands. Got", length(qa_bands), "expected", length(data_files)))
+        return(NA)
+    }
+
+    # check for correct number of qa_weights
+    if(length(qa_weights) != length(data_files)){
+        print(paste("Incorrect number of qa_weights. Got", length(qa_weights), "expected", length(data_files)))
+        return(NA)
+    }
+
+    # check for the correct number of RMSE maps
+    if(length(rmse_maps) != length(data_files)){
+        print(paste("Incorrect number of rmse_maps. Got", length(rmse_maps), "expected", length(data_files)))
+        return(NA)
+    }
+
+    # get the full set of measured system states
+    all_states <- sort(unique(unlist(measure_states)))
+
+    # if out_dates aren't provided, use all unique input dates
+    if(is.na(out_dates)){
+        print("out_dates not provided, using all unique input dates")
+        out_dates <- sort(unique(unlist(data_dates)))
+    }
+
+    #--------------------------------------------------------------------
+    # Get the data
+    the_data <- list()
+    # how can we prototype the data output first?
+    # proto_data <- array(NA, dim=c(length(cell_inds), length(out_dates) + 1, length(measure_states[[i]])))
+    for(i in 1:length(data_files)){
+        # first get the cell-to-cell map, if it exists, in order to calculate proper # of rows
+        row_range <- c(-Inf, Inf) # in case we have NA for the cell map, we'll get the righ # of rows
+        tmp_r <- raster(data_files[[i]][1])
+        
+        # retrieve the cell-to-cell mapping information
+        if(!is.na(cell_maps[i])){
+            cells_data <- GetValuesGDAL(cell_maps[i], start_row, num_rows)
+            row_range <- rowFromCell(tmp_r, range(cells_data))
+            cell_map <- raster(cell_maps[i])
+        }
+
+        # number of rows to get is minimum of: requested number, number of available lines, or the maximum of the calculated row range
+        num_rows_to_get <- min(num_rows, nrow(tmp_r) - start_row + 1, max(row_range))
+        # row to start on is either: requested start row (ref data), or the minimum of row_range
+        row_to_start_on <- max(start_row, min(row_range))
+
+        # get the data from all requested data files
+        tmp_data <- GetValuesGDAL_multiband(data_files[[i]], row_to_start_on, num_rows_to_get)
+
+        # get the indices that match reference cells to the retrieved sub dataset
+        if(!is.na(cell_maps[i])){
+            cell_inds <- cells_data[,1] - (ncol(tmp_r) * (min(row_range) - 1))
+        }else{
+            # this is the reference dataset
+            cell_inds <- 1:dim(tmp_data)[1]
+        }
+
+        # for the RMSE retrieval (which should have identical resolution as the ref/output map)
+        if(!is.na(cell_maps[[i]])){
+            num_rows_to_get_rmse <- min(num_rows, nrow(cell_map) - start_row + 1)
+        }else{
+            num_rows_to_get_rmse <- min(num_rows, nrow(tmp_r) - start_row + 1)
+        }
+        row_to_start_on_rmse <- start_row
+
+        # order the dates and data files in ascending order
+        data_files[[i]] <- data_files[[i]][order(data_dates[[i]])]
+        data_dates[[i]] <- sort(data_dates[[i]])
+
+        # get the RMSE data
+        # NOTE: we assume that if rmse_na_rep is NA for a particular dataset, then the RMSE covers all the associated bands!
+        if(!is.na(rmse_maps[i])){
+            tmp_rmse_data <- GetValuesGDAL_multiband(rmse_maps[i], row_to_start_on_rmse, num_rows_to_get_rmse)
+            # if not all states have RMSE, and a rmse_na_rep value is provided, we mirror that information
+            if(!is.na(rmse_na_rep[i])){
+                rmse_states[[i]][is.na(rmse_states[[i]])] <- rmse_na_rep[i]
+                tmp_rmse_data <- tmp_rmse_data[, , rmse_states[[i]]]
+            }else{
+                # no NA rep value is provided, so we assume we have the full complement of RMSE
+                tmp_rmse_data <- tmp_rmse_data[, rmse_states[[i]]]
+            }
+
+            # let's cast to integer to save space
+            tmp_rmse_data <- as.integer(round(tmp_rmse_data))
+
+            # this version expands to all dates (for time-varying version, if weights are used)            
+            # # expand to RMSE to all dates, if not all states have RMSE, use the RMSE repeat information to repeat those estimates
+            # if(!is.na(rmse_na_rep[i])){
+            #     rmse_states[[i]][is.na(rmse_states[[i]])] <- rmse_na_rep[i]
+            #     tmp_rmse_data <- tmp_rmse_data[, rep(1, length(out_dates)), rmse_states[[i]]]
+            # }else{
+            #     tmp_rmse_data <- tmp_rmse_data[, rep(1, length(out_dates)), rmse_states[[i]]]
+            # }
+        }else{
+            # no rmse information (should be for ref/output dataset only)
+            # we just replicate the given measurement errors for all dates/pixels
+            # tmp_rmse_data <- array(rep(meas_errors[[i]], each=length(cell_inds)*length(out_dates)), dim=c(length(cell_inds), 1, length(measure_states[[i]])))
+            # tmp_rmse_data <- array(rep(meas_errors[[i]], each=length(cell_inds)), dim=c(length(cell_inds), length(measure_states[[i]])))
+            tmp_rmse_data <- array(rep(as.integer(meas_errors[[i]]), each=length(cell_inds)), dim=c(length(cell_inds), length(measure_states[[i]])))
+        }
+
+        # if there is a QA band, and associated weights, then handle that, otherwise do nothing to tmp_data
+        if(!is.na(qa_bands[i])){
+            # get the QA data from the specified band
+            tmp_qa <- tmp_data[,, qa_bands[i]]
+            # expand to all bands
+            tmp_qa <- replicate(dim(tmp_data)[3], tmp_qa)
+            # where the weights are zero, set to NA, otherwise set to 1
+            remap_mat <- qa_weights[[i]]
+            remap_mat[remap_mat[, 2] == 0, 2] <- NA
+            remap_mat[remap_mat[, 2] != 0, 2] <- 1
+            remap_mat <- matrix(as.integer(remap_mat), ncol=2) # go to integer to preserve integer matrices
+            # create a multiplier matrix that will retain values where QA weight is not 0, and fill with NA otherwise
+            qa_mult <- array(remap_mat[, 2][match(tmp_qa, remap_mat[, 1])], dim=dim(tmp_qa))
+            # multiply the data by the 1/NA matrix to fill weight=0 values w/ NA and retain others
+            tmp_data <- tmp_data * qa_mult
+        }
+
+        # final data assignment, expanded to all dates, selecting only specified measure_states
+        # add a "date" layer to hold the RMSE information, thus the first entry in each measurement vector will be the associated RMSE or measurement error
+        # proto_data <- array(NA, dim=c(length(cell_inds), length(out_dates), length(measure_states[[i]])))
+        proto_data <- array(NA, dim=c(length(cell_inds), length(out_dates) + 1, length(measure_states[[i]])))
+        proto_data[,1,] <- tmp_rmse_data
+        # proto_data[, match(data_dates[[i]], out_dates),] <- tmp_data[cell_inds,, measure_states[[i]]]
+        proto_data[, match(data_dates[[i]], out_dates) + 1,] <- tmp_data[cell_inds,, measure_states[[i]]]
+        rm(tmp_data)
+        the_data[[i]] <- proto_data
+        rm(proto_data)
+    } # end data_files loop
+
+    # now mash it all together into a data cube for KF processing and return
+    # NOTE: given R's memory duplication issue, it is probably better to create the full return array first, populate as necessary, rather than using abind()
+    return(the_data)
+}
