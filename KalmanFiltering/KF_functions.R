@@ -1577,7 +1577,7 @@ DoBiharKF <- function(x, the_dlm, state_cov=NULL, sensors, smoothing=T, default_
         diag(W(this_dlm)) <- state_cov
       }
     }
-    
+
     # initialize state using the mean of the first not-NA observation across all sensors
     m0(this_dlm) <- c(by(apply(Y, 2, myf <- function(x) x[min(which(!is.na(x)))]), unlist(sensors), mean, na.rm=T))
     m0(this_dlm)[is.na(m0(this_dlm))] <- 0
@@ -1672,22 +1672,33 @@ GetKFData <- function(start_row, num_rows, data_files, data_dates, cell_maps, rm
     # how can we prototype the data output first?
     # proto_data <- array(NA, dim=c(length(cell_inds), length(out_dates) + 1, length(measure_states[[i]])))
     for(i in 1:length(data_files)){
+        # order the dates and data files in ascending order
+        data_files[[i]] <- data_files[[i]][order(data_dates[[i]])]
+        data_dates[[i]] <- sort(data_dates[[i]])
+
         # first get the cell-to-cell map, if it exists, in order to calculate proper # of rows
         row_range <- c(-Inf, Inf) # in case we have NA for the cell map, we'll get the righ # of rows
         tmp_r <- raster(data_files[[i]][1])
         
         # retrieve the cell-to-cell mapping information
         if(!is.na(cell_maps[i])){
-            cells_data <- GetValuesGDAL(cell_maps[i], start_row, num_rows)
-            row_range <- rowFromCell(tmp_r, range(cells_data))
-            cell_map <- raster(cell_maps[i])
+          cell_map <- raster(cell_maps[i])
+          num_rows_to_get_cellmap <- min(num_rows, nrow(cell_map) - start_row + 1)
+          cells_data <- GetValuesGDAL(cell_maps[i], start_row, num_rows_to_get_cellmap)
+          row_range <- rowFromCell(tmp_r, range(cells_data))
+          row_to_start_on <- min(row_range)
+          num_rows_to_get <- min(num_rows, nrow(tmp_r) - row_to_start_on + 1, max(row_range))
+        }else{
+          row_to_start_on <- start_row
+          num_rows_to_get <- min(num_rows, nrow(tmp_r) - row_to_start_on + 1, max(row_range))
         }
 
         # number of rows to get is minimum of: requested number, number of available lines, or the maximum of the calculated row range
-        num_rows_to_get <- min(num_rows, nrow(tmp_r) - start_row + 1, max(row_range))
+        # row_to_start_on <- max(start_row, min(row_range))
+        # num_rows_to_get <- min(num_rows, nrow(tmp_r) - row_to_start_on + 1, max(row_range))
+        # # num_rows_to_get <- min(num_rows, nrow(tmp_r) - start_row + 1, max(row_range))
         # row to start on is either: requested start row (ref data), or the minimum of row_range
-        row_to_start_on <- max(start_row, min(row_range))
-
+        
         # get the data from all requested data files
         tmp_data <- GetValuesGDAL_multiband(data_files[[i]], row_to_start_on, num_rows_to_get)
 
@@ -1706,10 +1717,6 @@ GetKFData <- function(start_row, num_rows, data_files, data_dates, cell_maps, rm
             num_rows_to_get_rmse <- min(num_rows, nrow(tmp_r) - start_row + 1)
         }
         row_to_start_on_rmse <- start_row
-
-        # order the dates and data files in ascending order
-        data_files[[i]] <- data_files[[i]][order(data_dates[[i]])]
-        data_dates[[i]] <- sort(data_dates[[i]])
 
         # get the RMSE data
         # NOTE: we assume that if rmse_na_rep is NA for a particular dataset, then the RMSE covers all the associated bands!
