@@ -15,7 +15,7 @@
 # SCRIPTNAME="sub_INCA_cluster.sh"
 # SCRATCHROOT="INCA"
 #
-# declare -a tiles=("h08v04" "h09v04" "h10v04" "h11v04" "h12v04" "h13v04" "h08v05" "h09v05" "h10v05" "h11v05" "h12v05" "h09v06" "h10v06")
+# declare -a tiles=("h08v04" "h09v04" "h10v04" "h11v04" "h12v04" "h13v04" "h08v05" "h09v05" "h10v05" "h11v05" "h12v05" "h08v06" "h09v06" "h10v06")
 # for i in "${tiles[@]}"
 # do
 #   bsub_cmd="bsub -q cnr -W 4:00 -n 16 -R \"oc span[ptile=16]\" -o ${SCRATCHDIR}${SCRATCHROOT}.$i.out.%J -e $SCRATCHDIR$SCRATCHROOT.$i.err.%J \"csh ${SCRATCHDIR}${SCRIPTNAME} $i\""
@@ -23,7 +23,7 @@
 #   eval $bsub_cmd
 # done
 
-.libPaths("/home/jmgray2/R/x86_64-unknown-linux-gnu-library/3.1")
+# .libPaths("/home/jmgray2/R/x86_64-unknown-linux-gnu-library/3.1")
 library(raster)
 library(rgdal)
 library(parallel)
@@ -71,56 +71,58 @@ PhenoNormals <- function(x, years=NULL){
 }
 
 #=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+GetSDS <- function(file_path, sds=NULL){
+  # gets the SDS names for EOS HDF data access
+  # valid SDS: Greenup, MidGreenup, Peak, Senescence, MidGreendown, Dormancy, EVI_Minimum, EVI_Amplitude, NumCycles, QA_Detailed, QA_Overall
+  all_sds <- c("NumCycles", "Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Minimum", "EVI_Amplitude", "EVI_Area", "QA_Overall", "QA_Detailed")
+  if(is.null(sds)){
+    return(paste("HDF4_EOS:EOS_GRID:\"", file_path, "\":MCD12Q2:", all_sds, sep = ""))
+  }else{
+    return(paste("HDF4_EOS:EOS_GRID:\"", file_path, "\":MCD12Q2:", sds, sep = ""))
+  }
+}
+
+#=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
 PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
   # soup-to-nuts processing of INCA variables for a single tile
 
-  # first, export HDF as TIFF and calculate: ogi, half_spring, half_fall, dormancy, and gsl
-  # NOTE: we don't need to do this, b/c we have the HDF4 driver on henry2
-  # this is the leftover workaround that will work on the PC's
-  mcd12q2_names <- dir(data_dir, patt=paste("MCD12.*", tile, ".*hdf$", sep=""), full=T)
-  for(mcd12q2_name in mcd12q2_names){
-    tmp_out_name <- paste("temp_out_", tile, ".tif", sep="")
-    # gdal_translate(mcd12q2_name, dst_dataset = file.path(output_dir, tmp_out_name), sds=T)
-    gdal_cmd <- paste("gdal_translate -sds", mcd12q2_name, file.path(output_dir, tmp_out_name))
-    system(gdal_cmd)
-    out_files <- dir(output_dir, patt=paste("temp_out_", tile, ".*tif$", sep=""), full=T)
-    # out_files <- dir(output_dir, patt="temp_out.*.tif$", full=T)
-    s <- stack(out_files[1:4])
-    s <- subset(s, seq(1, nlayers(s), by=2)) # get rid of 2nd layer of each year
-    gsl <- raster(s, 4) - raster(s, 1)
-    half_spring <- (raster(s, 1) + raster(s, 2)) / 2
-    half_fall <- (raster(s, 3) + raster(s, 4)) / 2
-    annual_out_s <- stack(raster(s, 1), half_spring, half_fall, raster(s, 4), gsl)
-    out_file <- file.path(output_dir, paste(paste(unlist(strsplit(basename(mcd12q2_name), split="\\."))[1:3], collapse="_"), "_INCA.tif", sep=""))
-    writeRaster(annual_out_s, filename=out_file, overwrite=TRUE)
-  }
+  # the collection of SDS to calculate normals and trends over
+  metrics_to_do <- c("Greenup", "MidGreenup", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Minimum", "EVI_Amplitude", "EVI_Area")
+  doy_metric <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE) # is this a DOY value?
 
-  # now calculate the pheno normals
-  metrics <- c("ogi", "halfspring", "halffall", "dormancy", "gsl")
-  in_files <- dir(output_dir, patt=paste("MCD12.*", tile, ".*INCA.tif$", sep=""), full=T)
+  # gather and sort input files
+  in_files <- dir(data_dir, patt=paste("MCD12.*", tile, ".*hdf$", sep=""), full=T, rec=T)
   in_years <- as.integer(gsub(".*A([0-9]{4})001.*$", "\\1", basename(in_files))) # get data years from file name
-  doy_offset <- as.integer(as.Date(paste(in_years, "-1-1", sep="")) - as.Date("2000-1-1")) # Jan 1 of each data year as days since 2000-1-1
-  pheno_s <- stack(in_files)
+  in_files <- in_files[order(in_years)]
+  in_years <- sort(in_years)
 
-  # DEBUG: this is just b/c of weird job failures, do full processing for h11v05
-  # but only gsl for any others
-  mets_to_do <- 5
-  if(tile == "h11v05") mets_to_do <- 1:5
-  for(i in mets_to_do){
-    tmp_s <- subset(pheno_s, seq(i, nlayers(pheno_s), by=5))
-    # only need to subtract DOY offset from first four metrics!
-    if(i != 5) tmp_s <- tmp_s - doy_offset # convert days since 2000-1-1 to DOY
-    pheno_stack_v <- values(tmp_s)
-    # system.time(pheno_output <- parApply(cl, pheno_stack_v[1:1e4,], 1, PhenoNormals)) # do just first 1e4 pixels, for testing
-    system.time(pheno_output <- parApply(cl, pheno_stack_v, 1, PhenoNormals))
-    output_s <- stack(raster(tmp_s, 1))
-    # Definitely NOT the best way to do this, but sort of stumped and moving on...
-    for(n in 1:(dim(pheno_output)[1] - 1)){
-      output_s <- addLayer(output_s, raster(tmp_s, 1))
+  # calculate offset to convert from days since 1970-1-1 to DOY
+  doy_offset <- as.integer(as.Date(paste(in_years, "-1-1", sep="")) - as.Date("1970-1-1")) # Jan 1 of each data year as days since 2000-1-1
+
+  for(this_metric in metrics_to_do){
+    # get a RasterStack for all years of this metric
+    pheno_s <- stack(GetSDS(in_files, this_metric))
+    # subset to first layer in each year
+    pheno_s <- subset(pheno_s, seq(1, nlayers(pheno_s), by=2))
+    # set NA value
+    NAvalue(pheno_s) <- 32767
+
+    # convert to DOY if necessary
+    if(doy_metric[which(metrics_to_do == this_metric)]){
+      pheno_s <- pheno_s - doy_offset
     }
-    values(output_s) <- t(pheno_output)
-    out_file_name <- file.path(output_dir, paste(paste("INCA_summary", tile, metrics[i], sep="_"), ".tiff", sep=""))
-    writeRaster(file=out_file_name, output_s)
+
+    # get the raw values in a matrix
+    pheno_v <- values(pheno_s)
+
+    # calculate pheno normals
+    pheno_output_v <- parApply(cl, pheno_v, 1, PhenoNormals)
+
+    # create a blank output raster, assign the values, and write to a file
+    pheno_output_s <- do.call(stack, replicate(dim(pheno_output_v)[1], raster(pheno_s, 1)))
+    values(pheno_output_s) <- t(pheno_output_v)
+    out_file_name <- file.path(output_dir, paste("INCA", tile, this_metric, "tiff", sep="."))
+    writeRaster(file=out_file_name, pheno_output_s)
   }
 }
 
@@ -134,19 +136,15 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
 # parse the command line arguments
 arg_parser <- ArgumentParser()
 arg_parser$add_argument("-tile", type="character") # tile to process
-arg_parser$add_argument("-output_dir", type="character", default="/share/jmgray2/INCA/output") # output directory
-arg_parser$add_argument("-data_dir", type="character", default="/share/jmgray2/MODIS/MCD12Q2") # input binary splined evi data directory
+arg_parser$add_argument("-output_dir", type="character", default="/rsstu/users/j/jmgray2/SEAL/INCA/INCAoutput") # output directory
+arg_parser$add_argument("-data_dir", type="character", default="/rsstu/users/j/jmgray2/SEAL/INCA/MCD12Q2C6/MCD12Q2") # input binary splined evi data directory
 arg_parser$add_argument("-cluster_size", type="integer", default=16) # number of CPU cores to use for processing
 args <- arg_parser$parse_args()
 # args <- arg_parser$parse_args(c("-tile","h12v04")) # example to test parser
 
 # make a cluster
 cl <- makeCluster(args$cluster_size)
+clusterExport(cl, c("GetSDS", "PhenoNormals"))
 
 # compute INCA summaries
 system.time(PhenoNormalsTile(tile=args$tile, cl=cl, data_dir=args$data_dir, output_dir=args$output_dir))
-
-# # Print end time
-# end_time <- Sys.time()
-# print(end_time)
-# print(end_time - start_time)
