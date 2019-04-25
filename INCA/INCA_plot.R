@@ -3,7 +3,9 @@ library(raster)
 library(RColorBrewer)
 library(argparse)
 
-PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jmgray2/MODIS/LWMASK500"){
+
+
+PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/rsstu/users/j/jmgray2/SEAL/LWMASK500"){
   # plotting for INCA output
   MAXPIXELS <- 2.5e6
   PVALUETHRESH <- 0.05
@@ -13,14 +15,16 @@ PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jm
   SLOPECUTOFFSQUANTS <- c(0.05, 0.95)
   MADCUTOFFS <- c(0, 21)
   MADCUTOFFSQUANTS <- c(0, 0.98)
-  WATERCOLOR <- rgb(0.7, 0.7, 0.7)
-  LANDCOLOR <- rgb(0.2, 0.2, 0.2)
+  # WATERCOLOR <- rgb(0.7, 0.7, 0.7)
+  # LANDCOLOR <- rgb(0.2, 0.2, 0.2)
+  LANDCOLOR <- rgb(0.7, 0.7, 0.7)
+  WATERCOLOR <- rgb(0.2, 0.2, 0.2)
   LEGENDAXISCEX <- 1
   LEGENDMAINCEX <- 1
   LEGENDWIDTH <- 3.5
 
   # the color palettes
-  div_pal <- colorRampPalette(rev(brewer.pal(11, "RdYlBu")))
+  div_pal <- colorRampPalette(rev(brewer.pal(11, "RdBu")))
   median_pal <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
   mad_pal <- colorRampPalette(brewer.pal(9, "PuBuGn"))
 
@@ -30,10 +34,11 @@ PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jm
   lwmask_file <- dir(LWMASKDIR, pattern=paste(".*", tile, ".*", "bin$", sep=""), full=T)
 
   #DEBUG
-  print(input_file)
-  print(lwmask_file)
+  # print(input_file)
+  # print(lwmask_file)
 
   s <- stack(input_file)
+  NAvalue(s) <- 32767
   lwmask <- raster(lwmask_file)
   r_med <- raster(s, 1)
   r_med[lwmask != 1] <- NA
@@ -124,24 +129,24 @@ PlotINCASummary <- function(input_file, metric_name="INCA", LWMASKDIR="/share/jm
   title(paste(tile, metric_name, "Theil-Sen Slope (where p <=", PVALUETHRESH, ")"))
 
   # plot the annual median anomalies as multiples of the MAD
+  num_years <- (nlayers(s) - 6) / 2
+  years <- 2001:(2001 + num_years - 1)
   MADANOMCUTOFFS <- c(-3, 3)
-  mad_anoms <- subset(s, 21:34)
+  mad_anoms <- subset(s, (6 + num_years + 1):nlayers(s))
   madanom_extreme <- max(c(max(maxValue(mad_anoms)), abs(min(minValue(mad_anoms)))))
   madanom_breaks <- c(-1*madanom_extreme, seq(MADANOMCUTOFFS[1], MADANOMCUTOFFS[2], len=254), madanom_extreme)
-  years <- 2001:2014
 
   # quartz(h=12, w=12)
-  # layout(matrix(1:16, nrow=4, byrow=TRUE))
-  layout(matrix(1:14, nrow=2, byrow=TRUE))
+  layout(matrix(1:num_years, nrow=2, byrow=TRUE))
   par(mar=c(0.25, 0.25, 0.75, 0.25), oma=c(1,2,1,3.5))
   for(i in 1:nlayers(mad_anoms)){
     plot(lwmask, breaks=c(-1, 0.5, 1.5, 10), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE)
     plot(raster(mad_anoms, i), breaks=madanom_breaks, col=div_pal(length(madanom_breaks) - 1), legend=FALSE, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
     title(years[i])
-    if(i == 1 | i == 8){
+    if(i == 1 | i == ((num_years / 2) + 1)){
       mtext(paste(tile, metric_name), side=2, line=0.5)
     }
-    if(i == 14){
+    if(i == num_years){
       legend_at <- round(seq(madanom_breaks[2], madanom_breaks[length(madanom_breaks) - 1], len=7))
       legend_at_date <- legend_at
       legend_labels <- c(paste("<", legend_at_date[1]), as.character(legend_at_date[2:(length(legend_at_date) - 1)]), paste(">", legend_at_date[length(legend_at_date)]))

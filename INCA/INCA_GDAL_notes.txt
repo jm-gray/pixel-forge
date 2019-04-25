@@ -1,22 +1,33 @@
-gdal_merge.py -o CONUS_2012_LC1.tif `ls -rt -d -1 /projectnb/modislc/data/mcd12_out/lc_out/c5_hdf/c5.1_deliv/bug_fix_081214/mcd12q1/hdf_2012/LC1/* | grep '.*h\(\(0[8-9]\|1[0-3]\)v04\|\(0[8-9]\|1[0-2]\)v05\|\(0[8-9]\|1[0]\)v06\).*hdf'`
-gdalwarp -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs' -cutline conus.shp -crop_to_cutline LC_INT.tif CONUS_2012_LC1_AEANAD83_5k_cut.tif
-
-# MODIFIED FOR NEW INCA (EXAMPLE):
-gdal_merge.py -o /share/jmgray2/INCA/output/OGI_CONUS_OUT.tif /share/jmgray2/INCA/output/*ogi*.tif
-... (repeat for all phenometrics)
-gdal_merge.py -o /share/jmgray2/INCA/output/GSL_CONUS_OUT.tif /share/jmgray2/INCA/output/*gsl*.tif
-
-# then reproject and cut to CONUS shapefile
-gdalwarp -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs' -cutline conus.shp -crop_to_cutline LC_INT.tif CONUS_2012_LC1_AEANAD83_5k_cut.tif
-
-# consider using -tr flag to go to different resolution
-gdalwarp -tr 5000 5000 -r average -cutline conus.shp -crop_to_cutline CONUS_2012_LC1.tif LC_INT.tif
+##############################################################################
+# Web Mercator PROJ4:
++proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs
 
 
-# For LWMASK
-gdal_merge.py -o /Volumes/research/fer/jmgray2/MODIS/LWMASK500_CONUS/LWMASK500_CONUS.tif *.bin
+##############################################################################
+# Updated, for each phenometric we first create a VRT file, then we reproject, optionally resample, and cut to CONUS shapefile, outputting a GeoTIFF
 
-gdalwarp -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs' -cutline conus.shp -crop_to_cutline /Volumes/research/fer/jmgray2/MODIS/LWMASK500_CONUS/LWMASK500_CONUS.tif LWMASK500_CONUS_AEA.tif
+# create the VRT
+gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_MidGup.vrt *MidGreenup.tif
 
-# consider using -tr flag to go to different resolution
-gdalwarp -tr 5000 5000 -r average -cutline conus.shp -crop_to_cutline LWMASK500_CONUS_AEA.tif LWMASK5k_CONUS_AEA.tif
+# create the 500 m data
+# NOTE: need to adjust location of the cutline shapefile! conus.shp is at: /rsstu/users/j/jmgray2/SEAL/INCA/CONUS_shapefile
+
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_500m.tif
+
+# create the 2.5k data
+gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_2500m.tif
+
+# extract the median MidGup layer at 500 and 2500 meters
+gdal_translate -b 1 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_Median_WebMerc_500m.tif
+gdal_translate -b 1 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_Median_WebMerc_2500m.tif
+
+# extract 2012 MAD MidGup anomaly layer at 500 and 2500 meters
+gdal_translate -b 35 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_500m.tif
+gdal_translate -b 35 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_2500m.tif
+
+
+##############################################################################
+# Do the same for LW Mask (for plotting)
+gdalbuildvrt CONUS_LWMASK.vrt *bin
+
+gdalwarp -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline /Users/jmgray2/Desktop/INCA_midgup/conus.shp -crop_to_cutline CONUS_LWMASK.vrt CONUS_LWMASK_WebMerc.tif

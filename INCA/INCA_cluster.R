@@ -63,7 +63,7 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
   # soup-to-nuts processing of INCA variables for a single tile
 
   # the collection of SDS to calculate normals and trends over
-  metrics_to_do <- c("Greenup", "MidGreenup", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Minimum", "EVI_Amplitude", "EVI_Area")
+  metrics_to_do <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Minimum", "EVI_Amplitude", "EVI_Area")
   doy_metric <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE) # is this a DOY value?
 
   # gather and sort input files
@@ -91,7 +91,7 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
     # get the raw values in a matrix
     pheno_v <- values(pheno_s)
 
-    # calculate pheno normals
+    # calculate pheno normals, trends, and anomalies
     pheno_output_v <- parApply(cl, pheno_v, 1, PhenoNormals)
 
     # create a blank output raster, assign the values, and write to a file
@@ -105,10 +105,6 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
 #===============================================================================
 # Do the actual processing...
 #===============================================================================
-# # Print start time
-# start_time <- Sys.time()
-# print(start_time)
-
 # parse the command line arguments
 arg_parser <- ArgumentParser()
 arg_parser$add_argument("-tile", type="character") # tile to process
