@@ -82,6 +82,8 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
     pheno_s <- subset(pheno_s, seq(1, nlayers(pheno_s), by=2))
     # set NA value
     NAvalue(pheno_s) <- 32767
+    # some tiles also have -32768 as an out-of-range value
+    pheno_s[pheno_s == -32768] <- NA
 
     # convert to DOY if necessary
     if(doy_metric[which(metrics_to_do == this_metric)]){
@@ -98,7 +100,8 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
     pheno_output_s <- do.call(stack, replicate(dim(pheno_output_v)[1], raster(pheno_s, 1)))
     values(pheno_output_s) <- t(pheno_output_v)
     out_file_name <- file.path(output_dir, paste("INCA", tile, this_metric, "tiff", sep="."))
-    writeRaster(file=out_file_name, pheno_output_s)
+    # writeRaster(file=out_file_name, pheno_output_s)
+    writeRaster(file=out_file_name, pheno_output_s, NAflag=32767)
   }
 }
 

@@ -2,6 +2,10 @@
 # Web Mercator PROJ4:
 +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs
 
+##############################################################################
+# Lee recommended EPSG:4269
+# +proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs
+
 
 ##############################################################################
 # Updated, for each phenometric we first create a VRT file, then we reproject, optionally resample, and cut to CONUS shapefile, outputting a GeoTIFF
@@ -12,18 +16,26 @@ gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_MidGup.vrt *MidGreenup.tif
 # create the 500 m data
 # NOTE: need to adjust location of the cutline shapefile! conus.shp is at: /rsstu/users/j/jmgray2/SEAL/INCA/CONUS_shapefile
 
-gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_500m.tif
+# gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_500m.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_500m.tif
 
 # create the 2.5k data
-gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_2500m.tif
+# gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_2500m.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_2500m.tif
 
 # extract the median MidGup layer at 500 and 2500 meters
-gdal_translate -b 1 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_Median_WebMerc_500m.tif
-gdal_translate -b 1 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_Median_WebMerc_2500m.tif
+# gdal_translate -b 1 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_Median_WebMerc_500m.tif
+# gdal_translate -b 1 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_Median_WebMerc_2500m.tif
+gdal_translate -b 1 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_Median_NAD83_500m.tif
+gdal_translate -b 1 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_Median_NAD83_2500m.tif
+
 
 # extract 2012 MAD MidGup anomaly layer at 500 and 2500 meters
-gdal_translate -b 35 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_500m.tif
-gdal_translate -b 35 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_2500m.tif
+# gdal_translate -b 35 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_500m.tif
+# gdal_translate -b 35 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_2012_MAD_Anom_WebMerc_2500m.tif
+gdal_translate -b 35 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_2012_MAD_Anom_NAD83_500m.tif
+gdal_translate -b 35 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_2012_MAD_Anom_NAD83_2500m.tif
+
 
 
 ##############################################################################
