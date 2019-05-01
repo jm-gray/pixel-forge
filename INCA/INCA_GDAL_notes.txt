@@ -9,25 +9,59 @@
 
 ##############################################################################
 # Updated, for each phenometric we first create a VRT file, then we reproject, optionally resample, and cut to CONUS shapefile, outputting a GeoTIFF
+# Update: there seems to be a bug when reprojecting multiband rasters with resampling, the TS slope layer seems to ignore NoData values, because somehow the top-end values get corrupted as very large numbers...
+# fixing by extracting each metric individually prior to reprojection
 
 # create the VRT
 gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_MidGup.vrt *MidGreenup.tif
+
+# Create the NPN data
+gdal_translate -b 1 CONUS_MidGup.vrt CONUS_MidGup_median.tif
+gdal_translate -b 2 CONUS_MidGup.vrt CONUS_MidGup_MAD.tif
+gdal_translate -b 5 CONUS_MidGup.vrt CONUS_MidGup_TSslope.tif
+gdal_translate -b 6 CONUS_MidGup.vrt CONUS_MidGup_TSpvalue.tif
+
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.0045 0.0045 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_median.tif CONUS_MidGup_Median_NAD83_0045deg.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.0045 0.0045 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_MAD.tif CONUS_MidGup_MAD_NAD83_0045deg.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.022 0.022 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_median.tif CONUS_MidGup_Median_NAD83_022deg.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.022 0.022 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_MAD.tif CONUS_MidGup_MAD_NAD83_022deg.tif
+
+gdal_calc.py -A CONUS_MidGup_TSslope.tif -B CONUS_MidGup_TSpvalue.tif --outfile=CONUS_MidGup_TSslope_screened.tif --calc="A*(B<=0.05)" --NoDataValue=32767
+
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.0045 0.0045 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_TSslope_screened.tif CONUS_MidGup_TSslope_NAD83_0045deg.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.022 0.022 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_TSslope_screened.tif CONUS_MidGup_TSslope_NAD83_022deg.tif
+
+
+
 
 # create the 500 m data
 # NOTE: need to adjust location of the cutline shapefile! conus.shp is at: /rsstu/users/j/jmgray2/SEAL/INCA/CONUS_shapefile
 
 # gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_500m.tif
-gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 500 500 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_500m.tif
+# using EPSG:4269 we must specify resolution in degrees, 500 m is roughly 0.0045 degrees
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.0045 0.0045 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_500m.tif
 
 # create the 2.5k data
 # gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs' -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_WebMerc_2500m.tif
-gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 2500 2500 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_2500m.tif
+# using EPSG:4269 we must specify resolution in degrees, 2500 m is roughly 0.022 degrees
+gdalwarp -srcnodata 32767 -dstnodata 32767 -tr 0.022 0.022 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup.vrt CONUS_MidGreenup_NAD83_2500m.tif
 
 # extract the median MidGup layer at 500 and 2500 meters
 # gdal_translate -b 1 CONUS_MidGreenup_WebMerc_500m.tif CONUS_MidGreenup_Median_WebMerc_500m.tif
 # gdal_translate -b 1 CONUS_MidGreenup_WebMerc_2500m.tif CONUS_MidGreenup_Median_WebMerc_2500m.tif
 gdal_translate -b 1 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_Median_NAD83_500m.tif
 gdal_translate -b 1 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_Median_NAD83_2500m.tif
+
+# extract the MAD MidGup layer at 500 and 2500 meters
+gdal_translate -b 2 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_MAD_NAD83_500m.tif
+gdal_translate -b 2 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_MAD_NAD83_2500m.tif
+
+# extract the TS slope and p-value for the MidGup layer at 500 and 2500 meters
+gdal_translate -b 5 -b 6 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_TS_and_pvalue_NAD83_500m.tif
+gdal_translate -b 5 -b 6 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_TS_and_pvalue_NAD83_2500m.tif
+
+# screen the TS slope where p-value is <= 0.05
+gdal_calc.py -A CONUS_MidGreenup_TS_and_pvalue_NAD83_500m.tif --A_band=1 -B CONUS_MidGreenup_TS_and_pvalue_NAD83_500m.tif --B_band=2 --outfile=CONUS_MidGreenup_TSslope_screened_NAD83_500m.tif --calc="A*(A>0.05)" --NoDataValue=32767
 
 
 # extract 2012 MAD MidGup anomaly layer at 500 and 2500 meters
@@ -37,6 +71,11 @@ gdal_translate -b 35 CONUS_MidGreenup_NAD83_500m.tif CONUS_MidGreenup_2012_MAD_A
 gdal_translate -b 35 CONUS_MidGreenup_NAD83_2500m.tif CONUS_MidGreenup_2012_MAD_Anom_NAD83_2500m.tif
 
 
+##############################################################################
+# Testing
+gdal_translate -b 5 CONUS_MidGup.vrt CONUS_MidGup_TSslope.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_TSslope.tif CONUS_MidGup_TSslope_NAD83.tif
+gdalwarp -srcnodata 32767 -dstnodata 32767 -r average -tr 0.0045 0.0045 -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 -cutline conus.shp -crop_to_cutline CONUS_MidGup_TSslope.tif CONUS_MidGup_TSslope_NAD83_500m.tif
 
 ##############################################################################
 # Do the same for LW Mask (for plotting)

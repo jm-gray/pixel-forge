@@ -64,7 +64,7 @@ PhenoNormalsTile <- function(tile, cl, data_dir, output_dir){
 
   # the collection of SDS to calculate normals and trends over
   metrics_to_do <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Minimum", "EVI_Amplitude", "EVI_Area")
-  doy_metric <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE) # is this a DOY value?
+  doy_metric <- c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE) # is this a DOY value?
 
   # gather and sort input files
   in_files <- dir(data_dir, patt=paste("MCD12.*", tile, ".*hdf$", sep=""), full=T, rec=T)
