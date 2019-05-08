@@ -1,0 +1,6 @@
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+/rsstu/users/j/jmgray2/SEAL/MCD43C6/MCD43A4/2008/049: No such file or directory
+/rsstu/users/j/jmgray2/SEAL/MCD43C6/MCD43A4/2008/049/index.html.tmp: Bad file descriptor
+
+Cannot write to ‘/rsstu/users/j/jmgray2/SEAL/MCD43C6/MCD43A4/2008/049/index.html.tmp’ (Success).

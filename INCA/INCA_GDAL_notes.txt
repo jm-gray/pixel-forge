@@ -12,6 +12,8 @@
 # Update: there seems to be a bug when reprojecting multiband rasters with resampling, the TS slope layer seems to ignore NoData values, because somehow the top-end values get corrupted as very large numbers...
 # fixing by extracting each metric individually prior to reprojection
 
+##############################################################################
+# MidGup
 # create the VRT
 gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_MidGup.vrt *MidGreenup.tif
 
@@ -32,6 +34,52 @@ gdal_calc.py -A CONUS_MidGup_TSslope.tif -B CONUS_MidGup_TSpvalue.tif --outfile=
 
 gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGup_TSslope_screened.tif CONUS_MidGup_TSslope_NAD83_004deg.tif
 gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGup_TSslope_screened.tif CONUS_MidGup_TSslope_NAD83_02deg.tif
+
+##############################################################################
+# MidGdown
+# create the VRT
+gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_MidGdown.vrt ../INCAoutput/*MidGreendown.tif
+
+# Create the NPN data
+gdal_translate -b 1 CONUS_MidGdown.vrt CONUS_MidGdown_median.tif
+gdal_translate -b 2 CONUS_MidGdown.vrt CONUS_MidGdown_MAD.tif
+gdal_translate -b 5 CONUS_MidGdown.vrt CONUS_MidGdown_TSslope.tif
+gdal_translate -b 6 CONUS_MidGdown.vrt CONUS_MidGdown_TSpvalue.tif
+
+# reproject and cut
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269  CONUS_MidGdown_median.tif CONUS_MidGdown_Median_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGdown_MAD.tif CONUS_MidGdown_MAD_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGdown_median.tif CONUS_MidGdown_Median_NAD83_02deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGdown_MAD.tif CONUS_MidGdown_MAD_NAD83_02deg.tif
+
+# screen the TS slope using p-value
+gdal_calc.py -A CONUS_MidGdown_TSslope.tif -B CONUS_MidGdown_TSpvalue.tif --outfile=CONUS_MidGdown_TSslope_screened.tif --calc="A*(B<=0.05) + 32767*(B>0.05)" --NoDataValue=32767
+
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGdown_TSslope_screened.tif CONUS_MidGdown_TSslope_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_MidGdown_TSslope_screened.tif CONUS_MidGdown_TSslope_NAD83_02deg.tif
+
+##############################################################################
+# EVIarea
+# create the VRT
+gdalbuildvrt -srcnodata 32767 -vrtnodata 32767 CONUS_EVIarea.vrt ../INCAoutput/*EVI_Area.tif
+
+# Create the NPN data
+gdal_translate -b 1 CONUS_EVIarea.vrt CONUS_EVIarea_median.tif
+gdal_translate -b 2 CONUS_EVIarea.vrt CONUS_EVIarea_MAD.tif
+gdal_translate -b 5 CONUS_EVIarea.vrt CONUS_EVIarea_TSslope.tif
+gdal_translate -b 6 CONUS_EVIarea.vrt CONUS_EVIarea_TSpvalue.tif
+
+# reproject and cut
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269  CONUS_EVIarea_median.tif CONUS_EVIarea_Median_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_EVIarea_MAD.tif CONUS_EVIarea_MAD_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_EVIarea_median.tif CONUS_EVIarea_Median_NAD83_02deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_EVIarea_MAD.tif CONUS_EVIarea_MAD_NAD83_02deg.tif
+
+# screen the TS slope using p-value
+gdal_calc.py -A CONUS_EVIarea_TSslope.tif -B CONUS_EVIarea_TSpvalue.tif --outfile=CONUS_EVIarea_TSslope_screened.tif --calc="A*(B<=0.05) + 32767*(B>0.05)" --NoDataValue=32767
+
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 13030 6140 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_EVIarea_TSslope_screened.tif CONUS_EVIarea_TSslope_NAD83_004deg.tif
+gdalwarp -te -125.0208333 24.0625000 -66.4791667 49.9375000 -ts 2606 1228 -srcnodata 32767 -dstnodata -9999 -r average -s_srs '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs' -t_srs EPSG:4269 CONUS_EVIarea_TSslope_screened.tif CONUS_EVIarea_TSslope_NAD83_02deg.tif
 
 ##############################################################################
 # Do the same for LW Mask (for plotting)
