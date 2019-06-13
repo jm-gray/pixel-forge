@@ -11,6 +11,20 @@
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #-------------------------------------------------------------------------------
+MakeCell2CellMap <- function(x, target_r, output_dir, name_root="Cell2Cell"){
+    # makes a cell-to-cell map for the targeted output resolution
+    tmp_r <- x
+    tmp_r <- setValues(tmp_r, 1:ncell(tmp_r))
+    tmp_out <- file.path(output_dir, paste(name_root, "tmp.tif", sep=""))
+    out_file <- file.path(output_dir, paste(name_root, "_cellmap.tif", sep=""))
+    writeRaster(tmp_r, file=tmp_out)
+    gdal_cmd <- paste("gdalwarp -overwrite -dstnodata -9999 -te", paste(extent(target_r)[c(1, 3, 2, 4)], collapse=" "), "-ts", ncol(target_r), nrow(target_r), tmp_out, out_file)
+    system(gdal_cmd)
+    system(paste("rm", tmp_out))
+    return(out_file)
+}
+
+#-------------------------------------------------------------------------------
 GetSentinelDate <- function(x) as.Date(substr(unlist(strsplit(basename(x), "_"))[8], 1, 8), format="%Y%m%d")
 
 #-------------------------------------------------------------------------------
@@ -138,10 +152,13 @@ GetRMSE <- function(start_row, rows_to_do, match_files, ref_files, match_dates, 
   
   # get matching or closely matching dates (max_doy_diff) parameter
   close_match_dates <- as.Date(sapply(ref_dates, GetClosestDate, dates=match_dates, max_diff=max_doy_diff), origin="1970-1-1")
+  close_match_dates <- close_match_dates[!is.na(close_match_dates)]
   # check for no match/ref files
   if(length(close_match_dates) == 0){
     print("No matching or close dates found, try larger max_doy_diff")
     return(NA)
+  }else{
+    print(paste("Found", length(close_match_dates), "dates within", max_doy_diff, "days of ref"))
   }
   match_files_common <- match_files[match_dates %in% close_match_dates] # the close-in-date match files
   # layout(matrix(1:12, nrow=4, byrow=T))
@@ -195,7 +212,8 @@ GetRMSE <- function(start_row, rows_to_do, match_files, ref_files, match_dates, 
   
   # get the match data and screen w/ QA if necessary
   cells_data <- GetValuesGDAL(ref_to_match_cell_map_file, start_row, num_rows)
-  match_row_range <- rowFromCell(example_match_s, range(cells_data))
+  # match_row_range <- rowFromCell(example_match_s, range(cells_data))
+  match_row_range <- rowFromCell(example_match_s, range(cells_data, na.rm=T))
   match_data <- GetValuesGDAL_multiband(match_files_common, min(match_row_range), diff(match_row_range) + 1)
   if(!is.na(match_qa_band)) match_qa_data <- match_data[,, rep(match_qa_band, length(match_bands_to_get))] # get and expand QA data
   match_data <- match_data[,, match_bands]
