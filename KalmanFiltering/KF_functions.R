@@ -1090,6 +1090,15 @@ PlotFusionRGB <- function(r1, r2, kf, label, evi_breaks=c(-1e9, seq(0, 0.75, len
 }
 
 #-------------------------------------------------------------------------------
+GetSensorInd <- function(sensors, the_band){
+  # gets the indices in data_chunk of the system state x
+  # this is really just for plotting so that we can have a column of NA
+  # if the sensor does not observe the state
+  myf <- function(x, i) ifelse(i %in% x, which(x == i), NA)
+  return(sapply(sensors, myf, i=the_band) + c(0, cumsum(sapply(sensors, length))[1:(length(sensors) - 1)]))
+}
+
+#-------------------------------------------------------------------------------
 PlotForecast <- function(filt_m, filt_se, signal, t=NULL, conf_level=0.95, sigma=NULL, ylim=NULL, pt_cex=1, colmain=rgb(0.42, 0.68, 0.84), colerr=rgb(0.42, 0.68, 0.84, 0.5), colsignal="#636363", ...){
   if(is.null(t)) t <- 1:length(filt_m)
 
@@ -1791,7 +1800,10 @@ GetKFData <- function(start_row, num_rows, data_files, data_dates, cell_maps, rm
         proto_data <- array(NA, dim=c(length(cell_inds), length(out_dates) + 1, length(measure_states[[i]])))
         proto_data[,1,] <- tmp_rmse_data
         # proto_data[, match(data_dates[[i]], out_dates),] <- tmp_data[cell_inds,, measure_states[[i]]]
-        proto_data[, match(data_dates[[i]], out_dates) + 1,] <- tmp_data[cell_inds,, measure_states[[i]]]
+        # proto_data[, match(data_dates[[i]], out_dates) + 1,] <- tmp_data[cell_inds,, measure_states[[i]]]
+        # revised to handle the case where out_dates doesn't fully span available dates
+        exp_inds <- match(data_dates[[i]], out_dates)
+        proto_data[, exp_inds[!is.na(exp_inds)] + 1,] <- tmp_data[cell_inds, which(!is.na(exp_inds)), measure_states[[i]]]
         rm(tmp_data)
         the_data[[i]] <- proto_data
         rm(proto_data)
