@@ -5,7 +5,9 @@ DownloadMCD43 <- function(x, out_root_dir, overwrite=F){
   existing_mcd43a4_files <- dir(out_dir, pattern=as.character(x[3]), full=T)
   if(length(existing_mcd43a4_files) == 0 | overwrite){
     wget_cmd <- paste('wget -e robots=off -m -np -nd -R -r -l1 -A "*', as.character(x[3]), '*hdf" "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/MCD43A4/', x[1], '/', formatC(as.integer(x[2]), width=3, flag=0), '/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P ', out_dir, sep="")
-    system(wget_cmd, ignore.stdout=T, ignore.stderr=T)
+    # print(wget_cmd)
+    # system(wget_cmd, ignore.stdout=T, ignore.stderr=T)
+    system(wget_cmd)
     # system2(wget_cmd, stdout=stdout_file, stderr=stderr_file)
     existing_mcd43a4_files <- dir(out_dir, pattern=as.character(x[3]), full=T)
   }
@@ -13,7 +15,9 @@ DownloadMCD43 <- function(x, out_root_dir, overwrite=F){
   existing_mcd43a2_files <- dir(out_dir, pattern=as.character(x[3]), full=T)
   if(length(existing_mcd43a2_files) == 0 | overwrite){
     wget_cmd <- paste('wget -e robots=off -m -np -nd -R -r -l1 -A "*', as.character(x[3]), '*hdf" "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/MCD43A2/', x[1], '/', formatC(as.integer(x[2]), width=3, flag=0), '/" --header "Authorization: Bearer 6CAF0DF2-48B6-11E8-9950-14FA569DBFBA" -P ', out_dir, sep="")
-    system(wget_cmd, ignore.stdout=T, ignore.stderr=T)
+    # print(wget_cmd)
+    # system(wget_cmd, ignore.stdout=T, ignore.stderr=T)
+    system(wget_cmd)
     # system2(wget_cmd, stdout=stdout_file, stderr=stderr_file)
     existing_mcd43a2_files <- dir(out_dir, pattern=as.character(x[3]), full=T)
   }
