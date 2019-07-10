@@ -211,6 +211,8 @@ plotRGB(s_starfm, 4, 3, 2, stretch="lin")
 
 ############################
 # Determine possible input pairs
+# stupid comment
+library(raster)
 ard_dir <- "/Volumes/users/j/jmgray2/SEAL/KF_four_site_landsat/central_valley/cv_ard"
 mcd43_dir <- "/Volumes/users/j/jmgray2/SEAL/KF_four_site_landsat/central_valley/cv_mcd43"
 ard_qas <- dir(ard_dir, pattern="*PIXELQA.*envi$", full=T)
@@ -228,8 +230,13 @@ for(ard_qa in ard_qas){
     ard_good_fracs[i] <- sum(values(r) == 0) / ncell(r)
     i <- i + 1
 }
+
 cv_pair_df <- data.frame(file=ard_qas, date=ard_dates, good_frac=ard_good_fracs)
+# save(cv_pair_df, file="~/Desktop/good_frac_cv.Rdata")
+# load("~/Desktop/good_frac_cv.Rdata")
+
 # now, we'll compute the correlation between MODIS images on all possible dates, for each
 for(ard_date in ard_dates){
+    # find the pred day 
     mod_pred_day <- 
 }
