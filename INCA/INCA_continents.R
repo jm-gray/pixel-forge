@@ -2,6 +2,7 @@ library(raster)
 library(RColorBrewer)
 library(tools)
 library(argparse)
+library(viridis)
 #---------------------------------------------------------------------
 # run all continents:
 # qsub -V -l mem_total=24G -l h_rt=24:00:00 ./run_continent_diagnostics.sh namerica
@@ -28,82 +29,28 @@ BuildVRT <- function(file_list, out_file, band=NULL, vrtnodata=0){
     sys_cmd <- paste("gdalbuildvrt", paste("-vrtnodata", vrtnodata), out_file, paste(file_list, collapse=" "))
   }
   system(sys_cmd)
+  return(out_file)
+}
+
+#---------------------------------------------------------------------
+ReprojectContinent <- function(vrt_file, out_dir, cut_continent_path, out_res=5000){
+    cut_continent <- shapefile(cut_continent_path)
+
+    # first gdalwarp: go to resampled resolution
+    resample_out_file <- file.path(out_dir, paste(file_path_sans_ext(basename(vrt_file)), "_resampled.tif", sep=""))
+    gdal_cmd <- paste("gdalwarp -tr", out_res, out_res, vrt_file, resample_out_file)
+    system(gdal_cmd)
+    # second gdalwarp: reproject and crop to cutline
+    final_out_file <- file.path(out_dir, paste(file_path_sans_ext(basename(vrt_file)), "_reproj_cut.tif", sep=""))
+    gdal_cmd <- paste("gdalwarp -t_srs '", projection(cut_continent), "' -crop_to_cutline -cutline ", cut_continent_path, " ", resample_out_file, " ", final_out_file, sep="")
+    system(gdal_cmd)
+
+    system(paste("rm", resample_out_file))
+    return(final_out_file)
 }
 
 #---------------------------------------------------------------------
 GetTile <- function(tile, metric, data_dir) dir(data_dir, pattern=paste(tile, "\\.", metric, "\\.tif$", sep=""), full=T)
-
-#---------------------------------------------------------------------
-GetLWTile <- function(tile) list.files("/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m", pattern=paste("LW.map.", tile, "$", sep=""), full=T)
-
-#---------------------------------------------------------------------
-WriteHDR <- function(in_file){
-  tile <- gsub("LW.map.(h[0-9]{2}v[0-9]{2})$", "\\1", basename(in_file))
-  tile_h <- as.numeric(substr(tile, 2, 3))
-  tile_v <- as.numeric(substr(tile, 5, 6))
-  out_hdr <- file.path(dirname(in_file), paste(basename(in_file), ".hdr", sep=""))
-
-  uly_map = 10007554.677
-  ulx_map = -20015109.354
-  lry_map = -10007554.677
-  lrx_map = 20015109.354
-  pix = 463.312716525
-  dims = 2400
-
-  # calculate the upper left corner of the current tile
-  ulx = ulx_map + (tile_h * pix * dims)
-  uly = uly_map - (tile_v * pix * dims)
-
-  nbands=1
-
-  temp_txt = paste("ENVI\nENVI description = { MODIS 500 m LW Mask }\nlines = ", dims, "\nsamples = ", dims, "\nbands = ", nbands, "\nheader offset = 0\nfile type = ENVI Standard\ndata type = 1\ninterleave = bip\nbyte order = 0\nmap info = {Sinusoidal, 1, 1,", ulx, ", ", uly, ", ", pix, ", ", pix, "}", "\ncoordinate system string = {PROJCS[\"Sinusoidal\",GEOGCS[\"GCS_unnamed ellipse\",DATUM[\"D_unknown\",SPHEROID[\"Unknown\",6371007.181,0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Sinusoidal\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"Meter\",1]]}", sep="")
-
-
-  # write the header to a file
-  f <- file(out_hdr)
-  writeLines(c(temp_txt), f)
-  close(f)
-}
-
-PlotTile <- function(r, lwmask, cutoffs=c(0, 365), breaks=NULL, round_digs=0, pal=colorRampPalette(rev(brewer.pal(11, "Spectral"))), scale=1, title=NA, plot_legend=T, legend_only=F, legend_title="", pdf_out=NULL, plot_height=12, plotNEW=F, garish=F, continents=NA, MAXPIXELS=1.44e6,...){
-  # MAXPIXELS <- 5.7e6
-  WATERCOLOR <- rgb(0.7, 0.7, 0.7)
-  LANDCOLOR <- rgb(0.2, 0.2, 0.2)
-  LEGENDAXISCEX <- 1
-  LEGENDMAINCEX <- 1
-  LEGENDWIDTH <- 2.5
-
-  if(is.null(breaks)){
-    breaks <- round(c(minValue(r), seq(cutoffs[1], cutoffs[2]), maxValue(r)), round_digs)
-    breaks <- unique(breaks)
-  }
-
-  if(legend_only){
-    legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
-    legend_at_scaled <- round(legend_at / scale, round_digs)
-    legend_labels <- c(paste("<", legend_at_scaled[1]), as.character(legend_at_scaled[2:(length(legend_at_scaled) - 1)]), paste(">", legend_at_scaled[length(legend_at_scaled)]))
-    plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text=legend_title, side=3, font=2, line=0.5, cex=LEGENDMAINCEX), smallplot=c(0.2,0.5,0.2,0.9))
-    # plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=5, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=2), legend.args=list(text="", side=3, font=2, line=0.5, cex=2),  smallplot=c(0.1,0.5,0.2,0.9))
-  }else{
-    plot(lwmask, breaks=c(-1, 0.5, 1.5, 1e6), col=c(WATERCOLOR, LANDCOLOR, WATERCOLOR), xaxt="n", yaxt="n", legend=F, bty="n", box=FALSE, maxpixels=MAXPIXELS)
-    plot(r, breaks=breaks, col=pal(length(breaks) - 1), maxpixels=MAXPIXELS, legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T, ...)
-    if(plot_legend){
-      legend_at <- round(seq(breaks[2], breaks[length(breaks) - 1], len=7))
-      legend_at_scaled <- round(legend_at / scale, round_digs)
-      legend_labels <- c(paste("<", legend_at_scaled[1]), as.character(legend_at_scaled[2:(length(legend_at_scaled) - 1)]), paste(">", legend_at_scaled[length(legend_at_scaled)]))
-      plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=pal(length(breaks)-1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
-    }
-    title(title)
-  }
-}[]
-
-#------------------------------------------------
-# First create proper headers for all LW mask tiles
-# all_in_files <- list.files("/projectnb/modislc/data/mcd12_in/c6/ancillary_layers/C6_LW_Mask/lw_mask_500m", pattern="LW.map.h[0-9]{2}v[0-9]{2}$", full=T)
-# for(in_file in all_in_files){
-#   # in_file <- GetLWTile(tile)
-#   WriteHDR(in_file)
-# }
 
 #------------------------------------------------
 # tile lists
@@ -116,6 +63,8 @@ africa_tiles <- c('h15v07', 'h16v05', 'h16v06', 'h16v07', 'h16v08', 'h17v10', 'h
 samerica_tiles <- c('h10v10', 'h10v07', 'h10v08', 'h10v09', 'h11v10', 'h11v11', 'h11v12', 'h11v07', 'h11v08', 'h11v09', 'h12v10', 'h12v11', 'h12v12', 'h12v13', 'h12v08', 'h12v09', 'h13v10', 'h13v11', 'h13v12', 'h13v13', 'h13v14', 'h13v08', 'h13v09', 'h14v10', 'h14v11', 'h14v14', 'h14v09', 'h08v08', 'h08v09', 'h09v08', 'h09v09')
 oceania_tiles <- c('h00v10', 'h00v08', 'h01v10', 'h01v11', 'h01v07', 'h01v09', 'h02v10', 'h02v06', 'h02v08', 'h27v10', 'h28v14', 'h29v13', 'h03v10', 'h03v11', 'h03v06', 'h03v07', 'h30v13', 'h31v12', 'h31v13', 'h31v08', 'h32v11', 'h32v12', 'h32v07', 'h32v09', 'h33v10', 'h33v11', 'h33v07', 'h33v08', 'h33v09', 'h34v10', 'h34v07', 'h34v08', 'h34v09', 'h35v10', 'h35v08', 'h35v09', 'h04v09', 'h05v13', 'h06v11', 'h08v11')
 australia_tiles <- c('h27v11', 'h27v12', 'h27v14', 'h28v11', 'h28v12', 'h28v13', 'h29v10', 'h29v11', 'h29v12', 'h29v13', 'h30v10', 'h30v11', 'h30v12', 'h31v10', 'h31v11', 'h31v12', 'h32v10')
+eurasia_tiles <- c(asia_tiles, europe_tiles)
+oceania_tiles <- c(australia_tiles, oceania_tiles)
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Create mosaics and plot
@@ -129,13 +78,8 @@ args <- arg_parser$parse_args()
 # args <- arg_parser$parse_args(c("-continent","europe", "-metrics","Greenup", "MidGreenup", "Dormancy","-years","2011", "2014"))
 # all_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy")
 all_metrics <- c("Greenup", "MidGreenup", "Maturity", "Peak", "Senescence", "MidGreendown", "Dormancy", "EVI_Area", "EVI_Amplitude", "EVI_Minimum")
-
-# check for special value of years "0" which means "all years"
-if(args$years == 0){
-  years <- 2001:2015
-}else{
-  years <- args$years
-}
+doy_metrics <- c(rep(TRUE, 7), rep(FALSE, 3))
+layer_names <- c("Median", "MAD", "Average", "Std. Dev.", "TS-slope", "TS p-value", "NumVals")
 
 # check for special value of metrics "all" which means "all metrics"
 if(tolower(args$metrics) == "all"){
@@ -144,20 +88,30 @@ if(tolower(args$metrics) == "all"){
   metrics <- args$metrics
 }
 
+cut_continent_dir <- "/rsstu/users/j/jmgray2/SEAL/INCA/CutContinents"
+# cut_continent_dir <- "/Volumes/users/j/jmgray2/SEAL/INCA/CutContinents"
+dir(cut_continent_dir)
 if(tolower(args$continent) == "asia"){
   continent_list <- asia_tiles
+  the_continent_shp_file <- ""
 }else if(tolower(args$continent) == "namerica"){
   continent_list <- namerica_tiles
+  the_continent_shp_file <- file.path(cut_continent_dir, "INCA_NAmerica_aea_cutline.shp")
 }else if(tolower(args$continent) == "europe"){
   continent_list <- europe_tiles
+  the_continent_shp_file <- ""
 }else if(tolower(args$continent) == "africa"){
   continent_list <- africa_tiles
+  the_continent_shp_file <- ""
 }else if(tolower(args$continent) == "samerica"){
   continent_list <- samerica_tiles
+  the_continent_shp_file <- ""
 }else if(tolower(args$continent) == "oceania"){
   continent_list <- oceania_tiles
+  the_continent_shp_file <- ""
 }else if(tolower(args$continent) == "australia"){
   continent_list <- australia_tiles
+  the_continent_shp_file <- ""
 }else{
   print("not a recognized continent")
   quit()
@@ -174,34 +128,143 @@ data_dir <- "/rsstu/users/j/jmgray2/SEAL/INCA/INCAglobaloutput"
 # data_dir <- "/Volumes/users/j/jmgray2/SEAL/INCA/INCAglobaloutput"
 out_dir <- "/rsstu/users/j/jmgray2/SEAL/INCA/INCAglobaloutput/continent_mosaics"
 # out_dir <- "/Volumes/users/j/jmgray2/SEAL/INCA/INCAglobaloutput/continent_mosaics"
-# out_dir <- "/projectnb/modislc/users/joshgray/C6_Diagnostics/Mosaics"
-band_to_mosaic <- 1
-# years <- 2001:2014
-i <- 1
-tiles_to_mosaic <- continent_list
 
+tiles_to_mosaic <- continent_list
 out_prefix <- tolower(args$continent)
-# out_prefix <- "AUS"
-# pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, ".pdf", sep="")), height=15, width=15)
-# metric_name <- metrics[1]
-for(metric_name in metrics){
-    # doy_offset <- as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")
-    out_file <- file.path(out_dir, paste(paste(out_prefix, metric_name, sep="_"), ".vrt", sep=""))
-    mosaic_files <- unlist(lapply(tiles_to_mosaic, GetTile, metric=metric_name, data_dir=data_dir))
-    BuildVRT(mosaic_files, out_file=out_file, band=band_to_mosaic, vrtnodata=32767)
-    # /rsstu/users/j/jmgray2/SEAL/LWMASK500
-    out_lwmask_file <- file.path(out_dir, paste(paste(out_prefix, "LWMASK", sep="_"), ".vrt", sep=""))
-    if(!file.exists(out_lwmask_file)){
-      lwmask_mosaic_files <- unlist(lapply(tiles_to_mosaic, GetLWTile))
-      BuildVRT(lwmask_mosaic_files, out_file=out_lwmask_file, band=1, vrtnodata=32767)
+
+MAXPIXELS <- 2.5e6
+PVALUETHRESH <- 0.05
+MEDIANCUTOFFS <- NULL
+MEDIANCUTOFFSQUANTS <- c(0.02, 0.98)
+SLOPECUTOFFS <- NULL
+SLOPECUTOFFSQUANTS <- c(0.05, 0.95)
+MADCUTOFFS <- c(0, 21)
+MADCUTOFFSQUANTS <- c(0, 0.98)
+LANDCOLOR <- rgb(0.5, 0.5, 0.5)
+WATERCOLOR <- rgb(0.2, 0.2, 0.2)
+LEGENDAXISCEX <- 1
+LEGENDMAINCEX <- 1
+LEGENDWIDTH <- 2.5
+
+
+# for(metric_name in metrics){
+for(metric_name in metrics[!doy_metrics]){
+    # check if we're doing a DOY metric or not
+    if(metric_name %in% metrics[doy_metrics]){
+        doing_doy <- TRUE
+    }else{
+        doing_doy <- FALSE
     }
-    # make the plot
-    pdf(file.path(out_dir, paste("C6_Diagnostics_", out_prefix, "_", metric_name, "_", year, ".pdf", sep="")), height=15, width=15)
-    r <- raster(out_file) - as.integer(doy_offset)
-    lw_mask <- raster(out_lwmask_file)
-    qs <- quantile(r, c(0.02, 0.98), na.rm=T)
-    plot_title <- paste(out_prefix, metric_name, year)
-    PlotTile(r, lw_mask, cutoffs=c(qs[1], qs[2]), MAXPIXELS=5e6, title=plot_title)
-    dev.off()
+    # mosaic, resample, and reproject
+    out_res <- 2500
+    out_vrt_file <- file.path(out_dir, paste(paste(out_prefix, metric_name, sep="_"), ".vrt", sep=""))
+    mosaic_files <- unlist(lapply(tiles_to_mosaic, GetTile, metric=metric_name, data_dir=data_dir))
+    out_vrt_file <- BuildVRT(mosaic_files, out_file=out_vrt_file, vrtnodata=32767)
+    out_file <- ReprojectContinent(vrt_file=out_vrt_file, out_dir=out_dir, cut_continent_path=the_continent_shp_file, out_res=out_res)
+    
+    # make the plots
+    s <- stack(out_file)
+    continent_shp <- shapefile(the_continent_shp_file)
+    pdf_height <- nrow(s) / 120
+    pdf_width <- ncol(s) / 120
+    pdf(file.path(out_dir, paste("INCA_", out_prefix, "_", metric_name, ".pdf", sep="")), height=pdf_height, width=pdf_width)
+    
+    if(doing_doy){
+        #----------------------------------------
+        # plot median
+        med_qs <- quantile(raster(s, 1), c(0, 0.02, 0.98, 1))
+        med_breaks <- unique(round(c(med_qs[1], seq(med_qs[2], med_qs[3], len=254), med_qs[4])))
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(raster(s, 1), breaks=med_breaks, col=plasma(length(med_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        legend_at <- round(seq(med_breaks[2], med_breaks[length(med_breaks) - 1], len=7))
+        legend_labels <- c(paste("<", legend_at[1], sep=""), as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=plasma(length(med_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="DOY", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "Median"), cex=2)
+
+        #----------------------------------------
+        # plot MAD
+        mad_qs <- quantile(raster(s, 2), c(0, 0.02, 0.98, 1))
+        mad_breaks <- c(seq(0, 42), mad_qs[4])
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(raster(s, 2), breaks=mad_breaks, col=viridis(length(mad_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        legend_at <- round(seq(0, mad_breaks[length(mad_breaks) - 1], len=7))
+        legend_labels <- c(legend_at[1], as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=viridis(length(med_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="days", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "MAD"), cex=2)
+
+        #----------------------------------------
+        # plot TS slope
+        slope_r <- raster(s, 5)
+        pvalue_r <- raster(s, 6)
+        slope_r[pvalue_r >= 0.05] <- NA
+        slope_qs <- quantile(slope_r, c(0, 0.02, 0.98, 1))
+        neg_breaks <- c(-max(abs(slope_qs[c(1, 4)])), seq(-3, 0, len=128))
+        pos_breaks <- c(seq(0, 3, len=128), max(abs(slope_qs[c(1, 4)])))
+        slope_breaks <- c(neg_breaks[1:(length(neg_breaks) - 1)], pos_breaks[2:length(pos_breaks)])
+        slope_pal <- colorRampPalette(rev(brewer.pal(9, "RdBu")))
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(slope_r, breaks=slope_breaks, col=slope_pal(length(slope_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        legend_at <- round(seq(slope_breaks[2], slope_breaks[length(slope_breaks) - 1], len=7))
+        legend_labels <- c(paste("<", legend_at[1], sep=""), as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(legend_at[1]:legend_at[length(legend_at)])), legend.only=T, col=slope_pal(length(slope_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text="days/yr", side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "Sig. TS-slopes"), cex=2)
+
+        dev.off()
+    }else{
+        if(metric_name == "EVI_Area"){
+            legend_text <- "sum(EVI2)"
+        }else{
+            legend_text <- "EVI2"
+        }
+        #----------------------------------------
+        # plot median
+        med_qs <- quantile(raster(s, 1), c(0, 0.02, 0.98, 1))
+        med_breaks <- c(med_qs[1], seq(med_qs[2], med_qs[3], len=254), med_qs[4])
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(raster(s, 1), breaks=med_breaks, col=plasma(length(med_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        # legend_at <- round(seq(med_breaks[2], med_breaks[length(med_breaks) - 1], len=7))
+        legend_at <- round(seq(med_breaks[2], med_breaks[length(med_breaks) - 1], len=7), digits=2)
+        legend_labels <- c(paste("<", legend_at[1], sep=""), as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(c(legend_at[1], legend_at[length(legend_at)]))), legend.only=T, col=plasma(length(med_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text=legend_text, side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "Median"), cex=2)
+
+        #----------------------------------------
+        # plot MAD
+        mad_qs <- quantile(raster(s, 2), c(0, 0.02, 0.98, 1))
+        # mad_breaks <- c(seq(0, 42), mad_qs[4])
+        mad_breaks <- c(seq(0, mad_qs[3], len=254), mad_qs[4])
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(raster(s, 2), breaks=mad_breaks, col=viridis(length(mad_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        legend_at <- signif(seq(0, mad_breaks[length(mad_breaks) - 1], len=7), digits=2)
+        legend_labels <- c(legend_at[1], as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(c(legend_at[1], legend_at[length(legend_at)]))), legend.only=T, col=viridis(length(med_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text=legend_text, side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "MAD"), cex=2)
+
+        #----------------------------------------
+        # plot TS slope
+        slope_r <- raster(s, 5)
+        pvalue_r <- raster(s, 6)
+        slope_r[pvalue_r >= 0.05] <- NA
+        slope_qs <- quantile(slope_r, c(0, 0.02, 0.98, 1))
+        neg_breaks <- c(-max(abs(slope_qs[c(1, 4)])), seq(-max(abs(slope_qs[2:3])), 0, len=128))
+        pos_breaks <- c(seq(0, max(abs(slope_qs[2:3])), len=128), max(abs(slope_qs[c(1, 4)])))
+        slope_breaks <- c(neg_breaks[1:(length(neg_breaks) - 1)], pos_breaks[2:length(pos_breaks)])
+        slope_pal <- colorRampPalette(rev(brewer.pal(9, "RdBu")))
+        par(mar=rep(1, 4), oma=c(0, 0, 2, 0), bg=WATERCOLOR, col.lab="white", col.axis="white", col.main="white", col.sub="white", fg="white", cex.main=1.5)
+        plot(continent_shp, border=NA, col=LANDCOLOR, box=F)
+        plot(slope_r, breaks=slope_breaks, col=slope_pal(length(slope_breaks) - 1), maxpixels=ncell(s), legend=F, xaxt="n", yaxt="n", bty="n", box=FALSE, add=T)
+        legend_at <- signif(seq(slope_breaks[2], slope_breaks[length(slope_breaks) - 1], len=7), digits=2)
+        legend_labels <- c(paste("<", legend_at[1], sep=""), as.character(legend_at[2:(length(legend_at) - 1)]), paste(">", legend_at[length(legend_at)], sep=""))
+        plot(raster(matrix(c(legend_at[1], legend_at[length(legend_at)]))), legend.only=T, col=slope_pal(length(slope_breaks) - 1), legend.width=LEGENDWIDTH, axis.args=list(at=legend_at, labels=legend_labels, cex.axis=LEGENDAXISCEX), legend.args=list(text=paste(legend_text, "/yr", sep=""), side=3, font=2, line=0.5, cex=LEGENDMAINCEX))
+        title(paste("MCD12Q2", metric_name, "Sig. TS-slopes"), cex=2)
+
+        dev.off()
+    }
+
 }
 # dev.off() # close the continent file
