@@ -485,3 +485,78 @@ for(the_date in all_dates){
     trash_vrt <- WriteVRT(the_date=as.Date(the_date, origin="1970-1-1"), the_tile=the_tile, out_dir=out_dir, out_suffix=out_suffix)
     i <- i + 1
 }
+
+#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+# Create Cell-to-Cell Maps
+#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+root_dir <- "/Volumes/users/j/jmgray2/SEAL/KF_four_site_landsat"
+#--------------------------------
+# Central Valley
+site <- "central_valley"
+data_dir <- file.path(root_dir, site)
+output_dir <- file.path(root_dir, site, "Cell2CellMaps")
+
+# get ARD files
+ard_files <- dir(file.path(data_dir, "cv_ard"), pattern=".*vrt$", full=T)
+ard_dates <- as.Date(gsub(".*_([0-9]{8})_[0-9]{8}.*vrt$", "\\1", basename(ard_files)), format="%Y%m%d")
+ard_files <- ard_files[order(ard_dates)]
+ard_dates <- sort(ard_dates)
+
+# get MODIS files and dates
+modis_files <- dir(file.path(data_dir, "cv_mcd43"), pattern=".*vrt$", full=T)
+modis_dates <- as.Date(gsub(".*_([0-9]{4}_[0-9]{3})_.*", "\\1", basename(modis_files)), format="%Y_%j")
+modis_files <- modis_files[order(modis_dates)]
+modis_dates <- sort(modis_dates)
+
+ard_to_modis_cell_map <- MakeCell2CellMap(raster(modis_files[1]), raster(ard_files[1]), output_dir=output_dir, name_root="ARD2MODIS")
+
+#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+# Create RMSE Maps
+#+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+#--------------------------------
+# Central Valley
+site <- "central_valley"
+data_dir <- file.path(root_dir, site)
+output_dir <- file.path(root_dir, site, "RMSEMaps")
+
+# get ARD files
+ard_files <- dir(file.path(data_dir, "cv_ard"), pattern=".*vrt$", full=T)
+ard_dates <- as.Date(gsub(".*_([0-9]{8})_[0-9]{8}.*vrt$", "\\1", basename(ard_files)), format="%Y%m%d")
+ard_files <- ard_files[order(ard_dates)]
+ard_dates <- sort(ard_dates)
+
+# get MODIS files and dates
+modis_files <- dir(file.path(data_dir, "cv_mcd43"), pattern=".*vrt$", full=T)
+modis_dates <- as.Date(gsub(".*_([0-9]{4}_[0-9]{3})_.*", "\\1", basename(modis_files)), format="%Y_%j")
+modis_files <- modis_files[order(modis_dates)]
+modis_dates <- sort(modis_dates)
+
+cl <- makeCluster(detectCores() - 1)
+clusterExport(cl, c("GetRMSE"))
+clusterEvalQ(cl, {library(raster); library(rgdal); source("/Users/jmgray2/Documents/pixel-forge/KalmanFiltering/KF_functions.R")})
+num_rows_ard <- 1000
+example_ard_r <- raster(ard_files[1])
+row_seq <- seq(1, nrow(example_ard_r), by=num_rows_ard)
+
+# Make ARD-MODIS RMSE maps
+modis_2_ard_match_bands <- 1:6
+the_cell_map <- dir(file.path(data_dir, "Cell2CellMaps"), pattern="MODIS", full=T)
+system.time(tmp <- parLapply(cl, row_seq, GetRMSE, rows_to_do=num_rows_ard, match_files=modis_files, ref_files=ard_files, match_dates=modis_dates, ref_dates=ard_dates, ref_to_match_cell_map_file=the_cell_map, ref_bands=1:6, match_bands=modis_2_ard_match_bands, match_qa_band=7, match_qa_good_vals=0))
+system.time(tmp_c <- do.call(rbind, tmp))
+dim(tmp_c)
+tmp_rmse_s <- stack(ard_files[1])
+tmp_rmse_s <- subset(tmp_rmse_s, 1:6)
+values(tmp_rmse_s) <- c(tmp_c)
+out_file <- file.path(output_dir, "ARD2MODIS_RMSE.tif")
+writeRaster(tmp_rmse_s, file=out_file)
+rm(tmp, tmp_c, tmp_rmse_s)
+plot(tmp_rmse_s)
+length(ard_files)
+nf <- layout(matrix(1:77, nrow=7, ncol=11, byrow=T))
+par(mar=rep(0.25, 4), oma=rep(0.5, 4))
+layout.show(nf)
+for(ard_file in ard_files){
+    s <- stack(ard_file)
+    plotRGB(s, 5, 4, 3, stretch="lin")
+}
+

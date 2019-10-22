@@ -232,6 +232,7 @@ for(ard_qa in ard_qas){
 }
 
 cv_pair_df <- data.frame(file=ard_qas, date=ard_dates, good_frac=ard_good_fracs)
+# This file moved to /Volumes/.../SEAL/KF_four_site_landsat!!!!
 # save(cv_pair_df, file="~/Desktop/good_frac_cv.Rdata")
 # load("~/Desktop/good_frac_cv.Rdata")
 
