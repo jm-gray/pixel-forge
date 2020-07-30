@@ -127,7 +127,8 @@ PhenoReturnValue <- function(default_value=NA){
 ScaleToIntegerAndSetNA <- function(annual_pheno_metrics, scale=1e4, outNA=32767){
 	# this function takes a version of annual_pheno_metrics with floating point actual data values and scales & casts for output
 
-	annual_pheno_metrics$evi_area_cycle1=round(annual_pheno_metrics$evi_area_cycle1 / 1e3 * scale) # so we don't exceed 32767!
+	evi_area_scale <- scale / 10 # ensures we don't go over the integer limit
+	annual_pheno_metrics$evi_area_cycle1=round(annual_pheno_metrics$evi_area_cycle1 / evi_area_scale) # so we don't exceed 32767!
 	annual_pheno_metrics$evi_amp_cycle1=round(annual_pheno_metrics$evi_amp_cycle1 * scale)
 	annual_pheno_metrics$evi_min_cycle1=round(annual_pheno_metrics$evi_min_cycle1 * scale)
 	# annual_pheno_metrics$frac_filled_gup_cycle1=round(annual_pheno_metrics$frac_filled_gup_cycle1 * scale)
@@ -140,7 +141,7 @@ ScaleToIntegerAndSetNA <- function(annual_pheno_metrics, scale=1e4, outNA=32767)
 	# annual_pheno_metrics$midgdown_qual_cycle1=round(annual_pheno_metrics$midgdown_qual_cycle1 * scale)
 	# annual_pheno_metrics$dor_qual_cycle1=round(annual_pheno_metrics$dor_qual_cycle1 * scale)
 
-	annual_pheno_metrics$evi_area_cycle2=round(annual_pheno_metrics$evi_area_cycle2 / 1e3 * scale) # so we don't exceed 32767!
+	annual_pheno_metrics$evi_area_cycle2=round(annual_pheno_metrics$evi_area_cycle2 / evi_area_scale) # so we don't exceed 32767!
 	annual_pheno_metrics$evi_amp_cycle2=round(annual_pheno_metrics$evi_amp_cycle2 * scale)
 	annual_pheno_metrics$evi_min_cycle2=round(annual_pheno_metrics$evi_min_cycle2 * scale)
 	# annual_pheno_metrics$frac_filled_gup_cycle2=round(annual_pheno_metrics$frac_filled_gup_cycle2 * scale)
@@ -668,11 +669,11 @@ SegMet <- function(seg, x, dates, pheno_pars){
 	seg_metrics$peak <- as.numeric(dates[peak_seg_ind] - as.Date("1970-1-1"))
 
 	# get gdown dates
-	sen_seg_ind <- GetThresh(sen_thresh, evi_gdown, first_greater=T, gup=F) + seg[2] - 1
+	sen_seg_ind <- GetThresh(sen_thresh, evi_gdown, first_greater=F, gup=F) + seg[2] - 1
 	seg_metrics$sen <- as.numeric(dates[sen_seg_ind] - as.Date("1970-1-1"))
-	midgdown_seg_ind <- GetThresh(midgdown_thresh, evi_gdown, first_greater=T, gup=F) + seg[2] - 1
+	midgdown_seg_ind <- GetThresh(midgdown_thresh, evi_gdown, first_greater=F, gup=F) + seg[2] - 1
 	seg_metrics$midgdown <- as.numeric(dates[midgdown_seg_ind] - as.Date("1970-1-1"))
-	dor_seg_ind <- GetThresh(dor_thresh, evi_gdown, first_greater=T, gup=F) + seg[2] - 1
+	dor_seg_ind <- GetThresh(dor_thresh, evi_gdown, first_greater=F, gup=F) + seg[2] - 1
 	seg_metrics$dor <- as.numeric(dates[dor_seg_ind] - as.Date("1970-1-1"))
 
 	# calculate GUP and GDOWN spline R^2
