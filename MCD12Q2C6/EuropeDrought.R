@@ -50,8 +50,8 @@ europe_lc_r <- raster(out_vrt_lc)
 
 #--------
 # get the median and MAD INCA data for Europe
-metric <- "Greenup"
-# metric <- "EVI_Area"
+# metric <- "Greenup"
+metric <- "EVI_Area"
 europe_inca_files <- sapply(europe_tiles, function(x, metric) dir(inca_dir, pattern=paste(x, metric, sep=".*"), full=T), metric=metric)
 # return(c(round(med), MAD, round(avg), stddev, ts.slope, ts.pvalue, ann.median.anoms, ann.median.anoms.mad))
 out_vrt_median <- file.path(output_dir, paste("Europe_INCAmedian_", metric, ".vrt", sep=""))
@@ -145,131 +145,68 @@ DTmed$val_2018 <- DTeurope[year == 2018, value_conv]
 DTmed[, anomaly2018 := val_2018 - med_val]
 DTmed[, anomaly2018mad := anomaly2018 / mad_val]
 save(DTmed, file="Europe_DT_median_2018.Rdata")
-
-the_metric <- "Greenup1"
-lat_intervals <- seq(30, 70, by=0.5)
-# tmp <- DTmed[phenometric == the_metric & igbp %in% c(12, 14), median(anomaly2018mad, na.rm=T), by=findInterval(lat, lat_intervals, all.inside=T)]
-tmp <- DTmed[phenometric == the_metric, median(anomaly2018mad, na.rm=T), by=findInterval(lat, lat_intervals, all.inside=T)]
-tmp[, middle_lat := lat_intervals[findInterval] + diff(lat_intervals)[1]/2]
-tmp <- tmp[order(middle_lat)]
-plot(tmp[,.(V1,middle_lat)], type="l")
-abline(v=0, lty=3)
-
+load("/rsstu/users/j/jmgray2/SEAL/INCA/Europe_DT_median_2018.Rdata")
 
 # the_metric <- "Greenup1"
-which_igbps <- c(1:5)
-igbp_list <- list(1:5, c(12, 14), 10)
-igbp_names <- c("Forests", "Crops/mosaic", "Grasslands")
+# lat_intervals <- seq(30, 70, by=1)
+# # tmp <- DTmed[phenometric == the_metric & igbp %in% c(12, 14), median(anomaly2018mad, na.rm=T), by=findInterval(lat, lat_intervals, all.inside=T)]
+# tmp <- DTmed[phenometric == the_metric, median(anomaly2018mad, na.rm=T), by=findInterval(lat, lat_intervals, all.inside=T)]
+# tmp[, middle_lat := lat_intervals[findInterval] + diff(lat_intervals)[1]/2]
+# tmp <- tmp[order(middle_lat)]
+# setnames(tmp, c("lat_band", "median_madz_2018", "middle_lat"))
+# plot(NA, NA, type="n", xlab=paste(the_metric, "Anomaly (x*MAD)"), ylab="Latitude", ylim=c(35, 70), xlim=c(-2.5, 2.5))
+# points(tmp[, .(median_madz_2018, middle_lat)], type="l", lwd=2, col=1)
+# abline(v=0, lty=3)
+# title(the_metric)
+
+# the_metric <- "Greenup1"
+# the_metric <- "MidGreenup1"
+# metrics <- c("Greenup1", "MidGreenup1", "Peak1", "EVI_Amplitude1")
+lat_intervals <- seq(30, 70, by=1)
+# igbp_list <- list(1:5, c(12, 14), 10)
+# igbp_names <- c("Forests", "Crops/mosaic", "Grasslands")
+igbp_list <- list(1:5, c(10, 12, 14))
+igbp_names <- c("Forests", "Crops/mosaic/grassland")
+
 col_list <- c(brewer.pal(5, "Greens")[4], brewer.pal(5, "Oranges")[4], brewer.pal(5, "Purples")[4])
-lat_intervals <- seq(30, 70, by=2)
+metrics <- c("Greenup1", "MidGreenup1", "Peak1", "Senescence1", "MidGreendown1", "Dormancy1", "EVI_Amplitude1")
 
-plot(NA, NA, type="n", xlab=paste(the_metric, "Anomaly (days)"), ylab="Latitude", ylim=c(35, 70), xlim=c(-21, 21))
-abline(v=0, lty=2)
-
-i <- 1
-for(which_igbps in igbp_list){
-    DT_lat_all <- DTeurope[
-        igbp %in% which_igbps & phenometric == the_metric & year %in% 2001:2016,
-        median(value - as.integer(as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")), na.rm=T),
-        by=findInterval(lat, lat_intervals, all.inside=T)]
-    DT_lat_all[, middle_lat := seq(30, 70, by=2)[findInterval] + 1]
-    DT_lat_all <- DT_lat_all[order(middle_lat)]
-
-    DT_lat_2018 <- DTeurope[
-        igbp %in% which_igbps & phenometric == the_metric & year == 2018,
-        median(value - as.integer(as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")), na.rm=T),
-        by=findInterval(lat, lat_intervals, all.inside=T)]
-    DT_lat_2018[, middle_lat := seq(30, 70, by=2)[findInterval] + 1]
-    DT_lat_2018 <- DT_lat_2018[order(middle_lat)]
-
-    # plot the anomalies as DOYS
-    points(DT_lat_2018[, V1] - DT_lat_all[, V1], DT_lat_all[, middle_lat], type="l", lwd=2, col=col_list[i])
-    i <- i + 1
-}
-legend("topright", legend=igbp_names, col=col_list, lwd=2)
-
-the_metric <- "EVI_Amplitude1"
-which_igbps <- c(1:5)
-igbp_list <- list(1:5, c(12, 14), 10)
-igbp_names <- c("Forests", "Crops/mosaic", "Grasslands")
-col_list <- c(brewer.pal(5, "Greens")[4], brewer.pal(5, "Oranges")[4], brewer.pal(5, "Purples")[4])
-lat_intervals <- seq(30, 70, by=2)
-
-plot(NA, NA, type="n", xlab=paste(the_metric, "Anomaly"), ylab="Latitude", ylim=c(35, 70), xlim=c(-21, 21))
-abline(v=0, lty=2)
-
-i <- 1
-for(which_igbps in igbp_list){
-    DT_lat_all <- DTeurope[
-        igbp %in% which_igbps & phenometric == the_metric & year %in% 2001:2016,
-        median(value, na.rm=T),
-        by=findInterval(lat, lat_intervals, all.inside=T)]
-    DT_lat_all[, middle_lat := seq(30, 70, by=2)[findInterval] + 1]
-    DT_lat_all <- DT_lat_all[order(middle_lat)]
-
-    DT_lat_2018 <- DTeurope[
-        igbp %in% which_igbps & phenometric == the_metric & year == 2018,
-        median(value, na.rm=T),
-        by=findInterval(lat, lat_intervals, all.inside=T)]
-    DT_lat_2018[, middle_lat := seq(30, 70, by=2)[findInterval] + 1]
-    DT_lat_2018 <- DT_lat_2018[order(middle_lat)]
-
-    # plot the anomalies as DOYS
-    points(DT_lat_2018[, V1] - DT_lat_all[, V1], DT_lat_all[, middle_lat], type="l", lwd=2, col=col_list[i])
-    i <- i + 1
-}
-legend("topright", legend=igbp_names, col=col_list, lwd=2)
-
-
-MakeTransp <- function(thecolor, alpha=0.5) rgb(matrix(c(col2rgb(thecolor)), ncol=3), max=255, alpha=alpha*255)
-
-GetLatAnomAndPlot <- function(metric, igbps=NULL, anomaly_year=2018, other_years=NULL, lat_step=2, conv_doy=TRUE, plot=TRUE, plot_col="#3182BD"){
-    lat_intervals <- seq(30, 70, by=lat_step)
-    if(is.null(igbps)) igbps <- 1:14
-    if(is.null(other_years)) other_years <- 2001:2018
-
-    if(conv_doy){
-        DTsub <- DTeurope[
-            igbp %in% igbps & phenometric == metric, 
-            .(year, lat, igbp, value - as.integer(as.Date(paste(year, "-1-1", sep="")) - as.Date("1970-1-1")))
-        ]
+pdf(file=file.path(output_dir, "Euro2018Anomaly_by_latitude.pdf"), width=40, height=15)
+layout(matrix(1:length(metrics), nrow=1))
+par(mar=c(3, 0.5, 2, 0.5), tcl=0.3, oma=c(3, 3, 1, 3))
+for(the_metric in metrics){
+    plot(NA, NA, type="n", xlab="", ylab="", ylim=c(35, 70), xlim=c(-2.5, 2.5), xaxt="n", yaxt="n")
+    if(which(metrics == the_metric) == 1){
+        axis(1, padj=-1)
+        axis(2, padj=1)
+        axis(3, labels=F, padj=1)
+        axis(4, labels=F, padj=-1)
+        mtext('MAD-based "z-score"', side=1, line=2.4, cex=1.25)
+        mtext("Latitude", side=2, line=1.8, cex=1.25)
+    }else if(which(metrics == the_metric) == length(metrics)){
+        axis(1, padj=-1)
+        axis(2, labels=F)
+        axis(3, labels=F, padj=1)
+        axis(4, labels=T, padj=-1)
+        mtext('MAD-based "z-score"', side=1, line=2.4, cex=1.25)
     }else{
-        DTsub <- DTeurope[
-            igbp %in% igbps & phenometric == metric, 
-            .(year, lat, igbp, value)
-        ]
+        axis(1, padj=-1)
+        axis(2, labels=F)
+        axis(3, labels=F, padj=1)
+        axis(4, labels=F, padj=-1)
+        mtext('MAD-based "z-score"', side=1, line=2.4, cex=1.25)
     }
-    setnames(DTsub, c("year", "lat", "igbp", "value"))
-
-    # get latitudinal band averages and s.d. across all years
-    DT_lat_all <- DTsub[
-        year %in% other_years,
-        .(mean(value, na.rm=T), sd(value, na.rm=T)),
-        by=findInterval(lat, lat_intervals, all.inside=T)
-    ]
-    setnames(DT_lat_all, c("int", "pheno_mean", "pheno_sd"))
-    DT_lat_all[, middle_lat := seq(30, 70, by=2)[int] + 1]
-    DT_lat_all <- DT_lat_all[order(middle_lat)]
-
-    # get latitudinal band averages and s.d. in anomaly year
-    DT_lat_anom <- DTsub[
-        year %in% anomaly_year,
-        .(mean(value, na.rm=T), sd(value, na.rm=T)),
-        by=findInterval(lat, lat_intervals, all.inside=T)
-    ]
-    setnames(DT_lat_anom, c("int", "pheno_mean", "pheno_sd"))
-    DT_lat_anom[, middle_lat := seq(30, 70, by=2)[int] + 1]
-    DT_lat_anom <- DT_lat_anom[order(middle_lat)]
-    
-    # plot the anomalies as DOYS
-
-    # points(DT_lat_2018[, V1] - DT_lat_all[, V1], DT_lat_all[, middle_lat], type="l", lwd=2, col=col_list[i])
-
-    
-
-
+    abline(v=0, lty=3)
+    title(the_metric)
+    i <- 1
+    for(which_igbps in igbp_list){
+        tmp <- DTmed[igbp %in% which_igbps & phenometric == the_metric, median(anomaly2018mad, na.rm=T), by=findInterval(lat, lat_intervals, all.inside=T)]
+        tmp[, middle_lat := lat_intervals[findInterval] + diff(lat_intervals)[1]/2]
+        tmp <- tmp[order(middle_lat)]
+        setnames(tmp, c("lat_band", "median_madz_2018", "middle_lat"))
+        points(tmp[, .(median_madz_2018, middle_lat)], type="l", lwd=3, col=col_list[i])
+        i <- i + 1
+    }
+    legend("topright", legend=igbp_names, col=col_list, lwd=3)
 }
-
-DT <- data.table(x=rnorm(10), y=rnorm(10), z=sample(LETTERS[1:3], 10, rep=T))
-DT[, mean_x:=mean(x), by=z]
-brewer.pal(5, "Blues")[4]
+dev.off()
